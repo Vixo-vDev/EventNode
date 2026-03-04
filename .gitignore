@@ -1,0 +1,23 @@
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# OS related
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Build artifacts (just in case they leak to root)
+node_modules/
+build/
+target/
+bin/
+out/
+
+# Environment
+.env
+.env.local
+*.log
