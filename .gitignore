@@ -1,3 +1,7 @@
+# Docker - no subir volúmenes locales
+docker/mysql/data/
+docker/*.log
+
 # IDEs and Editors
 .vscode/
 .idea/

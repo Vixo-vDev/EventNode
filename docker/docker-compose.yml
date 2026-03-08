@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: event_node_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rooteventnode01
+      MYSQL_DATABASE: event_node
+      MYSQL_USER: vixo_dev
+      MYSQL_PASSWORD: eventnode01
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - eventos_network
+
+volumes:
+  mysql_data:
+
+networks:
+  eventos_network:
+    driver: bridge
