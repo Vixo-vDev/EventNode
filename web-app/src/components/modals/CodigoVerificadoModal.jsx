@@ -20,6 +20,8 @@ function CodigoVerificadoModal() {
             <button
               className="btn btn-primary rounded-pill w-100 fw-semibold"
               data-bs-dismiss="modal"
+              data-bs-toggle="modal"
+              data-bs-target="#newPasswordModal"
             >
               Continuar
             </button>

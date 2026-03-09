@@ -5,6 +5,8 @@ import CuentaVinculadaModal from '../../components/modals/CuentaVinculadaModal'
 import RestablecerContrasenaModal from '../../components/modals/RestablecerContrasenaModal'
 import VerificarCodigoModal from '../../components/modals/VerificarCodigoModal'
 import CodigoVerificadoModal from '../../components/modals/CodigoVerificadoModal'
+import NuevaContrasenaModal from '../../components/modals/NuevaContrasenaModal'
+import ContrasenaActualizadaModal from '../../components/modals/ContrasenaActualizadaModal'
 import profileAvatar from '../../assets/profile_avatar.png'
 
 function StudentProfile() {
@@ -130,6 +132,8 @@ function StudentProfile() {
       <RestablecerContrasenaModal />
       <VerificarCodigoModal />
       <CodigoVerificadoModal />
+      <NuevaContrasenaModal />
+      <ContrasenaActualizadaModal />
     </DashboardLayout>
   )
 }
