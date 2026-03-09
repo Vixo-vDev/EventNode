@@ -57,13 +57,15 @@ function StudentSidebar() {
       </NavLink>
 
       <div className="mt-auto px-3 py-2">
-        <Link
-          to="/"
-          className="d-flex align-items-center gap-2 text-decoration-none text-secondary small"
+        <button
+          type="button"
+          className="d-flex align-items-center gap-2 text-decoration-none text-secondary small btn btn-link p-0 border-0"
+          data-bs-toggle="modal"
+          data-bs-target="#logoutModal"
         >
           <i className="bi bi-box-arrow-left"></i>
           Cerrar sesión
-        </Link>
+        </button>
       </div>
     </nav>
   )
