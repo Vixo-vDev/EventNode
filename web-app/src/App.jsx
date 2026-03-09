@@ -6,6 +6,7 @@ import StudentEventDetail from './pages/student/StudentEventDetail'
 import StudentEventEnrolled from './pages/student/StudentEventEnrolled'
 import StudentDiplomas from './pages/student/StudentDiplomas'
 import StudentDiplomaDetail from './pages/student/StudentDiplomaDetail'
+import StudentProfile from './pages/student/StudentProfile'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/estudiante/evento/:id/inscrito" element={<StudentEventEnrolled />} />
         <Route path="/estudiante/diplomas" element={<StudentDiplomas />} />
         <Route path="/estudiante/diplomas/:id" element={<StudentDiplomaDetail />} />
+        <Route path="/estudiante/perfil" element={<StudentProfile />} />
       </Routes>
     </BrowserRouter>
   )
