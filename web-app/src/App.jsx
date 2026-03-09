@@ -1,34 +1,27 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import StudentHome from './pages/student/StudentHome'
+import StudentEvents from './pages/student/StudentEvents'
+import StudentMyEvents from './pages/student/StudentMyEvents'
+import StudentEventDetail from './pages/student/StudentEventDetail'
+import StudentEventEnrolled from './pages/student/StudentEventEnrolled'
+import StudentDiplomas from './pages/student/StudentDiplomas'
+import StudentDiplomaDetail from './pages/student/StudentDiplomaDetail'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <BrowserRouter>
+      <Routes>
+        {/* Rutas de Estudiante */}
+        <Route path="/" element={<StudentHome />} />
+        <Route path="/estudiante" element={<StudentHome />} />
+        <Route path="/estudiante/eventos" element={<StudentEvents />} />
+        <Route path="/estudiante/mis-eventos" element={<StudentMyEvents />} />
+        <Route path="/estudiante/evento/:id" element={<StudentEventDetail />} />
+        <Route path="/estudiante/evento/:id/inscrito" element={<StudentEventEnrolled />} />
+        <Route path="/estudiante/diplomas" element={<StudentDiplomas />} />
+        <Route path="/estudiante/diplomas/:id" element={<StudentDiplomaDetail />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
