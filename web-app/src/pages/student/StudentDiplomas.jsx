@@ -43,7 +43,7 @@ function StudentDiplomas() {
             image={eventMarketing}
             title="Workshop: Marketing Digital para Startups"
             date="22 Oct 2023"
-            category="IA & CIENCIA"
+            category="MARKETING"
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4">
@@ -67,7 +67,7 @@ function StudentDiplomas() {
             image={eventMarketing}
             title="Workshop: Marketing Digital para Startups"
             date="22 Oct 2023"
-            category="IA & CIENCIA"
+            category="MARKETING"
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4">

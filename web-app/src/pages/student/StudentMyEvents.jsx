@@ -14,7 +14,7 @@ function StudentMyEvents() {
         <div>
           <h2 className="fw-bold mb-1">Mis Eventos</h2>
           <p className="text-secondary small mb-0">
-            Descubre y únete a los próximos eventos académicos y talleres.
+            Gestiona y revisa los eventos en los que estás inscrito.
           </p>
         </div>
         <div className="input-group" style={{ maxWidth: '280px' }}>
@@ -66,7 +66,7 @@ function StudentMyEvents() {
             title="Workshop: Marketing Digital para Startups"
             date="22 Oct 2023 • 16:00 PM"
             location="Auditorio"
-            category="IA & CIENCIA"
+            category="MARKETING"
           />
         </div>
         <div className="col-12 col-md-6 col-lg-4">

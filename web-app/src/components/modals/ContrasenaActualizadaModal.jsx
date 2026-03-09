@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 function ContrasenaActualizadaModal() {
   return (
     <div className="modal fade" id="passwordUpdatedModal" tabIndex="-1" aria-labelledby="passwordUpdatedModalLabel" aria-hidden="true">
@@ -17,12 +19,13 @@ function ContrasenaActualizadaModal() {
               Ahora puedes iniciar sesión con tu nueva clave.
             </p>
 
-            <button
+            <Link
+              to="/estudiante"
               className="btn btn-primary rounded-pill w-100 fw-semibold mb-3"
               data-bs-dismiss="modal"
             >
               Ir al Inicio
-            </button>
+            </Link>
           </div>
         </div>
       </div>
