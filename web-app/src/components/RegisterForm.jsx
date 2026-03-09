@@ -1,10 +1,24 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 function RegisterForm() {
+  const [age, setAge] = useState('')
+
+  function handleBirthDateChange(e) {
+    const birthDate = new Date(e.target.value)
+    const today = new Date()
+    let calculatedAge = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      calculatedAge--
+    }
+    setAge(calculatedAge >= 0 ? calculatedAge : '')
+  }
+
   return (
     <form>
       <div className="row mb-3">
-        <div className="col-6">
+        <div className="col-4">
           <label className="form-label small fw-semibold" htmlFor="regName">
             Nombre(s)*
           </label>
@@ -15,15 +29,26 @@ function RegisterForm() {
             placeholder="Ingresa tu nombre"
           />
         </div>
-        <div className="col-6">
-          <label className="form-label small fw-semibold" htmlFor="regLastName">
-            Apellidos*
+        <div className="col-4">
+          <label className="form-label small fw-semibold" htmlFor="regLastNameP">
+            Apellido Paterno*
           </label>
           <input
             type="text"
             className="form-control"
-            id="regLastName"
-            placeholder="Ingresa tus apellidos"
+            id="regLastNameP"
+            placeholder="Apellido paterno"
+          />
+        </div>
+        <div className="col-4">
+          <label className="form-label small fw-semibold" htmlFor="regLastNameM">
+            Apellido Materno*
+          </label>
+          <input
+            type="text"
+            className="form-control"
+            id="regLastNameM"
+            placeholder="Apellido materno"
           />
         </div>
       </div>
@@ -75,17 +100,30 @@ function RegisterForm() {
 
       <div className="row mb-3">
         <div className="col-4">
-          <label className="form-label small fw-semibold" htmlFor="regAge">
-            Edad*
+          <label className="form-label small fw-semibold" htmlFor="regBirthDate">
+            Fecha de nacimiento*
           </label>
           <input
-            type="number"
+            type="date"
             className="form-control"
-            id="regAge"
-            placeholder="18"
+            id="regBirthDate"
+            onChange={handleBirthDateChange}
           />
         </div>
-        <div className="col-4">
+        <div className="col-2">
+          <label className="form-label small fw-semibold" htmlFor="regAge">
+            Edad
+          </label>
+          <input
+            type="text"
+            className="form-control bg-light"
+            id="regAge"
+            value={age}
+            readOnly
+            disabled
+          />
+        </div>
+        <div className="col-3">
           <label className="form-label small fw-semibold" htmlFor="regSex">
             Sexo*
           </label>
@@ -95,66 +133,27 @@ function RegisterForm() {
             <option value="F">Femenino</option>
           </select>
         </div>
-        <div className="col-4">
+        <div className="col-3">
           <label className="form-label small fw-semibold" htmlFor="regQuarter">
             Cuatrimestre*
           </label>
-          <input
-            type="number"
-            className="form-control"
-            id="regQuarter"
-            placeholder="1"
-          />
-        </div>
-      </div>
-
-      <div className="mb-4">
-        <label className="form-label small fw-semibold">
-          Identidad de Género*
-        </label>
-        <div className="d-flex gap-4">
-          <div className="form-check">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="gender"
-              id="genderMale"
-              value="hombre"
-            />
-            <label className="form-check-label small" htmlFor="genderMale">
-              Hombre
-            </label>
-          </div>
-          <div className="form-check">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="gender"
-              id="genderFemale"
-              value="mujer"
-            />
-            <label className="form-check-label small" htmlFor="genderFemale">
-              Mujer
-            </label>
-          </div>
-          <div className="form-check">
-            <input
-              type="radio"
-              className="form-check-input"
-              name="gender"
-              id="genderOther"
-              value="otro"
-            />
-            <label className="form-check-label small" htmlFor="genderOther">
-              Otro
-            </label>
-          </div>
+          <select className="form-select" id="regQuarter">
+            <option value="">Seleccionar</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+          </select>
         </div>
       </div>
 
       <button
         type="submit"
-        className="btn btn-primary w-100 py-2 rounded-pill fw-semibold"
+        className="btn btn-primary w-100 py-2 rounded-pill fw-semibold mt-2"
       >
         Crear cuenta
       </button>
