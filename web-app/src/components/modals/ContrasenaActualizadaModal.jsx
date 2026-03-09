@@ -23,13 +23,6 @@ function ContrasenaActualizadaModal() {
             >
               Ir al Inicio
             </button>
-
-            <p className="text-secondary small mb-0">
-              ¿Problemas para entrar?{' '}
-              <button className="btn btn-link text-primary text-decoration-underline small p-0 border-0">
-                Contactar soporte
-              </button>
-            </p>
           </div>
         </div>
       </div>
