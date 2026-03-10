@@ -44,7 +44,12 @@ function IngresoManualModal() {
             <button type="button" className="btn btn-white border flex-grow-1 py-2 fw-semibold" data-bs-dismiss="modal">
               Cancelar
             </button>
-            <button type="button" className="btn btn-primary flex-grow-1 py-2 fw-semibold" data-bs-dismiss="modal">
+            <button
+              type="button"
+              className="btn btn-primary flex-grow-1 py-2 fw-semibold"
+              data-bs-toggle="modal"
+              data-bs-target="#asistenciaExitosaModal"
+            >
               Confirmar
             </button>
           </div>

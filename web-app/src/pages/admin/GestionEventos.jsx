@@ -10,6 +10,7 @@ import CrearEventoModal from '../../components/modals/CrearEventoModal'
 import EditarEventoModal from '../../components/modals/EditarEventoModal'
 import QRCodeModal from '../../components/modals/QRCodeModal'
 import IngresoManualModal from '../../components/modals/IngresoManualModal'
+import AsistenciaExitosaModal from '../../components/modals/AsistenciaExitosaModal'
 
 function AdminEventCard({ image, title, location, date, status, capacityCurrent, capacityMax, isFull, isFinished }) {
   const isActive = status === 'ACTIVO'
@@ -226,6 +227,7 @@ function GestionEventos() {
       <EditarEventoModal />
       <QRCodeModal />
       <IngresoManualModal />
+      <AsistenciaExitosaModal />
     </DashboardLayout>
   )
 }
