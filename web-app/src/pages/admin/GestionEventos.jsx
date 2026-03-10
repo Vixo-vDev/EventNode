@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import DashboardLayout from '../../components/DashboardLayout'
 import AdminSidebar from '../../components/AdminSidebar'
 import eventConcert from '../../assets/events/event_concert.png'
@@ -6,6 +7,9 @@ import eventGala from '../../assets/events/event_gala.png'
 import eventFestival from '../../assets/events/event_festival.png'
 import eventWorkshop from '../../assets/events/event_workshop.png'
 import CrearEventoModal from '../../components/modals/CrearEventoModal'
+import EditarEventoModal from '../../components/modals/EditarEventoModal'
+import QRCodeModal from '../../components/modals/QRCodeModal'
+import IngresoManualModal from '../../components/modals/IngresoManualModal'
 
 function AdminEventCard({ image, title, location, date, status, capacityCurrent, capacityMax, isFull, isFinished }) {
   const isActive = status === 'ACTIVO'
@@ -18,27 +22,31 @@ function AdminEventCard({ image, title, location, date, status, capacityCurrent,
       className="card border-0 shadow-sm rounded-3 h-100 overflow-hidden"
       style={isFull ? { border: '2px solid #dc3545' } : {}}
     >
-      <div className="position-relative">
-        <img
-          src={image}
-          className="card-img-top"
-          alt={title}
-          style={{
-            height: '160px',
-            objectFit: 'cover',
-            filter: isTerminado || isCancelled ? 'grayscale(100%)' : 'none'
-          }}
-        />
-        <span className={`badge position-absolute top-0 start-0 m-2 rounded-pill px-3 ${
-          isActive ? 'bg-primary text-white' :
-          isTerminado ? 'bg-secondary text-white' :
-          'bg-danger text-white'
-        }`}>
-          {status}
-        </span>
-      </div>
-      <div className="card-body p-3">
-        <h6 className="fw-bold mb-2">{title}</h6>
+      <Link to="/admin/evento/1" className="text-decoration-none text-dark">
+        <div className="position-relative">
+          <img
+            src={image}
+            className="card-img-top"
+            alt={title}
+            style={{
+              height: '160px',
+              objectFit: 'cover',
+              filter: isTerminado || isCancelled ? 'grayscale(100%)' : 'none'
+            }}
+          />
+          <span className={`badge position-absolute top-0 start-0 m-2 rounded-pill px-3 ${
+            isActive ? 'bg-primary text-white' :
+            isTerminado ? 'bg-secondary text-white' :
+            'bg-danger text-white'
+          }`}>
+            {status}
+          </span>
+        </div>
+        <div className="card-body p-3">
+          <h6 className="fw-bold mb-2">{title}</h6>
+        </div>
+      </Link>
+      <div className="card-body p-3 pt-0">
         <div className="d-flex align-items-center gap-1 text-secondary small mb-3">
           <i className="bi bi-geo-alt"></i>
           <span>{location}</span>
@@ -64,7 +72,13 @@ function AdminEventCard({ image, title, location, date, status, capacityCurrent,
       <div className="card-footer bg-white border-top d-flex justify-content-start gap-3 px-3 py-2">
         {isActive && (
           <>
-            <button className="btn btn-link text-secondary p-0" title="Editar">
+            <button
+              className="btn btn-link text-secondary p-0"
+              title="Editar"
+              data-bs-toggle="modal"
+              data-bs-target="#editarEventoModal"
+              onClick={(e) => e.preventDefault()}
+            >
               <i className="bi bi-pencil"></i>
             </button>
             <button className="btn btn-link text-secondary p-0" title="Duplicar">
@@ -73,7 +87,13 @@ function AdminEventCard({ image, title, location, date, status, capacityCurrent,
             <button className="btn btn-link text-secondary p-0" title="Vista previa">
               <i className="bi bi-eye"></i>
             </button>
-            <button className="btn btn-link text-secondary p-0" title="QR">
+            <button
+              className="btn btn-link text-secondary p-0"
+              title="QR"
+              data-bs-toggle="modal"
+              data-bs-target="#qrCodeModal"
+              onClick={(e) => e.preventDefault()}
+            >
               <i className="bi bi-qr-code"></i>
             </button>
           </>
@@ -203,6 +223,9 @@ function GestionEventos() {
       </div>
 
       <CrearEventoModal />
+      <EditarEventoModal />
+      <QRCodeModal />
+      <IngresoManualModal />
     </DashboardLayout>
   )
 }

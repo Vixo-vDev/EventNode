@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AdminHome from './pages/admin/AdminHome'
 import GestionEventos from './pages/admin/GestionEventos'
+import AdminEventDetail from './pages/admin/AdminEventDetail'
+import AdminPreCheckIn from './pages/admin/AdminPreCheckIn'
+import AdminCheckIn from './pages/admin/AdminCheckIn'
 import AdminPerfil from './pages/admin/AdminPerfil'
 
 function App() {
@@ -11,6 +14,9 @@ function App() {
         <Route path="/" element={<AdminHome />} />
         <Route path="/admin" element={<AdminHome />} />
         <Route path="/admin/eventos" element={<GestionEventos />} />
+        <Route path="/admin/evento/:id" element={<AdminEventDetail />} />
+        <Route path="/admin/evento/:id/pre-check-in" element={<AdminPreCheckIn />} />
+        <Route path="/admin/evento/:id/check-in" element={<AdminCheckIn />} />
         <Route path="/admin/perfil" element={<AdminPerfil />} />
       </Routes>
     </BrowserRouter>
