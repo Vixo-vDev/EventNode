@@ -74,7 +74,6 @@ public class AlumnoService {
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
 
         Alumno alumno = new Alumno();
-        alumno.setIdUsuario(usuarioGuardado.getIdUsuario());
         alumno.setMatricula(request.getMatricula());
         alumno.setFechaNac(fechaNac);
         alumno.setEdad(edad);
