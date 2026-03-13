@@ -1,12 +1,16 @@
 package com.eventnode.eventnodeapi.controllers;
 
 import com.eventnode.eventnodeapi.dtos.EventoCreateRequest;
+import com.eventnode.eventnodeapi.dtos.EventoResponse;
 import com.eventnode.eventnodeapi.dtos.EventoUpdateRequest;
 import com.eventnode.eventnodeapi.models.Evento;
+import com.eventnode.eventnodeapi.models.Usuario;
+import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
 import com.eventnode.eventnodeapi.services.EventoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,20 +24,27 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/eventos")
 public class EventoController {
 
     private final EventoService eventoService;
+    private final UsuarioRepository usuarioRepository;
 
-    public EventoController(EventoService eventoService) {
+    public EventoController(EventoService eventoService, UsuarioRepository usuarioRepository) {
         this.eventoService = eventoService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @PostMapping("/crear")
-    public ResponseEntity<Map<String, String>> crearEvento(@Valid @RequestBody EventoCreateRequest request) {
-        Integer idUsuarioCreador = 1;
+    public ResponseEntity<Map<String, String>> crearEvento(@Valid @RequestBody EventoCreateRequest request,
+                                                           Authentication authentication) {
+        String correo = authentication.getName();
+        Usuario usuario = usuarioRepository.findByCorreo(correo)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario creador no encontrado en BD"));
+        Integer idUsuarioCreador = usuario.getIdUsuario();
         eventoService.crearEvento(request, idUsuarioCreador);
 
         Map<String, String> body = new HashMap<>();
@@ -53,12 +64,31 @@ public class EventoController {
             body.put("mensaje", "No se encontraron resultados");
             return ResponseEntity.status(HttpStatus.OK).body(body);
         }
-        return ResponseEntity.ok(eventos);
+        List<EventoResponse> response = eventos.stream()
+                .map(e -> new EventoResponse(
+                        e.getIdEvento(),
+                        e.getBanner(),
+                        e.getNombre(),
+                        e.getUbicacion(),
+                        e.getCapacidadMaxima(),
+                        e.getTiempoCancelacionHoras(),
+                        e.getFechaInicio(),
+                        e.getFechaFin(),
+                        e.getTiempoToleranciaMinutos(),
+                        e.getDescripcion(),
+                        e.getEstado(),
+                        e.getCategoria() != null ? e.getCategoria().getIdCategoria() : null,
+                        e.getCategoria() != null ? e.getCategoria().getNombre() : null
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{idEvento}")
     public ResponseEntity<Map<String, String>> actualizarEvento(@PathVariable Integer idEvento,
-                                                               @RequestBody EventoUpdateRequest request) {
+                                                               @RequestBody EventoUpdateRequest request,
+                                                               Authentication authentication) {
         eventoService.actualizarEvento(idEvento, request);
         Map<String, String> body = new HashMap<>();
         body.put("mensaje", "Evento actualizado con éxito");
@@ -66,7 +96,8 @@ public class EventoController {
     }
 
     @PostMapping("/{idEvento}/cancelar")
-    public ResponseEntity<Map<String, String>> cancelarEvento(@PathVariable Integer idEvento) {
+    public ResponseEntity<Map<String, String>> cancelarEvento(@PathVariable Integer idEvento,
+                                                              Authentication authentication) {
         eventoService.cancelarEvento(idEvento);
         Map<String, String> body = new HashMap<>();
         body.put("mensaje", "Evento cancelado con éxito");
