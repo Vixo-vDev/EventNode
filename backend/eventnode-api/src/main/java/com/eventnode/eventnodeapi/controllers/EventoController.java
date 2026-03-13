@@ -65,6 +65,14 @@ public class EventoController {
         return ResponseEntity.ok(body);
     }
 
+    @PostMapping("/{idEvento}/cancelar")
+    public ResponseEntity<Map<String, String>> cancelarEvento(@PathVariable Integer idEvento) {
+        eventoService.cancelarEvento(idEvento);
+        Map<String, String> body = new HashMap<>();
+        body.put("mensaje", "Evento cancelado con éxito");
+        return ResponseEntity.ok(body);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> manejarArgumentos(IllegalArgumentException ex) {
         Map<String, String> body = new HashMap<>();

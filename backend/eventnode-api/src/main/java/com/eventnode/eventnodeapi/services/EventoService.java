@@ -7,6 +7,7 @@ import com.eventnode.eventnodeapi.models.Evento;
 import com.eventnode.eventnodeapi.repositories.CategoriaRepository;
 import com.eventnode.eventnodeapi.repositories.EventoRepository;
 import com.eventnode.eventnodeapi.repositories.OrganizadorRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class EventoService {
     }
 
     @Transactional
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SUPERADMIN')")
     public void crearEvento(EventoCreateRequest request, Integer idUsuarioCreador) {
 
         if (eventoRepository.findByNombreAndFechaInicio(request.getNombre(), request.getFechaInicio()).isPresent()) {
@@ -95,6 +97,8 @@ public class EventoService {
         return eventoRepository.findAll((root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
 
+            // Solo eventos activos y no pasados
+            predicates.add(cb.equal(root.get("estado"), "ACTIVO"));
             predicates.add(cb.greaterThanOrEqualTo(root.get("fechaFin"), ahora));
 
             if (nombre != null && !nombre.isBlank()) {
@@ -114,6 +118,17 @@ public class EventoService {
     }
 
     @Transactional
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SUPERADMIN')")
+    public void cancelarEvento(Integer idEvento) {
+        Evento evento = eventoRepository.findById(idEvento)
+                .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado"));
+
+        evento.setEstado("CANCELADO");
+        eventoRepository.save(evento);
+    }
+
+    @Transactional
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SUPERADMIN')")
     public void actualizarEvento(Integer idEvento, EventoUpdateRequest request) {
         Evento evento = eventoRepository.findById(idEvento)
                 .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado"));
