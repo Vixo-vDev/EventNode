@@ -28,7 +28,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/alumnos/registro").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/eventos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/eventos", "/api/eventos/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());
@@ -38,12 +38,13 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails admin = User.withUsername("admin")
+        // Username debe coincidir con usuarios.correo para poder obtener id_usuario dinámicamente
+        UserDetails admin = User.withUsername("admin@eventnode.com")
                 .password(passwordEncoder.encode("admin123"))
                 .roles("ADMINISTRADOR")
                 .build();
 
-        UserDetails superadmin = User.withUsername("superadmin")
+        UserDetails superadmin = User.withUsername("superadmin@eventnode.com")
                 .password(passwordEncoder.encode("super123"))
                 .roles("SUPERADMIN")
                 .build();
