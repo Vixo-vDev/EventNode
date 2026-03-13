@@ -47,9 +47,8 @@ public class Evento {
     @JoinColumn(name = "id_categoria", nullable = false)
     private Categoria categoria;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creado_por", nullable = false)
-    private Usuario creadoPor;
+    @Column(name = "creado_por", nullable = false)
+    private Integer creadoPor;
 
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
@@ -153,11 +152,11 @@ public class Evento {
         this.categoria = categoria;
     }
 
-    public Usuario getCreadoPor() {
+    public Integer getCreadoPor() {
         return creadoPor;
     }
 
-    public void setCreadoPor(Usuario creadoPor) {
+    public void setCreadoPor(Integer creadoPor) {
         this.creadoPor = creadoPor;
     }
 
