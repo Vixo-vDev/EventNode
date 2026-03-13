@@ -16,6 +16,34 @@ services:
     networks:
       - eventos_network
 
+  backend:
+    build:
+      context: ../backend/eventnode-api
+      dockerfile: Dockerfile
+    container_name: event_node_backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/event_node?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: vixo_dev
+      SPRING_DATASOURCE_PASSWORD: eventnode01
+    depends_on:
+      - mysql
+    networks:
+      - eventos_network
+
+  frontend:
+    build:
+      context: ../web-app
+      dockerfile: Dockerfile
+    container_name: event_node_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - eventos_network
+
 volumes:
   mysql_data:
 

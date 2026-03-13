@@ -1,12 +1,10 @@
 import { Link } from 'react-router-dom'
-import DashboardLayout from '../../components/DashboardLayout'
-import AdminSidebar from '../../components/AdminSidebar'
 import eventTechSummit from '../../assets/events/event_tech_summit.png'
 import EditarEventoModal from '../../components/modals/EditarEventoModal'
 
 function AdminEventDetail() {
   return (
-    <DashboardLayout sidebar={<AdminSidebar />}>
+    <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div className="d-flex align-items-center gap-2">
           <Link to="/admin/eventos" className="text-dark text-decoration-none">
@@ -130,7 +128,7 @@ function AdminEventDetail() {
       </div>
 
       <EditarEventoModal />
-    </DashboardLayout>
+    </div>
   )
 }
 

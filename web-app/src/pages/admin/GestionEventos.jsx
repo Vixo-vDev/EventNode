@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { eventService } from '../../services/eventService'
 import eventConcert from '../../assets/events/event_concert.png'
 import eventTechSummit from '../../assets/events/event_tech_summit.png'
 import eventGala from '../../assets/events/event_gala.png'
@@ -13,7 +15,7 @@ import AsistenciaExitosaModal from '../../components/modals/AsistenciaExitosaMod
 function AdminEventCard({ image, title, location, date, status, capacityCurrent, capacityMax, isFull, isFinished }) {
   const isActive = status === 'ACTIVO'
   const isCancelled = status === 'CANCELADO'
-  const isTerminado = status === 'TERMINADO'
+  const isTerminado = status === 'TERMINADO' || status === 'FINALIZADO'
   const percent = capacityMax > 0 ? Math.round((capacityCurrent / capacityMax) * 100) : 0
 
   return (
@@ -105,14 +107,48 @@ function AdminEventCard({ image, title, location, date, status, capacityCurrent,
   )
 }
 
+// Imágenes de fallback para cuando la API no proporciona banner
+const fallbackImages = [eventConcert, eventTechSummit, eventGala, eventFestival, eventWorkshop]
+
 function GestionEventos() {
-  const mockCards = [
-    { id: 1, image: eventConcert, title: "Concierto Rock en Vivo", location: "Estadio Nacional, Lima", date: "25 Oct", status: "ACTIVO", capacityCurrent: 65, capacityMax: 100 },
-    { id: 2, image: eventTechSummit, title: "Tech Summit 2023", location: "Centro de Convenciones", date: "12 Nov", status: "ACTIVO", capacityCurrent: 500, capacityMax: 500, isFull: true },
-    { id: 3, image: eventGala, title: "Gala de Aniversario", location: "Hotel Marriott", date: "Mañana", status: "ACTIVO", capacityCurrent: 120, capacityMax: 150 },
-    { id: 4, image: eventFestival, title: "Festival Gastronómico", location: "Parque de la Exposición", date: "15 Sep", status: "TERMINADO", capacityCurrent: 2000, capacityMax: 2000, isFinished: true },
-    { id: 5, image: eventWorkshop, title: "Taller de Innovación", location: "Auditorio Central", date: "30 Oct", status: "CANCELADO", capacityCurrent: 0, capacityMax: 50 },
-  ];
+  const [eventos, setEventos] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState(null)
+
+  useEffect(() => {
+    const fetchEventos = async () => {
+      try {
+        const data = await eventService.getEventos()
+        // Mapear la respuesta del backend al formato del componente
+        const mapped = data.map((e, index) => ({
+          id: e.idEvento,
+          image: e.banner || fallbackImages[index % fallbackImages.length],
+          title: e.nombre,
+          location: e.ubicacion,
+          date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '',
+          status: e.estado,
+          capacityCurrent: 0, // El backend no devuelve inscritos aún
+          capacityMax: e.capacidadMaxima,
+          isFull: false,
+          isFinished: e.estado === 'FINALIZADO',
+        }))
+        setEventos(mapped)
+      } catch (err) {
+        setErrorMsg(err.message)
+        // Fallback a datos mock si el backend no está disponible
+        setEventos([
+          { id: 1, image: eventConcert, title: "Concierto Rock en Vivo", location: "Estadio Nacional, Lima", date: "25 Oct", status: "ACTIVO", capacityCurrent: 65, capacityMax: 100 },
+          { id: 2, image: eventTechSummit, title: "Tech Summit 2023", location: "Centro de Convenciones", date: "12 Nov", status: "ACTIVO", capacityCurrent: 500, capacityMax: 500, isFull: true },
+          { id: 3, image: eventGala, title: "Gala de Aniversario", location: "Hotel Marriott", date: "Mañana", status: "ACTIVO", capacityCurrent: 120, capacityMax: 150 },
+          { id: 4, image: eventFestival, title: "Festival Gastronómico", location: "Parque de la Exposición", date: "15 Sep", status: "TERMINADO", capacityCurrent: 2000, capacityMax: 2000, isFinished: true },
+          { id: 5, image: eventWorkshop, title: "Taller de Innovación", location: "Auditorio Central", date: "30 Oct", status: "CANCELADO", capacityCurrent: 0, capacityMax: 50 },
+        ])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchEventos()
+  }, [])
 
   return (
     <div>
@@ -152,7 +188,13 @@ function GestionEventos() {
       </div>
 
       <div className="row g-3">
-        {mockCards.map(evento => (
+        {loading ? (
+          <div className="col-12 text-center py-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+        ) : eventos.map(evento => (
           <div className="col-12 col-md-6 col-lg-4" key={evento.id}>
             <AdminEventCard
               image={evento.image}

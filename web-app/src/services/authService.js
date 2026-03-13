@@ -15,7 +15,22 @@ export const authService = {
       throw new Error(errorData.mensaje || 'Error al iniciar sesión');
     }
 
-    return response.json();
+    const data = await response.json();
+
+    // Mapear la respuesta del backend al formato que espera App.jsx
+    // Backend devuelve: { mensaje, rol, idUsuario }
+    // Frontend espera: { id, name, role, email }
+    const rolMap = {
+      'ALUMNO': 'STUDENT',
+      'ADMINISTRADOR': 'ADMIN',
+    };
+
+    return {
+      id: data.idUsuario,
+      name: data.rol === 'ADMINISTRADOR' ? 'Administrador' : 'Estudiante',
+      role: rolMap[data.rol] || 'STUDENT',
+      email: correo,
+    };
   },
 
   register: async (alumnoData) => {
@@ -33,5 +48,9 @@ export const authService = {
     }
 
     return response.json();
+  },
+
+  logout: () => {
+    console.log('Sesión cerrada');
   }
 };

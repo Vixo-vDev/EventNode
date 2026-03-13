@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { eventService } from '../../services/eventService'
 import EventBanner from '../../components/EventBanner'
 import CategoryFilter from '../../components/CategoryFilter'
 import EventCard from '../../components/EventCard'
@@ -7,12 +9,37 @@ import eventAi from '../../assets/events/event_ai.png'
 import eventMarketing from '../../assets/events/event_marketing.png'
 import eventUiux from '../../assets/events/event_uiux.png'
 
+const fallbackImages = [eventAi, eventMarketing, eventUiux]
+
 function StudentEvents() {
-  const mockEvents = [
-    { id: 1, image: eventAi, title: "Congreso Internacional de Inteligencia Artificial", date: "10 Oct 2023 • 09:00 AM", location: "Auditorio", category: "DESARROLLO" },
-    { id: 2, image: eventMarketing, title: "Workshop: Marketing Digital para Startups", date: "22 Oct 2023 • 16:00 PM", location: "Auditorio", category: "MARKETING" },
-    { id: 3, image: eventUiux, title: "Semana del Diseño UI/UX 2023", date: "28 Oct 2023 • 10:00 AM", location: "Auditorio", category: "DESARROLLO" }
-  ];
+  const [eventos, setEventos] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchEventos = async () => {
+      try {
+        const data = await eventService.getEventos()
+        const mapped = data.map((e, index) => ({
+          id: e.idEvento,
+          image: e.banner || fallbackImages[index % fallbackImages.length],
+          title: e.nombre,
+          date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + new Date(e.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '',
+          location: e.ubicacion,
+          category: e.categoriaNombre || 'GENERAL',
+        }))
+        setEventos(mapped)
+      } catch {
+        setEventos([
+          { id: 1, image: eventAi, title: "Congreso Internacional de Inteligencia Artificial", date: "10 Oct 2023 • 09:00 AM", location: "Auditorio", category: "DESARROLLO" },
+          { id: 2, image: eventMarketing, title: "Workshop: Marketing Digital para Startups", date: "22 Oct 2023 • 16:00 PM", location: "Auditorio", category: "MARKETING" },
+          { id: 3, image: eventUiux, title: "Semana del Diseño UI/UX 2023", date: "28 Oct 2023 • 10:00 AM", location: "Auditorio", category: "DESARROLLO" }
+        ])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchEventos()
+  }, [])
 
   return (
     <div>
@@ -59,7 +86,13 @@ function StudentEvents() {
       <CategoryFilter />
 
       <div className="row g-3 mb-4">
-        {mockEvents.map(event => (
+        {loading ? (
+          <div className="col-12 text-center py-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+        ) : eventos.map(event => (
           <div className="col-12 col-md-6 col-lg-4" key={event.id}>
             <EventCard
               image={event.image}

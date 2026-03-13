@@ -1,4 +1,4 @@
-function CerrarSesionModal() {
+function CerrarSesionModal({ onLogout }) {
   return (
     <div className="modal fade" id="logoutModal" tabIndex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered modal-sm">
@@ -25,6 +25,7 @@ function CerrarSesionModal() {
                 type="button"
                 className="btn btn-primary rounded-pill w-50"
                 data-bs-dismiss="modal"
+                onClick={onLogout}
               >
                 Cerrar sesión
               </button>

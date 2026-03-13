@@ -1,12 +1,16 @@
 package com.eventnode.eventnodeapi.models;
 
 import jakarta.persistence.*;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "alumnos")
-public class Alumno {
+public class Alumno implements Persistable<Integer> {
+
+    @Transient
+    private boolean isNew = true;
 
     @Id
     @Column(name = "id_usuario")
@@ -100,6 +104,22 @@ public class Alumno {
 
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
+    }
+
+    @Override
+    public Integer getId() {
+        return idUsuario;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PrePersist
+    @PostLoad
+    void markNotNew() {
+        this.isNew = false;
     }
 }
 

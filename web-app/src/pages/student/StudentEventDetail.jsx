@@ -1,13 +1,11 @@
 import { Link } from 'react-router-dom'
-import DashboardLayout from '../../components/DashboardLayout'
-import StudentSidebar from '../../components/StudentSidebar'
 import EventDetailInfo from '../../components/EventDetailInfo'
 import OrganizerCard from '../../components/OrganizerCard'
 import eventDetailImg from '../../assets/events/event_detail.png'
 
 function StudentEventDetail() {
   return (
-    <DashboardLayout sidebar={<StudentSidebar />}>
+    <div>
       <div className="d-flex align-items-center gap-2 mb-4">
         <Link
           to="/estudiante/eventos"
@@ -75,7 +73,7 @@ function StudentEventDetail() {
           <EventDetailInfo />
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
 

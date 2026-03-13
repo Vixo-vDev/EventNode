@@ -1,11 +1,9 @@
 import { Link } from 'react-router-dom'
-import DashboardLayout from '../../components/DashboardLayout'
-import AdminSidebar from '../../components/AdminSidebar'
 import diplomaMock from '../../assets/diploma_mock.png'
 
 function AdminDiplomaDetail() {
   return (
-    <DashboardLayout sidebar={<AdminSidebar />}>
+    <div>
       <div className="d-flex align-items-center gap-3 mb-4">
         <Link to="/admin/diplomas" className="btn btn-light rounded-circle d-flex align-items-center justify-content-center p-0" style={{ width: '40px', height: '40px' }}>
           <i className="bi bi-arrow-left text-secondary fs-5"></i>
@@ -55,7 +53,7 @@ function AdminDiplomaDetail() {
           Descargar PDF
         </button>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
 

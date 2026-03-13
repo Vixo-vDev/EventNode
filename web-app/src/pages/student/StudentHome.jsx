@@ -1,15 +1,40 @@
-import EventCard from '../../components/EventCard'
+import { useState, useEffect } from 'react'
+import { eventService } from '../../services/eventService'
 import EventCard from '../../components/EventCard'
 import eventAi from '../../assets/events/event_ai.png'
 import eventMarketing from '../../assets/events/event_marketing.png'
 import eventUiux from '../../assets/events/event_uiux.png'
 
+const fallbackImages = [eventAi, eventMarketing, eventUiux]
+
 function StudentHome() {
-  const mockEvents = [
-    { id: 1, image: eventAi, title: "Congreso Internacional de Inteligencia Artificial", date: "15 Ene 2025 | 9:00 AM", location: "Auditorio Principal, UTEZ" },
-    { id: 2, image: eventMarketing, title: "Workshop: Marketing Digitalización y Neuronas", date: "22 Ene 2025 | 11:00 AM", location: "Sala de Conferencias B" },
-    { id: 3, image: eventUiux, title: "Semana del Diseño UI/UX 2025", date: "29 Ene 2025 | 10:00 AM", location: "Laboratorio de Diseño" }
-  ]
+  const [eventos, setEventos] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchEventos = async () => {
+      try {
+        const data = await eventService.getEventos()
+        const mapped = data.slice(0, 3).map((e, index) => ({
+          id: e.idEvento,
+          image: e.banner || fallbackImages[index % fallbackImages.length],
+          title: e.nombre,
+          date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ' | ' + new Date(e.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '',
+          location: e.ubicacion,
+        }))
+        setEventos(mapped)
+      } catch {
+        setEventos([
+          { id: 1, image: eventAi, title: "Congreso Internacional de Inteligencia Artificial", date: "15 Ene 2025 | 9:00 AM", location: "Auditorio Principal, UTEZ" },
+          { id: 2, image: eventMarketing, title: "Workshop: Marketing Digitalización y Neuronas", date: "22 Ene 2025 | 11:00 AM", location: "Sala de Conferencias B" },
+          { id: 3, image: eventUiux, title: "Semana del Diseño UI/UX 2025", date: "29 Ene 2025 | 10:00 AM", location: "Laboratorio de Diseño" }
+        ])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchEventos()
+  }, [])
 
   const mockDiplomas = [
     { id: 4, image: eventMarketing, title: "Web Development Summit '25", date: "05 Feb 2025 | 8:00 AM", location: "Centro de Convenciones" },
@@ -42,7 +67,13 @@ function StudentHome() {
         Próximos Eventos
       </h5>
       <div className="row g-3 mb-5">
-        {mockEvents.map(event => (
+        {loading ? (
+          <div className="col-12 text-center py-3">
+            <div className="spinner-border text-primary spinner-border-sm" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+        ) : eventos.map(event => (
           <div className="col-12 col-md-6 col-lg-4" key={event.id}>
             <EventCard image={event.image} title={event.title} date={event.date} location={event.location} />
           </div>

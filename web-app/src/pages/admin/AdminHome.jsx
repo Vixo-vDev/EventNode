@@ -1,11 +1,38 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { eventService } from '../../services/eventService'
 
 function AdminHome() {
-  const mockEvents = [
-    { id: 1, name: 'Design Thinking Workshop', date: 'FEB 24, 09:00 AM', status: 'ACTIVO', capacityText: '75%', capacityPercent: 75, statusClass: 'bg-success text-success' },
-    { id: 2, name: 'Blockchain Governance', date: 'FEB 25, 11:30 AM', status: 'ACTIVO', capacityText: '45%', capacityPercent: 45, statusClass: 'bg-success text-success' },
-    { id: 3, name: 'Marketing Masterclass', date: 'FEB 26, 02:00 PM', status: 'CANCELADO', capacityText: '0%', capacityPercent: 0, statusClass: 'bg-danger text-danger', isCancelled: true }
-  ];
+  const [eventos, setEventos] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchEventos = async () => {
+      try {
+        const data = await eventService.getEventos()
+        const mapped = data.slice(0, 5).map(e => ({
+          id: e.idEvento,
+          name: e.nombre,
+          date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { month: 'short', day: '2-digit' }).toUpperCase() + ', ' + new Date(e.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '',
+          status: e.estado,
+          capacityPercent: 0,
+          capacityText: '0%',
+          statusClass: e.estado === 'ACTIVO' ? 'bg-success text-success' : e.estado === 'CANCELADO' ? 'bg-danger text-danger' : 'bg-secondary text-secondary',
+          isCancelled: e.estado === 'CANCELADO',
+        }))
+        setEventos(mapped)
+      } catch {
+        setEventos([
+          { id: 1, name: 'Design Thinking Workshop', date: 'FEB 24, 09:00 AM', status: 'ACTIVO', capacityText: '75%', capacityPercent: 75, statusClass: 'bg-success text-success' },
+          { id: 2, name: 'Blockchain Governance', date: 'FEB 25, 11:30 AM', status: 'ACTIVO', capacityText: '45%', capacityPercent: 45, statusClass: 'bg-success text-success' },
+          { id: 3, name: 'Marketing Masterclass', date: 'FEB 26, 02:00 PM', status: 'CANCELADO', capacityText: '0%', capacityPercent: 0, statusClass: 'bg-danger text-danger', isCancelled: true }
+        ])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchEventos()
+  }, [])
 
   return (
     <div>
@@ -83,7 +110,15 @@ function AdminHome() {
                 </tr>
               </thead>
               <tbody>
-                {mockEvents.map(event => (
+                {loading ? (
+                  <tr>
+                    <td colSpan="4" className="text-center py-4">
+                      <div className="spinner-border text-primary spinner-border-sm" role="status">
+                        <span className="visually-hidden">Cargando...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : eventos.map(event => (
                   <tr key={event.id}>
                     <td className={`ps-3 py-3 fw-semibold small ${event.isCancelled ? 'text-primary' : ''}`}>{event.name}</td>
                     <td className="py-3 text-secondary small">{event.date}</td>

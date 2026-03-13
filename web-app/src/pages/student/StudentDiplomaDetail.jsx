@@ -1,10 +1,8 @@
 import { Link } from 'react-router-dom'
-import DashboardLayout from '../../components/DashboardLayout'
-import StudentSidebar from '../../components/StudentSidebar'
 
 function StudentDiplomaDetail() {
   return (
-    <DashboardLayout sidebar={<StudentSidebar />}>
+    <div>
       <Link
         to="/estudiante/diplomas"
         className="text-secondary text-decoration-none small d-flex align-items-center gap-1 mb-3"
@@ -112,7 +110,7 @@ function StudentDiplomaDetail() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
 

@@ -1,6 +1,4 @@
 import { Link } from 'react-router-dom'
-import DashboardLayout from '../../components/DashboardLayout'
-import StudentSidebar from '../../components/StudentSidebar'
 import CuentaVinculadaModal from '../../components/modals/CuentaVinculadaModal'
 import RestablecerContrasenaModal from '../../components/modals/RestablecerContrasenaModal'
 import VerificarCodigoModal from '../../components/modals/VerificarCodigoModal'
@@ -9,22 +7,23 @@ import NuevaContrasenaModal from '../../components/modals/NuevaContrasenaModal'
 import ContrasenaActualizadaModal from '../../components/modals/ContrasenaActualizadaModal'
 import profileAvatar from '../../assets/profile_avatar.png'
 
-function StudentProfile() {
+function StudentProfile({ user }) {
+  const userName = user?.name || "Estudiante UTEZ";
+  const userInitials = userName.split(' ').map(n => n[0]).join('');
+
   return (
-    <DashboardLayout sidebar={<StudentSidebar />}>
+    <div>
       <h2 className="fw-bold mb-4">Perfil</h2>
 
       <div className="card border-0 shadow-sm rounded-3 mb-4">
         <div className="card-body p-4">
           <div className="d-flex flex-column flex-md-row align-items-center gap-3 mb-4">
-            <img
-              src={profileAvatar}
-              alt="Sophia Díaz"
-              className="rounded-circle border border-3 border-primary"
-              style={{ width: '90px', height: '90px', objectFit: 'cover' }}
-            />
+            <div className="rounded-circle border border-3 border-primary bg-primary bg-opacity-10 d-flex align-items-center justify-content-center fw-bold text-primary fs-2"
+                 style={{ width: '90px', height: '90px' }}>
+              {userInitials}
+            </div>
             <div className="text-center text-md-start">
-              <h5 className="fw-bold mb-0">Sophia Díaz</h5>
+              <h5 className="fw-bold mb-0">{userName}</h5>
               <span className="badge bg-success bg-opacity-10 text-success small">Activo</span>
             </div>
             <div className="ms-md-auto">
@@ -134,7 +133,7 @@ function StudentProfile() {
       <CodigoVerificadoModal />
       <NuevaContrasenaModal />
       <ContrasenaActualizadaModal />
-    </DashboardLayout>
+    </div>
   )
 }
 

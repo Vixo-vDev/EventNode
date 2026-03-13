@@ -31,7 +31,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/eventos", "/api/eventos/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults());
+                .httpBasic(basic -> basic.authenticationEntryPoint((request, response, authException) -> 
+                        response.sendError(org.springframework.http.HttpStatus.UNAUTHORIZED.value(), 
+                                           org.springframework.http.HttpStatus.UNAUTHORIZED.getReasonPhrase())));
 
         return http.build();
     }

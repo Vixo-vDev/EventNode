@@ -12,6 +12,7 @@ import AdminDiplomas from './AdminDiplomas'
 import AdminDiplomaDetail from './AdminDiplomaDetail'
 import AdminEstudiantes from './AdminEstudiantes'
 import AdminPerfil from './AdminPerfil'
+import CerrarSesionModal from '../../components/modals/CerrarSesionModal'
 
 function AdminDashboard({ loggedUser, onLogout }) {
   const menuItems = [
@@ -37,6 +38,7 @@ function AdminDashboard({ loggedUser, onLogout }) {
         <Route path="/estudiantes" element={<AdminEstudiantes />} />
         <Route path="/perfil" element={<AdminPerfil user={loggedUser} />} />
       </Routes>
+      <CerrarSesionModal onLogout={onLogout} />
     </DashboardLayout>
   )
 }

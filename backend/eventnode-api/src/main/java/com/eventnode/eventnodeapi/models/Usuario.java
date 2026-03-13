@@ -31,7 +31,7 @@ public class Usuario {
     @Column(name = "recover_password", length = 20)
     private String recoverPassword;
 
-    @Column(name = "estado", nullable = false, length = 10)
+    @Column(name = "estado", nullable = false, columnDefinition = "ENUM('ACTIVO','INACTIVO')")
     private String estado;
 
     @Column(name = "intentos_fallidos")

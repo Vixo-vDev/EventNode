@@ -1,9 +1,8 @@
-import DashboardLayout from '../../components/DashboardLayout'
-import AdminSidebar from '../../components/AdminSidebar'
+function AdminPerfil({ user }) {
+  const userName = user?.name || 'Administrador';
 
-function AdminPerfil() {
   return (
-    <DashboardLayout sidebar={<AdminSidebar />}>
+    <div>
       <h2 className="fw-bold mb-4">Perfil</h2>
 
       <div className="card border-0 shadow-sm rounded-3 mb-4">
@@ -14,7 +13,7 @@ function AdminPerfil() {
               <i className="bi bi-person-fill text-primary fs-1"></i>
             </div>
             <div className="text-center text-md-start">
-              <h5 className="fw-bold mb-0">Administrador</h5>
+              <h5 className="fw-bold mb-0">{userName}</h5>
               <span className="badge bg-success bg-opacity-10 text-success small">Activo</span>
             </div>
             <div className="ms-md-auto">
@@ -82,7 +81,7 @@ function AdminPerfil() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
 

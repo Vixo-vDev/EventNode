@@ -11,6 +11,7 @@ import StudentEventEnrolled from './StudentEventEnrolled'
 import StudentDiplomas from './StudentDiplomas'
 import StudentDiplomaDetail from './StudentDiplomaDetail'
 import StudentProfile from './StudentProfile'
+import CerrarSesionModal from '../../components/modals/CerrarSesionModal'
 
 function StudentDashboard({ loggedUser, onLogout }) {
   const menuItems = [
@@ -34,6 +35,7 @@ function StudentDashboard({ loggedUser, onLogout }) {
         <Route path="/diplomas/:id" element={<StudentDiplomaDetail />} />
         <Route path="/perfil" element={<StudentProfile user={loggedUser} />} />
       </Routes>
+      <CerrarSesionModal onLogout={onLogout} />
     </DashboardLayout>
   )
 }

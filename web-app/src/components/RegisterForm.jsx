@@ -34,7 +34,7 @@ function RegisterForm() {
     setSuccess(false)
     setIsLoading(true)
     
-    // Convert cuatrimestre to integer before sending
+    // Convertir cuatrimestre a entero antes de enviar
     const submitData = {
       ...formData,
       cuatrimestre: formData.cuatrimestre ? parseInt(formData.cuatrimestre, 10) : null
