@@ -1,8 +1,39 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { authService } from '../services/authService'
 
 function LoginForm() {
+  const [correo, setCorreo] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate()
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
+    
+    try {
+      const response = await authService.login(correo, password)
+      localStorage.setItem('idUsuario', response.idUsuario)
+      localStorage.setItem('rol', response.rol)
+      
+      if (response.rol === 'Administrador' || response.rol === 'ADMIN') {
+        navigate('/admin')
+      } else {
+        navigate('/estudiante')
+      }
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <form>
+    <form onSubmit={handleSubmit}>
+      {error && <div className="alert alert-danger mb-3 p-2 small text-center">{error}</div>}
       <div className="mb-3">
         <label className="form-label small fw-semibold" htmlFor="loginEmail">
           Correo Institucional
@@ -16,6 +47,9 @@ function LoginForm() {
             className="form-control border-start-0"
             id="loginEmail"
             placeholder="20243ds01@utez.edu.mx"
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+            required
           />
         </div>
       </div>
@@ -41,6 +75,9 @@ function LoginForm() {
             className="form-control border-start-0 border-end-0"
             id="loginPassword"
             placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
           />
           <span className="input-group-text bg-white border-start-0" role="button">
             <i className="bi bi-eye text-secondary"></i>
@@ -62,8 +99,11 @@ function LoginForm() {
       <button
         type="submit"
         className="btn btn-primary w-100 py-2 rounded-pill fw-semibold"
+        disabled={isLoading}
       >
-        Iniciar Sesión <i className="bi bi-arrow-right ms-1"></i>
+        {isLoading ? 'Iniciando Sesión...' : (
+          <>Iniciar Sesión <i className="bi bi-arrow-right ms-1"></i></>
+        )}
       </button>
 
       <p className="text-center mt-4 mb-0 small text-secondary">
