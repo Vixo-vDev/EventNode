@@ -1,0 +1,105 @@
+package com.eventnode.eventnodeapi;
+
+import jakarta.persistence.*;
+
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "alumnos")
+public class Alumno {
+
+    @Id
+    @Column(name = "id_usuario")
+    private Integer idUsuario;
+
+    @Column(name = "matricula", nullable = false, unique = true, length = 20)
+    private String matricula;
+
+    @Column(name = "fecha_nac", nullable = false)
+    private LocalDate fechaNac;
+
+    @Column(name = "edad", nullable = false)
+    private Integer edad;
+
+    @Column(name = "sexo", nullable = false, length = 20)
+    private String sexo;
+
+    @Column(name = "cuatrimestre", nullable = false)
+    private Integer cuatrimestre;
+
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "id_usuario")
+    private Usuario usuario;
+
+    public Alumno() {
+    }
+
+    public Alumno(Integer idUsuario, String matricula, LocalDate fechaNac,
+                  Integer edad, String sexo, Integer cuatrimestre, Usuario usuario) {
+        this.idUsuario = idUsuario;
+        this.matricula = matricula;
+        this.fechaNac = fechaNac;
+        this.edad = edad;
+        this.sexo = sexo;
+        this.cuatrimestre = cuatrimestre;
+        this.usuario = usuario;
+    }
+
+    public Integer getIdUsuario() {
+        return idUsuario;
+    }
+
+    public void setIdUsuario(Integer idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+
+    public String getMatricula() {
+        return matricula;
+    }
+
+    public void setMatricula(String matricula) {
+        this.matricula = matricula;
+    }
+
+    public LocalDate getFechaNac() {
+        return fechaNac;
+    }
+
+    public void setFechaNac(LocalDate fechaNac) {
+        this.fechaNac = fechaNac;
+    }
+
+    public Integer getEdad() {
+        return edad;
+    }
+
+    public void setEdad(Integer edad) {
+        this.edad = edad;
+    }
+
+    public String getSexo() {
+        return sexo;
+    }
+
+    public void setSexo(String sexo) {
+        this.sexo = sexo;
+    }
+
+    public Integer getCuatrimestre() {
+        return cuatrimestre;
+    }
+
+    public void setCuatrimestre(Integer cuatrimestre) {
+        this.cuatrimestre = cuatrimestre;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
+}
+
