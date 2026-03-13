@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom'
-import DashboardLayout from '../../components/DashboardLayout'
-import AdminSidebar from '../../components/AdminSidebar'
 
 function AdminHome() {
+  const mockEvents = [
+    { id: 1, name: 'Design Thinking Workshop', date: 'FEB 24, 09:00 AM', status: 'ACTIVO', capacityText: '75%', capacityPercent: 75, statusClass: 'bg-success text-success' },
+    { id: 2, name: 'Blockchain Governance', date: 'FEB 25, 11:30 AM', status: 'ACTIVO', capacityText: '45%', capacityPercent: 45, statusClass: 'bg-success text-success' },
+    { id: 3, name: 'Marketing Masterclass', date: 'FEB 26, 02:00 PM', status: 'CANCELADO', capacityText: '0%', capacityPercent: 0, statusClass: 'bg-danger text-danger', isCancelled: true }
+  ];
+
   return (
-    <DashboardLayout sidebar={<AdminSidebar />}>
+    <div>
       <h2 className="fw-bold mb-4">Panel</h2>
 
       <div className="row g-3 mb-4">
@@ -79,90 +83,33 @@ function AdminHome() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td className="ps-3 py-3 fw-semibold small">Design Thinking Workshop</td>
-                  <td className="py-3 text-secondary small">FEB 24, 09:00 AM</td>
-                  <td className="py-3">
-                    <span className="badge bg-success bg-opacity-10 text-success rounded-pill px-3">ACTIVO</span>
-                  </td>
-                  <td className="pe-3 py-3">
-                    <div className="d-flex align-items-center gap-2">
-                      <div className="progress flex-grow-1" style={{ height: '6px' }}>
-                        <div className="progress-bar bg-primary" style={{ width: '75%' }}></div>
-                      </div>
-                      <span className="text-secondary small">75%</span>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="ps-3 py-3 fw-semibold small">Blockchain Governance</td>
-                  <td className="py-3 text-secondary small">FEB 25, 11:30 AM</td>
-                  <td className="py-3">
-                    <span className="badge bg-success bg-opacity-10 text-success rounded-pill px-3">ACTIVO</span>
-                  </td>
-                  <td className="pe-3 py-3">
-                    <div className="d-flex align-items-center gap-2">
-                      <div className="progress flex-grow-1" style={{ height: '6px' }}>
-                        <div className="progress-bar bg-primary" style={{ width: '45%' }}></div>
-                      </div>
-                      <span className="text-secondary small">45%</span>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="ps-3 py-3 fw-semibold small text-primary">Marketing Masterclass</td>
-                  <td className="py-3 text-secondary small">FEB 26, 02:00 PM</td>
-                  <td className="py-3">
-                    <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3">CANCELLED</span>
-                  </td>
-                  <td className="pe-3 py-3 text-secondary small">0%</td>
-                </tr>
-                <tr>
-                  <td className="ps-3 py-3 fw-semibold small text-primary">Marketing Masterclass</td>
-                  <td className="py-3 text-secondary small">FEB 26, 02:00 PM</td>
-                  <td className="py-3">
-                    <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3">CANCELLED</span>
-                  </td>
-                  <td className="pe-3 py-3 text-secondary small">0%</td>
-                </tr>
-                <tr>
-                  <td className="ps-3 py-3 fw-semibold small text-primary">Marketing Masterclass</td>
-                  <td className="py-3 text-secondary small">FEB 26, 02:00 PM</td>
-                  <td className="py-3">
-                    <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3">CANCELLED</span>
-                  </td>
-                  <td className="pe-3 py-3 text-secondary small">0%</td>
-                </tr>
-                <tr>
-                  <td className="ps-3 py-3 fw-semibold small text-primary">Marketing Masterclass</td>
-                  <td className="py-3 text-secondary small">FEB 26, 02:00 PM</td>
-                  <td className="py-3">
-                    <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3">CANCELLED</span>
-                  </td>
-                  <td className="pe-3 py-3 text-secondary small">0%</td>
-                </tr>
-                <tr>
-                  <td className="ps-3 py-3 fw-semibold small text-primary">Marketing Masterclass</td>
-                  <td className="py-3 text-secondary small">FEB 26, 02:00 PM</td>
-                  <td className="py-3">
-                    <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3">CANCELLED</span>
-                  </td>
-                  <td className="pe-3 py-3 text-secondary small">0%</td>
-                </tr>
-                <tr>
-                  <td className="ps-3 py-3 fw-semibold small text-primary">Marketing Masterclass</td>
-                  <td className="py-3 text-secondary small">FEB 26, 02:00 PM</td>
-                  <td className="py-3">
-                    <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3">CANCELLED</span>
-                  </td>
-                  <td className="pe-3 py-3 text-secondary small">0%</td>
-                </tr>
+                {mockEvents.map(event => (
+                  <tr key={event.id}>
+                    <td className={`ps-3 py-3 fw-semibold small ${event.isCancelled ? 'text-primary' : ''}`}>{event.name}</td>
+                    <td className="py-3 text-secondary small">{event.date}</td>
+                    <td className="py-3">
+                      <span className={`badge bg-opacity-10 rounded-pill px-3 ${event.statusClass}`}>{event.status}</span>
+                    </td>
+                    <td className="pe-3 py-3">
+                      {event.isCancelled ? (
+                         <span className="text-secondary small">{event.capacityText}</span>
+                      ) : (
+                        <div className="d-flex align-items-center gap-2">
+                          <div className="progress flex-grow-1" style={{ height: '6px' }}>
+                            <div className="progress-bar bg-primary" style={{ width: `${event.capacityPercent}%` }}></div>
+                          </div>
+                          <span className="text-secondary small">{event.capacityText}</span>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
 

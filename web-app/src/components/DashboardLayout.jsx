@@ -2,10 +2,10 @@ import Header from './Header'
 import Footer from './Footer'
 import CerrarSesionModal from './modals/CerrarSesionModal'
 
-function DashboardLayout({ sidebar, children }) {
+function DashboardLayout({ sidebar, user, children }) {
   return (
     <div className="d-flex flex-column vh-100 w-100 overflow-hidden">
-      <Header />
+      <Header user={user} />
 
       <div className="d-flex flex-grow-1 w-100 overflow-hidden">
         <aside className="d-none d-md-block flex-shrink-0 overflow-auto" style={{ width: '240px' }}>

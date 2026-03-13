@@ -1,34 +1,39 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { authService } from '../services/authService'
 
-function LoginForm() {
+function LoginForm({ onLogin }) {
   const [correo, setCorreo] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
     setError(null)
     setIsLoading(true)
     
-    try {
-      const response = await authService.login(correo, password)
-      localStorage.setItem('idUsuario', response.idUsuario)
-      localStorage.setItem('rol', response.rol)
+    // Simulating network request
+    setTimeout(() => {
+      // Mock logic: if email starts with admin, they are admin
+      const isMockAdmin = correo.toLowerCase().includes('admin@utez.edu.mx')
       
-      if (response.rol === 'Administrador' || response.rol === 'ADMIN') {
+      const mockUserData = {
+        id: isMockAdmin ? 1 : 100,
+        name: isMockAdmin ? 'Administrador Sistema' : 'Estudiante Demo',
+        role: isMockAdmin ? 'ADMIN' : 'STUDENT',
+        email: correo
+      }
+
+      onLogin(mockUserData)
+      
+      if (isMockAdmin) {
         navigate('/admin')
       } else {
         navigate('/estudiante')
       }
-    } catch (err) {
-      setError(err.message)
-    } finally {
       setIsLoading(false)
-    }
+    }, 1000)
   }
 
   return (

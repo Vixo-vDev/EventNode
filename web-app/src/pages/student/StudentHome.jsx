@@ -1,13 +1,24 @@
-import DashboardLayout from '../../components/DashboardLayout'
-import StudentSidebar from '../../components/StudentSidebar'
+import EventCard from '../../components/EventCard'
 import EventCard from '../../components/EventCard'
 import eventAi from '../../assets/events/event_ai.png'
 import eventMarketing from '../../assets/events/event_marketing.png'
 import eventUiux from '../../assets/events/event_uiux.png'
 
 function StudentHome() {
+  const mockEvents = [
+    { id: 1, image: eventAi, title: "Congreso Internacional de Inteligencia Artificial", date: "15 Ene 2025 | 9:00 AM", location: "Auditorio Principal, UTEZ" },
+    { id: 2, image: eventMarketing, title: "Workshop: Marketing Digitalización y Neuronas", date: "22 Ene 2025 | 11:00 AM", location: "Sala de Conferencias B" },
+    { id: 3, image: eventUiux, title: "Semana del Diseño UI/UX 2025", date: "29 Ene 2025 | 10:00 AM", location: "Laboratorio de Diseño" }
+  ]
+
+  const mockDiplomas = [
+    { id: 4, image: eventMarketing, title: "Web Development Summit '25", date: "05 Feb 2025 | 8:00 AM", location: "Centro de Convenciones" },
+    { id: 5, image: eventAi, title: "Seminario Avanzado Big Data", date: "12 Feb 2025 | 2:00 PM", location: "Auditorio B, UTEZ" },
+    { id: 6, image: eventUiux, title: "Seminario Avanzado Big Data", date: "19 Feb 2025 | 3:00 PM", location: "Laboratorio de Cómputo" }
+  ]
+
   return (
-    <DashboardLayout sidebar={<StudentSidebar />}>
+    <div>
       <h2 className="fw-bold mb-1">Inicio</h2>
       <p className="text-secondary small mb-4">
         Explora los eventos que tenemos preparados para ti
@@ -31,30 +42,11 @@ function StudentHome() {
         Próximos Eventos
       </h5>
       <div className="row g-3 mb-5">
-        <div className="col-12 col-md-6 col-lg-4">
-          <EventCard
-            image={eventAi}
-            title="Congreso Internacional de Inteligencia Artificial"
-            date="15 Ene 2025 | 9:00 AM"
-            location="Auditorio Principal, UTEZ"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4">
-          <EventCard
-            image={eventMarketing}
-            title="Workshop: Marketing Digitalización y Neuronas"
-            date="22 Ene 2025 | 11:00 AM"
-            location="Sala de Conferencias B"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4">
-          <EventCard
-            image={eventUiux}
-            title="Semana del Diseño UI/UX 2025"
-            date="29 Ene 2025 | 10:00 AM"
-            location="Laboratorio de Diseño"
-          />
-        </div>
+        {mockEvents.map(event => (
+          <div className="col-12 col-md-6 col-lg-4" key={event.id}>
+            <EventCard image={event.image} title={event.title} date={event.date} location={event.location} />
+          </div>
+        ))}
       </div>
 
       <h5 className="fw-bold mb-3">
@@ -62,32 +54,13 @@ function StudentHome() {
         Diploma
       </h5>
       <div className="row g-3">
-        <div className="col-12 col-md-6 col-lg-4">
-          <EventCard
-            image={eventMarketing}
-            title="Web Development Summit '25"
-            date="05 Feb 2025 | 8:00 AM"
-            location="Centro de Convenciones"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4">
-          <EventCard
-            image={eventAi}
-            title="Seminario Avanzado Big Data"
-            date="12 Feb 2025 | 2:00 PM"
-            location="Auditorio B, UTEZ"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4">
-          <EventCard
-            image={eventUiux}
-            title="Seminario Avanzado Big Data"
-            date="19 Feb 2025 | 3:00 PM"
-            location="Laboratorio de Cómputo"
-          />
-        </div>
+        {mockDiplomas.map(diploma => (
+          <div className="col-12 col-md-6 col-lg-4" key={diploma.id}>
+             <EventCard image={diploma.image} title={diploma.title} date={diploma.date} location={diploma.location} />
+          </div>
+        ))}
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
 

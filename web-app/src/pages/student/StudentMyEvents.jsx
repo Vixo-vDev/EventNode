@@ -1,6 +1,4 @@
 import { Link } from 'react-router-dom'
-import DashboardLayout from '../../components/DashboardLayout'
-import StudentSidebar from '../../components/StudentSidebar'
 import CategoryFilter from '../../components/CategoryFilter'
 import EventCard from '../../components/EventCard'
 import eventAi from '../../assets/events/event_ai.png'
@@ -8,8 +6,14 @@ import eventMarketing from '../../assets/events/event_marketing.png'
 import eventUiux from '../../assets/events/event_uiux.png'
 
 function StudentMyEvents() {
+  const mockEvents = [
+    { id: 1, image: eventAi, title: "Congreso Internacional de Inteligencia Artificial", date: "15 Oct 2023 • 09:00 AM", location: "Auditorio", category: "DESARROLLO" },
+    { id: 2, image: eventMarketing, title: "Workshop: Marketing Digital para Startups", date: "22 Oct 2023 • 16:00 PM", location: "Auditorio", category: "MARKETING" },
+    { id: 3, image: eventUiux, title: "Semana del Diseño UI/UX 2023", date: "28 Oct 2023 • 10:00 AM", location: "Auditorio", category: "DESARROLLO" }
+  ];
+
   return (
-    <DashboardLayout sidebar={<StudentSidebar />}>
+    <div>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
         <div>
           <h2 className="fw-bold mb-1">Mis Eventos</h2>
@@ -50,36 +54,20 @@ function StudentMyEvents() {
 
       <CategoryFilter />
 
-      <div className="row g-3">
-        <div className="col-12 col-md-6 col-lg-4">
-          <EventCard
-            image={eventAi}
-            title="Congreso Internacional de Inteligencia Artificial"
-            date="15 Oct 2023 • 09:00 AM"
-            location="Auditorio"
-            category="DESARROLLO"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4">
-          <EventCard
-            image={eventMarketing}
-            title="Workshop: Marketing Digital para Startups"
-            date="22 Oct 2023 • 16:00 PM"
-            location="Auditorio"
-            category="MARKETING"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4">
-          <EventCard
-            image={eventUiux}
-            title="Semana del Diseño UI/UX 2023"
-            date="28 Oct 2023 • 10:00 AM"
-            location="Auditorio"
-            category="DESARROLLO"
-          />
-        </div>
+      <div className="row g-3 mb-4">
+        {mockEvents.map(event => (
+          <div className="col-12 col-md-6 col-lg-4" key={event.id}>
+            <EventCard
+              image={event.image}
+              title={event.title}
+              date={event.date}
+              location={event.location}
+              category={event.category}
+            />
+          </div>
+        ))}
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
 

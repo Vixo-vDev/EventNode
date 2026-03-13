@@ -1,0 +1,44 @@
+import { Routes, Route } from 'react-router-dom'
+import DashboardLayout from '../../components/DashboardLayout'
+import Sidebar from '../../components/Sidebar'
+
+// Vistas Internas de Admin
+import AdminHome from './AdminHome'
+import GestionEventos from './GestionEventos'
+import AdminEventDetail from './AdminEventDetail'
+import AdminPreCheckIn from './AdminPreCheckIn'
+import AdminCheckIn from './AdminCheckIn'
+import AdminDiplomas from './AdminDiplomas'
+import AdminDiplomaDetail from './AdminDiplomaDetail'
+import AdminEstudiantes from './AdminEstudiantes'
+import AdminPerfil from './AdminPerfil'
+
+function AdminDashboard({ loggedUser, onLogout }) {
+  const menuItems = [
+    { path: '/admin', exact: true, label: 'Inicio', icon: 'bi bi-house' },
+    { path: '/admin/eventos', exact: false, label: 'Eventos', icon: 'bi bi-calendar-event' },
+    { path: '/admin/diplomas', exact: false, label: 'Diplomas', icon: 'bi bi-award' },
+    { path: '/admin/estudiantes', exact: false, label: 'Estudiantes', icon: 'bi bi-people' },
+    { path: '/admin/perfil', exact: false, label: 'Perfil', icon: 'bi bi-person' }
+  ]
+
+  const sidebar = <Sidebar menuItems={menuItems} user={loggedUser} />
+
+  return (
+    <DashboardLayout sidebar={sidebar} user={loggedUser}>
+      <Routes>
+        <Route path="/" element={<AdminHome />} />
+        <Route path="/eventos" element={<GestionEventos />} />
+        <Route path="/evento/:id" element={<AdminEventDetail />} />
+        <Route path="/evento/:id/pre-check-in" element={<AdminPreCheckIn />} />
+        <Route path="/evento/:id/check-in" element={<AdminCheckIn />} />
+        <Route path="/diplomas" element={<AdminDiplomas />} />
+        <Route path="/diploma/:id" element={<AdminDiplomaDetail />} />
+        <Route path="/estudiantes" element={<AdminEstudiantes />} />
+        <Route path="/perfil" element={<AdminPerfil user={loggedUser} />} />
+      </Routes>
+    </DashboardLayout>
+  )
+}
+
+export default AdminDashboard

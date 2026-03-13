@@ -1,5 +1,4 @@
-import DashboardLayout from '../../components/DashboardLayout'
-import StudentSidebar from '../../components/StudentSidebar'
+
 import DiplomaCard from '../../components/DiplomaCard'
 import Pagination from '../../components/Pagination'
 import eventAi from '../../assets/events/event_ai.png'
@@ -7,8 +6,17 @@ import eventMarketing from '../../assets/events/event_marketing.png'
 import eventUiux from '../../assets/events/event_uiux.png'
 
 function StudentDiplomas() {
+  const mockDiplomas = [
+    { id: 1, image: eventAi, title: "Congreso Internacional de Inteligencia Artificial", date: "15 Oct 2023", category: "DESARROLLO" },
+    { id: 2, image: eventMarketing, title: "Workshop: Marketing Digital para Startups", date: "22 Oct 2023", category: "MARKETING" },
+    { id: 3, image: eventUiux, title: "Semana del Diseño UI/UX 2023", date: "28 Oct 2023", category: "DESARROLLO" },
+    { id: 4, image: eventAi, title: "Congreso Internacional de Inteligencia Artificial", date: "15 Oct 2023", category: "DESARROLLO" },
+    { id: 5, image: eventMarketing, title: "Workshop: Marketing Digital para Startups", date: "22 Oct 2023", category: "MARKETING" },
+    { id: 6, image: eventUiux, title: "Semana del Diseño UI/UX 2023", date: "28 Oct 2023", category: "DESARROLLO" }
+  ];
+
   return (
-    <DashboardLayout sidebar={<StudentSidebar />}>
+    <div>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
         <div>
           <h2 className="fw-bold mb-1">Diplomas</h2>
@@ -30,58 +38,20 @@ function StudentDiplomas() {
       </div>
 
       <div className="row g-3 mb-4">
-        <div className="col-12 col-md-6 col-lg-4">
-          <DiplomaCard
-            image={eventAi}
-            title="Congreso Internacional de Inteligencia Artificial"
-            date="15 Oct 2023"
-            category="DESARROLLO"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4">
-          <DiplomaCard
-            image={eventMarketing}
-            title="Workshop: Marketing Digital para Startups"
-            date="22 Oct 2023"
-            category="MARKETING"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4">
-          <DiplomaCard
-            image={eventUiux}
-            title="Semana del Diseño UI/UX 2023"
-            date="28 Oct 2023"
-            category="DESARROLLO"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4">
-          <DiplomaCard
-            image={eventAi}
-            title="Congreso Internacional de Inteligencia Artificial"
-            date="15 Oct 2023"
-            category="DESARROLLO"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4">
-          <DiplomaCard
-            image={eventMarketing}
-            title="Workshop: Marketing Digital para Startups"
-            date="22 Oct 2023"
-            category="MARKETING"
-          />
-        </div>
-        <div className="col-12 col-md-6 col-lg-4">
-          <DiplomaCard
-            image={eventUiux}
-            title="Semana del Diseño UI/UX 2023"
-            date="28 Oct 2023"
-            category="DESARROLLO"
-          />
-        </div>
+        {mockDiplomas.map(diploma => (
+          <div className="col-12 col-md-6 col-lg-4" key={diploma.id}>
+            <DiplomaCard
+              image={diploma.image}
+              title={diploma.title}
+              date={diploma.date}
+              category={diploma.category}
+            />
+          </div>
+        ))}
       </div>
 
       <Pagination />
-    </DashboardLayout>
+    </div>
   )
 }
 

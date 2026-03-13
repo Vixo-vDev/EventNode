@@ -1,6 +1,4 @@
 import { Link } from 'react-router-dom'
-import DashboardLayout from '../../components/DashboardLayout'
-import AdminSidebar from '../../components/AdminSidebar'
 import EditarEstudianteModal from '../../components/modals/EditarEstudianteModal'
 
 function AdminEstudiantes() {
@@ -20,7 +18,7 @@ function AdminEstudiantes() {
   ]
 
   return (
-    <DashboardLayout sidebar={<AdminSidebar />}>
+    <div>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
           <h2 className="fw-bold mb-1">Estudiantes</h2>
@@ -186,7 +184,7 @@ function AdminEstudiantes() {
       </div>
 
       <EditarEstudianteModal />
-    </DashboardLayout>
+    </div>
   )
 }
 
