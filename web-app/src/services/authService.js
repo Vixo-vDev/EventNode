@@ -1,3 +1,5 @@
+import { toast } from 'react-toastify';
+
 const API_URL = '/api';
 
 export const authService = {
@@ -17,20 +19,26 @@ export const authService = {
 
     const data = await response.json();
 
-    // Mapear la respuesta del backend al formato que espera App.jsx
-    // Backend devuelve: { mensaje, rol, idUsuario }
-    // Frontend espera: { id, name, role, email }
     const rolMap = {
       'ALUMNO': 'STUDENT',
       'ADMINISTRADOR': 'ADMIN',
+      'SUPERADMIN': 'ADMIN',
     };
 
-    return {
+    const userRol = data.rol ? data.rol.toUpperCase() : '';
+
+    const userData = {
       id: data.idUsuario,
-      name: data.rol === 'ADMINISTRADOR' ? 'Administrador' : 'Estudiante',
-      role: rolMap[data.rol] || 'STUDENT',
+      name: userRol === 'ADMINISTRADOR' || userRol === 'SUPERADMIN' ? 'Administrador' : 'Estudiante',
+      role: rolMap[userRol] || 'STUDENT',
       email: correo,
     };
+
+    // Almacenar en localStorage
+    localStorage.setItem('auth_user', JSON.stringify(userData));
+    localStorage.setItem('auth_token', btoa(correo + ':' + password));
+
+    return userData;
   },
 
   register: async (alumnoData) => {
@@ -51,6 +59,18 @@ export const authService = {
   },
 
   logout: () => {
-    console.log('Sesión cerrada');
+    localStorage.removeItem('auth_user');
+    localStorage.removeItem('auth_token');
+    toast.info('Sesión cerrada exitosamente');
+  },
+
+  getAuthHeader: () => {
+    const token = localStorage.getItem('auth_token');
+    return token ? { 'Authorization': `Basic ${token}` } : {};
+  },
+  
+  getCurrentUser: () => {
+    const userStr = localStorage.getItem('auth_user');
+    return userStr ? JSON.parse(userStr) : null;
   }
 };

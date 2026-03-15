@@ -194,6 +194,12 @@ function GestionEventos() {
               <span className="visually-hidden">Cargando...</span>
             </div>
           </div>
+        ) : eventos.length === 0 ? (
+          <div className="col-12 text-center py-5 text-secondary">
+            <i className="bi bi-calendar-x" style={{ fontSize: '3rem' }}></i>
+            <h5 className="mt-3">No hay eventos registrados</h5>
+            <p className="small">Comience creando un nuevo evento en esta plataforma.</p>
+          </div>
         ) : eventos.map(evento => (
           <div className="col-12 col-md-6 col-lg-4" key={evento.id}>
             <AdminEventCard
