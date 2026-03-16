@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import eventTechSummit from '../../assets/events/event_tech_summit.png'
 
 function EditarEventoModal() {
-const fileInputRef = useRef(null);
+  const fileInputRef = useRef(null);
   const formRef = useRef(null);
   const [bannerPreview, setBannerPreview] = useState(eventTechSummit);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -39,7 +39,7 @@ const fileInputRef = useRef(null);
           <div className="modal-body px-4 py-3">
             <div className="mb-4">
               <label className="form-label text-uppercase text-secondary small fw-bold">Banner del Evento</label>
-<input type="file" ref={fileInputRef} accept="image/*" className="d-none" onChange={handleBannerChange} />
+              <input type="file" ref={fileInputRef} accept="image/*" className="d-none" onChange={handleBannerChange} />
               <div className="rounded-3 overflow-hidden position-relative" style={{ cursor: 'pointer' }} onClick={handleBannerClick}>
                 <img
                   src={bannerPreview}
@@ -47,7 +47,7 @@ const fileInputRef = useRef(null);
                   className="w-100"
                   style={{ height: '180px', objectFit: 'cover' }}
                 />
-<div className="position-absolute top-50 start-50 translate-middle bg-dark bg-opacity-50 text-white px-3 py-2 rounded-pill d-flex align-items-center gap-2" style={{ pointerEvents: 'none' }}>
+                <div className="position-absolute top-50 start-50 translate-middle bg-dark bg-opacity-50 text-white px-3 py-2 rounded-pill d-flex align-items-center gap-2" style={{ pointerEvents: 'none' }}>
                   <i className="bi bi-camera"></i> Cambiar Banner
                 </div>
               </div>
@@ -74,7 +74,7 @@ const fileInputRef = useRef(null);
                 <label className="form-label text-secondary small">Descripción*</label>
                 <textarea className="form-control" rows="3" defaultValue="El evento tecnológico más importante del año, donde expertos de todo el mundo se reúnen para discutir las últimas tendencias en IA, desarrollo web y ciberseguridad." required></textarea>
               </div>
-</div>
+            </div>
 
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
@@ -156,7 +156,7 @@ const fileInputRef = useRef(null);
               <i className="bi bi-check-circle"></i>
               Actualizar Evento
             </button>
-</div>
+          </div>
         </form>
       </div>
 
@@ -185,10 +185,10 @@ const fileInputRef = useRef(null);
               <h5>Revisa los datos</h5>
               <p className="text-secondary small">Por favor, asegúrate de completar todos los campos obligatorios (*) antes de continuar.</p>
               <button className="btn btn-danger rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowError(false)}>Entendido</button>
+            </div>
           </div>
         </div>
-      </div>
-)}
+      )}
     </div>
   )
 }
