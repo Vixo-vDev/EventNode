@@ -1,37 +1,8 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { authService } from '../services/authService'
+import { Link } from 'react-router-dom'
 
-function LoginForm({ onLogin }) {
-  const [correo, setCorreo] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const navigate = useNavigate()
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError(null)
-    setIsLoading(true)
-    
-    try {
-      const userData = await authService.login(correo, password)
-      onLogin(userData)
-      
-      if (userData.role === 'ADMIN') {
-        navigate('/admin')
-      } else {
-        navigate('/estudiante')
-      }
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
+function LoginForm({ correo, setCorreo, password, setPassword, error, isLoading, onSubmit }) {
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={onSubmit}>
       {error && <div className="alert alert-danger mb-3 p-2 small text-center">{error}</div>}
       <div className="mb-3">
         <label className="form-label small fw-semibold" htmlFor="loginEmail">

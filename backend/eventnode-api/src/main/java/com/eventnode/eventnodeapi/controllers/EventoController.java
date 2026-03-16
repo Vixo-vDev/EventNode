@@ -3,23 +3,15 @@ package com.eventnode.eventnodeapi.controllers;
 import com.eventnode.eventnodeapi.dtos.EventoCreateRequest;
 import com.eventnode.eventnodeapi.dtos.EventoResponse;
 import com.eventnode.eventnodeapi.dtos.EventoUpdateRequest;
+import com.eventnode.eventnodeapi.models.Categoria;
 import com.eventnode.eventnodeapi.models.Evento;
-import com.eventnode.eventnodeapi.models.Usuario;
-import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
+import com.eventnode.eventnodeapi.repositories.CategoriaRepository;
 import com.eventnode.eventnodeapi.services.EventoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,25 +23,29 @@ import java.util.stream.Collectors;
 public class EventoController {
 
     private final EventoService eventoService;
-    private final UsuarioRepository usuarioRepository;
+    private final CategoriaRepository categoriaRepository;
 
-    public EventoController(EventoService eventoService, UsuarioRepository usuarioRepository) {
+    public EventoController(EventoService eventoService, CategoriaRepository categoriaRepository) {
         this.eventoService = eventoService;
-        this.usuarioRepository = usuarioRepository;
+        this.categoriaRepository = categoriaRepository;
     }
 
     @PostMapping("/crear")
-    public ResponseEntity<Map<String, String>> crearEvento(@Valid @RequestBody EventoCreateRequest request,
-                                                           Authentication authentication) {
-        String correo = authentication.getName();
-        Usuario usuario = usuarioRepository.findByCorreo(correo)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario creador no encontrado en BD"));
-        Integer idUsuarioCreador = usuario.getIdUsuario();
-        eventoService.crearEvento(request, idUsuarioCreador);
-
-        Map<String, String> body = new HashMap<>();
-        body.put("mensaje", "Evento creado con éxito");
-        return ResponseEntity.status(HttpStatus.CREATED).body(body);
+    public ResponseEntity<?> crearEvento(@Valid @RequestBody EventoCreateRequest request) {
+        try {
+            eventoService.crearEvento(request);
+            Map<String, String> body = new HashMap<>();
+            body.put("mensaje", "Evento creado con éxito");
+            return ResponseEntity.status(HttpStatus.CREATED).body(body);
+        } catch (SecurityException ex) {
+            Map<String, String> body = new HashMap<>();
+            body.put("mensaje", ex.getMessage());
+            return ResponseEntity.status(403).body(body);
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            Map<String, String> body = new HashMap<>();
+            body.put("mensaje", ex.getMessage());
+            return ResponseEntity.badRequest().body(body);
+        }
     }
 
     @GetMapping
@@ -85,10 +81,21 @@ public class EventoController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/categorias")
+    public ResponseEntity<List<Map<String, Object>>> listarCategorias() {
+        List<Categoria> categorias = categoriaRepository.findAll();
+        List<Map<String, Object>> result = categorias.stream().map(c -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("idCategoria", c.getIdCategoria());
+            map.put("nombre", c.getNombre());
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(result);
+    }
+
     @PutMapping("/{idEvento}")
     public ResponseEntity<Map<String, String>> actualizarEvento(@PathVariable Integer idEvento,
-                                                               @RequestBody EventoUpdateRequest request,
-                                                               Authentication authentication) {
+                                                               @RequestBody EventoUpdateRequest request) {
         eventoService.actualizarEvento(idEvento, request);
         Map<String, String> body = new HashMap<>();
         body.put("mensaje", "Evento actualizado con éxito");
@@ -96,12 +103,22 @@ public class EventoController {
     }
 
     @PostMapping("/{idEvento}/cancelar")
-    public ResponseEntity<Map<String, String>> cancelarEvento(@PathVariable Integer idEvento,
-                                                              Authentication authentication) {
+    public ResponseEntity<Map<String, String>> cancelarEvento(@PathVariable Integer idEvento) {
         eventoService.cancelarEvento(idEvento);
         Map<String, String> body = new HashMap<>();
         body.put("mensaje", "Evento cancelado con éxito");
         return ResponseEntity.ok(body);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
+        String mensaje = ex.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(fe -> fe.getDefaultMessage())
+                .orElse("Error de validación");
+        Map<String, String> body = new HashMap<>();
+        body.put("mensaje", mensaje);
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -118,4 +135,3 @@ public class EventoController {
         return ResponseEntity.badRequest().body(body);
     }
 }
-

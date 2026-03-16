@@ -1,21 +1,98 @@
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
+import { userService } from '../../services/userService'
 import EditarEstudianteModal from '../../components/modals/EditarEstudianteModal'
+import CrearAdministradorModal from '../../components/modals/CrearAdministradorModal'
 
-function AdminEstudiantes() {
-  const students = [
-    { id: 1, initials: 'JD', name: 'Jane Doe', matricula: '202300042', email: 'jane.doe@university.edu', role: 'STUDENT', active: true },
-    { id: 2, initials: 'MS', name: 'Mark Smith', matricula: '202300055', email: 'mark.smith@university.edu', role: 'ADMIN', active: false },
-    { id: 3, initials: 'JD', name: 'Jane Doe', matricula: '202300042', email: 'jane.doe@university.edu', role: 'STUDENT', active: true },
-    { id: 4, initials: 'MS', name: 'Mark Smith', matricula: '202300055', email: 'mark.smith@university.edu', role: 'ADMIN', active: false },
-    { id: 5, initials: 'JD', name: 'Jane Doe', matricula: '202300042', email: 'jane.doe@university.edu', role: 'STUDENT', active: true },
-    { id: 6, initials: 'MS', name: 'Mark Smith', matricula: '202300055', email: 'mark.smith@university.edu', role: 'ADMIN', active: false },
-  ]
+const INITIAL_ADMIN_FORM = {
+  nombre: '',
+  apellidoPaterno: '',
+  apellidoMaterno: '',
+  correo: '',
+  password: '',
+}
 
-  const admins = [
-    { name: 'Jordan Smith', role: 'Master Level', bg: 'bg-warning bg-opacity-25 text-warning' },
-    { name: 'Elena Vance', role: 'Analytics Head', bg: 'bg-primary bg-opacity-10 text-primary' },
-    { name: 'Marcus Chen', role: 'Security Officer', bg: 'bg-danger bg-opacity-10 text-danger' }
-  ]
+function AdminEstudiantes({ user }) {
+  const [students, setStudents] = useState([])
+  const [admins, setAdmins] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // Estado para crear administrador
+  const [adminForm, setAdminForm] = useState(INITIAL_ADMIN_FORM)
+  const [adminError, setAdminError] = useState('')
+  const [adminLoading, setAdminLoading] = useState(false)
+
+  const isSuperAdmin = user?.originalRole === 'SUPERADMIN'
+
+  const fetchUsers = async () => {
+    try {
+      const data = await userService.getUsuarios()
+      const alumnos = data
+        .filter(u => u.rol === 'ALUMNO')
+        .map(u => ({
+          id: u.idUsuario,
+          initials: (u.nombre?.[0] || '') + (u.apellidoPaterno?.[0] || ''),
+          name: `${u.nombre} ${u.apellidoPaterno}`,
+          matricula: u.matricula || '—',
+          email: u.correo,
+          role: 'STUDENT',
+          active: u.estado === 'ACTIVO',
+        }))
+      const adminList = data
+        .filter(u => u.rol === 'ADMINISTRADOR' || u.rol === 'SUPERADMIN')
+        .map(u => ({
+          id: u.idUsuario,
+          name: `${u.nombre} ${u.apellidoPaterno}`,
+          role: u.rol === 'SUPERADMIN' ? 'Super Admin' : 'Administrador',
+          bg: u.rol === 'SUPERADMIN' ? 'bg-warning bg-opacity-25 text-warning' : 'bg-primary bg-opacity-10 text-primary',
+        }))
+      setStudents(alumnos)
+      setAdmins(adminList)
+    } catch {
+      setStudents([])
+      setAdmins([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const handleAdminChange = (e) => {
+    const { name, value } = e.target
+    setAdminForm(prev => ({ ...prev, [name]: value }))
+    setAdminError('')
+  }
+
+  const handleAdminSubmit = async (e) => {
+    e.preventDefault()
+    setAdminError('')
+    setAdminLoading(true)
+    try {
+      await userService.crearAdmin({
+        ...adminForm,
+        idSolicitante: user?.id,
+      })
+      toast.success('Administrador creado exitosamente')
+      setAdminForm(INITIAL_ADMIN_FORM)
+      // Cerrar modal programáticamente usando Bootstrap JS
+      const modalEl = document.getElementById('crearAdminModal')
+      if (modalEl && window.bootstrap) {
+        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
+        if (bsModal) bsModal.hide()
+      }
+      // Refrescar lista
+      setLoading(true)
+      fetchUsers()
+    } catch (err) {
+      setAdminError(err.message)
+      toast.error(err.message)
+    } finally {
+      setAdminLoading(false)
+    }
+  }
 
   return (
     <div>
@@ -26,10 +103,6 @@ function AdminEstudiantes() {
             Administrar y supervisar las cuentas, roles y estados de los estudiantes.
           </p>
         </div>
-        <button className="btn btn-primary rounded-3 d-flex align-items-center gap-2 flex-shrink-0 px-3 fw-semibold" style={{ fontSize: '13px' }}>
-          <i className="bi bi-person-plus-fill"></i>
-          Agregar estudiante
-        </button>
       </div>
 
       <div className="card border-0 shadow-sm rounded-4 mb-4">
@@ -42,148 +115,134 @@ function AdminEstudiantes() {
               <input
                 type="text"
                 className="form-control bg-transparent border-0 shadow-none small"
-                placeholder="Search by Name, Matricula, or Email"
+                placeholder="Buscar por nombre, matrícula o correo..."
                 style={{ fontSize: '13px' }}
               />
-            </div>
-            <div className="d-flex align-items-center gap-2">
-              <span className="text-secondary small fw-bold text-uppercase" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>ESTADO</span>
-              <select className="form-select border-light-subtle rounded-3 small fw-semibold" style={{ width: '110px', fontSize: '13px' }}>
-                <option selected>Todos</option>
-                <option>Active</option>
-                <option>Inactive</option>
-              </select>
-              <button className="btn btn-light rounded-3 ms-1 d-flex align-items-center justify-content-center text-secondary" style={{ width: '38px', height: '38px' }}>
-                <i className="bi bi-funnel"></i>
-              </button>
             </div>
           </div>
         </div>
 
         <div className="card-body p-0">
-          <div className="table-responsive">
-            <table className="table align-middle mb-0">
-              <thead>
-                <tr>
-                  <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom ps-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>Nombre Completo</th>
-                  <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Matricula</th>
-                  <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Email</th>
-                  <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Rol</th>
-                  <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Estado</th>
-                  <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom text-end pe-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="border-top-0">
-                {students.map((student, index) => (
-                  <tr key={index}>
-                    <td className="py-3 border-light ps-4">
-                      <div className="d-flex align-items-center gap-3">
-                        <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '32px', height: '32px', fontSize: '12px' }}>
-                          {student.initials}
-                        </div>
-                        <span className="fw-bold text-dark small">{student.name}</span>
-                      </div>
-                    </td>
-                    <td className="small py-3 border-light text-secondary">{student.matricula}</td>
-                    <td className="small py-3 border-light text-secondary">{student.email}</td>
-                    <td className="py-3 border-light">
-                      <span className={`badge rounded-pill px-3 py-1 fw-bold ${student.role === 'ADMIN' ? 'bg-light text-secondary text-uppercase' : 'bg-primary bg-opacity-10 text-primary'}`} style={{ fontSize: '10px', letterSpacing: '0.5px' }}>
-                        {student.role}
-                      </span>
-                    </td>
-                    <td className="py-3 border-light">
-                      <div className={`d-flex align-items-center gap-1 fw-bold ${student.active ? 'text-success' : 'text-secondary'}`} style={{ fontSize: '11px' }}>
-                        <span style={{ fontSize: '14px', lineHeight: '1' }}>{student.active ? '•' : '○'}</span>
-                        {student.active ? 'Active' : 'Inactive'}
-                      </div>
-                    </td>
-                    <td className="py-3 border-light text-end pe-4">
-                      <div className="d-flex justify-content-end gap-2 text-secondary">
-                        <button
-                          className="btn btn-link text-secondary p-0 m-0"
-                          title="Editar"
-                          data-bs-toggle="modal"
-                          data-bs-target="#editarEstudianteModal"
-                        >
-                          <i className="bi bi-pencil" style={{ fontSize: '13px' }}></i>
-                        </button>
-                        <button className="btn btn-link text-secondary p-0 m-0" title="Bloquear">
-                          <i className="bi bi-slash-circle" style={{ fontSize: '13px' }}></i>
-                        </button>
-                        <button className="btn btn-link text-secondary p-0 m-0" title="Eliminar">
-                          <i className="bi bi-trash" style={{ fontSize: '13px' }}></i>
-                        </button>
-                      </div>
-                    </td>
+          {loading ? (
+            <div className="text-center py-5">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          ) : students.length > 0 ? (
+            <div className="table-responsive">
+              <table className="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom ps-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>Nombre Completo</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Matrícula</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Email</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Estado</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom text-end pe-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div className="card-footer bg-transparent border-top p-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-          <span className="text-secondary small" style={{ fontSize: '12px' }}>
-            Mostrando 1 - 6 de 42 resultados
-          </span>
-          <nav aria-label="Page navigation">
-            <ul className="pagination pagination-sm mb-0 gap-1">
-              <li className="page-item disabled">
-                <a className="page-link border-0 text-secondary bg-transparent h-100 d-flex align-items-center rounded" href="#" tabIndex="-1" aria-disabled="true">
-                  <i className="bi bi-chevron-left small"></i>
-                </a>
-              </li>
-              <li className="page-item active" aria-current="page">
-                <a className="page-link border-0 bg-primary text-white rounded d-flex align-items-center justify-content-center" href="#" style={{ width: '28px', height: '28px' }}>1</a>
-              </li>
-              <li className="page-item">
-                <a className="page-link border-0 text-dark bg-transparent rounded d-flex align-items-center justify-content-center" href="#" style={{ width: '28px', height: '28px' }}>2</a>
-              </li>
-              <li className="page-item">
-                <a className="page-link border-0 text-dark bg-transparent rounded d-flex align-items-center justify-content-center" href="#" style={{ width: '28px', height: '28px' }}>3</a>
-              </li>
-              <li className="page-item">
-                <a className="page-link border-0 text-dark bg-transparent h-100 d-flex align-items-center rounded" href="#">
-                  <i className="bi bi-chevron-right small"></i>
-                </a>
-              </li>
-            </ul>
-          </nav>
+                </thead>
+                <tbody className="border-top-0">
+                  {students.map(student => (
+                    <tr key={student.id}>
+                      <td className="py-3 border-light ps-4">
+                        <div className="d-flex align-items-center gap-3">
+                          <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '32px', height: '32px', fontSize: '12px' }}>
+                            {student.initials}
+                          </div>
+                          <span className="fw-bold text-dark small">{student.name}</span>
+                        </div>
+                      </td>
+                      <td className="small py-3 border-light text-secondary">{student.matricula}</td>
+                      <td className="small py-3 border-light text-secondary">{student.email}</td>
+                      <td className="py-3 border-light">
+                        <div className={`d-flex align-items-center gap-1 fw-bold ${student.active ? 'text-success' : 'text-secondary'}`} style={{ fontSize: '11px' }}>
+                          <span style={{ fontSize: '14px', lineHeight: '1' }}>{student.active ? '•' : '○'}</span>
+                          {student.active ? 'Activo' : 'Inactivo'}
+                        </div>
+                      </td>
+                      <td className="py-3 border-light text-end pe-4">
+                        <div className="d-flex justify-content-end gap-2 text-secondary">
+                          <button
+                            className="btn btn-link text-secondary p-0 m-0"
+                            title="Editar"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editarEstudianteModal"
+                          >
+                            <i className="bi bi-pencil" style={{ fontSize: '13px' }}></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-5">
+              <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
+                <i className="bi bi-people text-primary fs-4"></i>
+              </div>
+              <h6 className="fw-bold mb-1">No hay estudiantes registrados</h6>
+              <p className="text-secondary small mb-0">
+                Los estudiantes aparecerán aquí cuando se registren en la plataforma.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Seccion Administradores */}
+      {/* Sección Administradores */}
       <div className="card border-0 shadow-sm rounded-4 mb-4">
-        <div className="card-header bg-white border-bottom-0 p-4 d-flex justify-content-between align-items-center">
-          <h5 className="fw-bold mb-0 text-dark">Administradores</h5>
-          <button className="btn btn-link text-primary p-0 d-flex align-items-center gap-2 text-decoration-none">
-            <i className="bi bi-person-plus-fill fs-5"></i>
-          </button>
+        <div className="card-header bg-white border-bottom-0 p-4">
+          <div className="d-flex align-items-center justify-content-between">
+            <h5 className="fw-bold mb-0 text-dark">Administradores</h5>
+            {isSuperAdmin && (
+              <button
+                className="btn btn-primary btn-sm d-flex align-items-center gap-2 rounded-3 px-3"
+                data-bs-toggle="modal"
+                data-bs-target="#crearAdminModal"
+                style={{ fontSize: '13px' }}
+              >
+                <i className="bi bi-plus-lg"></i>
+                Nuevo Admin
+              </button>
+            )}
+          </div>
         </div>
         <div className="card-body px-4 pb-4 pt-0">
-          <div className="row g-3">
-            {admins.map((admin, index) => (
-              <div key={index} className="col-12 col-md-4">
-                <div className="border border-light-subtle rounded-4 p-3 d-flex align-items-center justify-content-between">
-                  <div className="d-flex align-items-center gap-3">
-                    <div className={`rounded-circle d-flex align-items-center justify-content-center fw-bold ${admin.bg}`} style={{ width: '40px', height: '40px' }}>
-                      <i className="bi bi-person-fill"></i>
-                    </div>
-                    <div className="lh-sm">
-                      <div className="fw-bold text-dark" style={{ fontSize: '13px' }}>{admin.name}</div>
-                      <div className="text-secondary" style={{ fontSize: '11px' }}>{admin.role}</div>
+          {admins.length > 0 ? (
+            <div className="row g-3">
+              {admins.map((admin, index) => (
+                <div key={index} className="col-12 col-md-4">
+                  <div className="border border-light-subtle rounded-4 p-3 d-flex align-items-center justify-content-between">
+                    <div className="d-flex align-items-center gap-3">
+                      <div className={`rounded-circle d-flex align-items-center justify-content-center fw-bold ${admin.bg}`} style={{ width: '40px', height: '40px' }}>
+                        <i className="bi bi-person-fill"></i>
+                      </div>
+                      <div className="lh-sm">
+                        <div className="fw-bold text-dark" style={{ fontSize: '13px' }}>{admin.name}</div>
+                        <div className="text-secondary" style={{ fontSize: '11px' }}>{admin.role}</div>
+                      </div>
                     </div>
                   </div>
-                  <button className="btn btn-link text-secondary p-0">
-                    <i className="bi bi-three-dots-vertical"></i>
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-secondary small mb-0">No hay administradores adicionales.</p>
+          )}
         </div>
       </div>
 
       <EditarEstudianteModal />
+
+      <CrearAdministradorModal
+        formData={adminForm}
+        error={adminError}
+        isLoading={adminLoading}
+        onChange={handleAdminChange}
+        onSubmit={handleAdminSubmit}
+      />
     </div>
   )
 }

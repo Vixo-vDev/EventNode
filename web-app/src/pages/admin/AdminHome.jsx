@@ -22,17 +22,16 @@ function AdminHome() {
         }))
         setEventos(mapped)
       } catch {
-        setEventos([
-          { id: 1, name: 'Design Thinking Workshop', date: 'FEB 24, 09:00 AM', status: 'ACTIVO', capacityText: '75%', capacityPercent: 75, statusClass: 'bg-success text-success' },
-          { id: 2, name: 'Blockchain Governance', date: 'FEB 25, 11:30 AM', status: 'ACTIVO', capacityText: '45%', capacityPercent: 45, statusClass: 'bg-success text-success' },
-          { id: 3, name: 'Marketing Masterclass', date: 'FEB 26, 02:00 PM', status: 'CANCELADO', capacityText: '0%', capacityPercent: 0, statusClass: 'bg-danger text-danger', isCancelled: true }
-        ])
+        setEventos([])
       } finally {
         setLoading(false)
       }
     }
     fetchEventos()
   }, [])
+
+  const totalEventos = eventos.length
+  const eventosActivos = eventos.filter(e => e.status === 'ACTIVO').length
 
   return (
     <div>
@@ -47,10 +46,10 @@ function AdminHome() {
                   style={{ width: '36px', height: '36px' }}>
                   <i className="bi bi-people-fill text-primary"></i>
                 </div>
-                <span className="badge bg-success bg-opacity-10 text-success small">+5%</span>
               </div>
-              <div className="text-secondary small mb-1">Ocurrencias</div>
-              <div className="fw-bold fs-2">82%</div>
+              <div className="text-secondary small mb-1">Asistencia</div>
+              <div className="fw-bold fs-2">{totalEventos > 0 ? '—' : '0%'}</div>
+              <div className="text-secondary small">Sin datos de asistencia aún</div>
             </div>
           </div>
         </div>
@@ -63,10 +62,12 @@ function AdminHome() {
                   style={{ width: '36px', height: '36px' }}>
                   <i className="bi bi-calendar-check text-primary"></i>
                 </div>
-                <span className="badge bg-danger bg-opacity-10 text-danger small fw-semibold">LIVE</span>
+                {eventosActivos > 0 && (
+                  <span className="badge bg-danger bg-opacity-10 text-danger small fw-semibold">LIVE</span>
+                )}
               </div>
-              <div className="text-secondary small mb-1">Total Active Events</div>
-              <div className="fw-bold fs-2">24</div>
+              <div className="text-secondary small mb-1">Eventos Activos</div>
+              <div className="fw-bold fs-2">{eventosActivos}</div>
             </div>
           </div>
         </div>
@@ -77,12 +78,12 @@ function AdminHome() {
               <div className="text-uppercase text-secondary small fw-bold mb-2">Diplomas</div>
               <div className="d-flex justify-content-between align-items-end">
                 <div>
-                  <div className="fw-bold fs-3 mb-0">1,240</div>
-                  <div className="text-secondary small">Issued</div>
+                  <div className="fw-bold fs-3 mb-0">0</div>
+                  <div className="text-secondary small">Emitidos</div>
                 </div>
                 <div className="text-end">
-                  <div className="fw-bold fs-3 mb-0">42</div>
-                  <div className="text-secondary small">Pending</div>
+                  <div className="fw-bold fs-3 mb-0">0</div>
+                  <div className="text-secondary small">Pendientes</div>
                 </div>
               </div>
             </div>
@@ -99,49 +100,62 @@ function AdminHome() {
             </Link>
           </div>
 
-          <div className="table-responsive">
-            <table className="table table-hover mb-0 align-middle">
-              <thead className="border-top">
-                <tr>
-                  <th className="text-uppercase text-secondary small fw-semibold ps-3 py-3" style={{ fontSize: '11px' }}>Nombre del Evento</th>
-                  <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>Fecha/Tiempo</th>
-                  <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>Estado</th>
-                  <th className="text-uppercase text-secondary small fw-semibold pe-3 py-3" style={{ fontSize: '11px' }}>Capacidad</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
+          {loading ? (
+            <div className="text-center py-4">
+              <div className="spinner-border text-primary spinner-border-sm" role="status">
+                <span className="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          ) : eventos.length > 0 ? (
+            <div className="table-responsive">
+              <table className="table table-hover mb-0 align-middle">
+                <thead className="border-top">
                   <tr>
-                    <td colSpan="4" className="text-center py-4">
-                      <div className="spinner-border text-primary spinner-border-sm" role="status">
-                        <span className="visually-hidden">Cargando...</span>
-                      </div>
-                    </td>
+                    <th className="text-uppercase text-secondary small fw-semibold ps-3 py-3" style={{ fontSize: '11px' }}>Nombre del Evento</th>
+                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>Fecha/Tiempo</th>
+                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>Estado</th>
+                    <th className="text-uppercase text-secondary small fw-semibold pe-3 py-3" style={{ fontSize: '11px' }}>Capacidad</th>
                   </tr>
-                ) : eventos.map(event => (
-                  <tr key={event.id}>
-                    <td className={`ps-3 py-3 fw-semibold small ${event.isCancelled ? 'text-primary' : ''}`}>{event.name}</td>
-                    <td className="py-3 text-secondary small">{event.date}</td>
-                    <td className="py-3">
-                      <span className={`badge bg-opacity-10 rounded-pill px-3 ${event.statusClass}`}>{event.status}</span>
-                    </td>
-                    <td className="pe-3 py-3">
-                      {event.isCancelled ? (
-                         <span className="text-secondary small">{event.capacityText}</span>
-                      ) : (
-                        <div className="d-flex align-items-center gap-2">
-                          <div className="progress flex-grow-1" style={{ height: '6px' }}>
-                            <div className="progress-bar bg-primary" style={{ width: `${event.capacityPercent}%` }}></div>
-                          </div>
+                </thead>
+                <tbody>
+                  {eventos.map(event => (
+                    <tr key={event.id}>
+                      <td className={`ps-3 py-3 fw-semibold small ${event.isCancelled ? 'text-primary' : ''}`}>{event.name}</td>
+                      <td className="py-3 text-secondary small">{event.date}</td>
+                      <td className="py-3">
+                        <span className={`badge bg-opacity-10 rounded-pill px-3 ${event.statusClass}`}>{event.status}</span>
+                      </td>
+                      <td className="pe-3 py-3">
+                        {event.isCancelled ? (
                           <span className="text-secondary small">{event.capacityText}</span>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        ) : (
+                          <div className="d-flex align-items-center gap-2">
+                            <div className="progress flex-grow-1" style={{ height: '6px' }}>
+                              <div className="progress-bar bg-primary" style={{ width: `${event.capacityPercent}%` }}></div>
+                            </div>
+                            <span className="text-secondary small">{event.capacityText}</span>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-5 px-3">
+              <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
+                <i className="bi bi-calendar-plus text-primary fs-4"></i>
+              </div>
+              <h6 className="fw-bold mb-1">No hay eventos registrados</h6>
+              <p className="text-secondary small mb-2">
+                Crea tu primer evento para comenzar a gestionar la plataforma.
+              </p>
+              <Link to="/admin/eventos" className="btn btn-primary btn-sm rounded-pill px-4">
+                Crear Evento
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

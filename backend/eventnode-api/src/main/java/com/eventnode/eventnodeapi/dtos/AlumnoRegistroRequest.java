@@ -1,5 +1,6 @@
 package com.eventnode.eventnodeapi.dtos;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,32 +9,33 @@ import java.time.LocalDate;
 
 public class AlumnoRegistroRequest {
 
-    @NotBlank
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
 
-    @NotBlank
+    @NotBlank(message = "El apellido paterno es obligatorio")
     private String apellidoPaterno;
 
-    @NotBlank
+    @NotBlank(message = "El apellido materno es obligatorio")
     private String apellidoMaterno;
 
-    @NotBlank
+    @NotBlank(message = "La matrícula es obligatoria")
     private String matricula;
 
-    @NotBlank
-    @Email
+    @NotBlank(message = "El correo es obligatorio")
+    @Email(message = "Ingrese una dirección de correo electrónico válida")
     private String correo;
 
-    @NotBlank
+    @NotBlank(message = "La contraseña es obligatoria")
     private String password;
 
-    @NotNull
+    @NotNull(message = "La fecha de nacimiento es obligatoria")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate fechaNacimiento;
 
-    @NotBlank
+    @NotBlank(message = "El sexo es obligatorio")
     private String sexo;
 
-    @NotNull
+    @NotNull(message = "El cuatrimestre es obligatorio")
     private Integer cuatrimestre;
 
     public AlumnoRegistroRequest() {
@@ -111,4 +113,3 @@ public class AlumnoRegistroRequest {
         this.cuatrimestre = cuatrimestre;
     }
 }
-

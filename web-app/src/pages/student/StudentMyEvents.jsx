@@ -1,17 +1,6 @@
 import { Link } from 'react-router-dom'
-import CategoryFilter from '../../components/CategoryFilter'
-import EventCard from '../../components/EventCard'
-import eventAi from '../../assets/events/event_ai.png'
-import eventMarketing from '../../assets/events/event_marketing.png'
-import eventUiux from '../../assets/events/event_uiux.png'
 
 function StudentMyEvents() {
-  const mockEvents = [
-    { id: 1, image: eventAi, title: "Congreso Internacional de Inteligencia Artificial", date: "15 Oct 2023 • 09:00 AM", location: "Auditorio", category: "DESARROLLO" },
-    { id: 2, image: eventMarketing, title: "Workshop: Marketing Digital para Startups", date: "22 Oct 2023 • 16:00 PM", location: "Auditorio", category: "MARKETING" },
-    { id: 3, image: eventUiux, title: "Semana del Diseño UI/UX 2023", date: "28 Oct 2023 • 10:00 AM", location: "Auditorio", category: "DESARROLLO" }
-  ];
-
   return (
     <div>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
@@ -35,37 +24,30 @@ function StudentMyEvents() {
 
       <ul className="nav nav-tabs mb-4">
         <li className="nav-item">
-          <Link
-            to="/estudiante/eventos"
-            className="nav-link text-secondary small"
-          >
+          <Link to="/estudiante/eventos" className="nav-link text-secondary small">
             Explorar los Eventos
           </Link>
         </li>
         <li className="nav-item">
-          <Link
-            to="/estudiante/mis-eventos"
-            className="nav-link active fw-semibold small"
-          >
+          <Link to="/estudiante/mis-eventos" className="nav-link active fw-semibold small">
             Mis Eventos
           </Link>
         </li>
       </ul>
 
-      <CategoryFilter />
-
-      <div className="row g-3 mb-4">
-        {mockEvents.map(event => (
-          <div className="col-12 col-md-6 col-lg-4" key={event.id}>
-            <EventCard
-              image={event.image}
-              title={event.title}
-              date={event.date}
-              location={event.location}
-              category={event.category}
-            />
+      <div className="card border-0 shadow-sm rounded-3">
+        <div className="card-body text-center py-5">
+          <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
+            <i className="bi bi-bookmark-star text-primary fs-3"></i>
           </div>
-        ))}
+          <h6 className="fw-bold mb-1">No estás inscrito en ningún evento</h6>
+          <p className="text-secondary small mb-2">
+            Explora los eventos disponibles e inscríbete para verlos aquí.
+          </p>
+          <Link to="/estudiante/eventos" className="btn btn-primary btn-sm rounded-pill px-4">
+            Explorar Eventos
+          </Link>
+        </div>
       </div>
     </div>
   )

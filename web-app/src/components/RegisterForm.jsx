@@ -1,70 +1,8 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { authService } from '../services/authService'
+import { Link } from 'react-router-dom'
 
-function RegisterForm() {
-  const [age, setAge] = useState('')
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const navigate = useNavigate()
-
-  const [formData, setFormData] = useState({
-    nombre: '',
-    apellidoPaterno: '',
-    apellidoMaterno: '',
-    matricula: '',
-    correo: '',
-    password: '',
-    fechaNacimiento: '',
-    sexo: '',
-    cuatrimestre: ''
-  })
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError(null)
-    setSuccess(false)
-    setIsLoading(true)
-    
-    // Convertir cuatrimestre a entero antes de enviar
-    const submitData = {
-      ...formData,
-      cuatrimestre: formData.cuatrimestre ? parseInt(formData.cuatrimestre, 10) : null
-    }
-
-    try {
-      await authService.register(submitData)
-      setSuccess(true)
-      setTimeout(() => navigate('/login'), 2500)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  function handleBirthDateChange(e) {
-    handleChange(e)
-    const birthDate = new Date(e.target.value)
-    const today = new Date()
-    let calculatedAge = today.getFullYear() - birthDate.getFullYear()
-    const monthDiff = today.getMonth() - birthDate.getMonth()
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      calculatedAge--
-    }
-    setAge(calculatedAge >= 0 ? calculatedAge : '')
-  }
-
+function RegisterForm({ formData, age, error, success, isLoading, onChange, onBirthDateChange, onSubmit }) {
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={onSubmit}>
       {error && <div className="alert alert-danger mb-3 p-2 small text-center">{error}</div>}
       {success && <div className="alert alert-success mb-3 p-2 small text-center">¡Cuenta creada con éxito! Redirigiendo al login...</div>}
       
@@ -79,7 +17,7 @@ function RegisterForm() {
             id="regName"
             name="nombre"
             value={formData.nombre}
-            onChange={handleChange}
+            onChange={onChange}
             placeholder="Ingresa tu nombre"
             required
           />
@@ -94,7 +32,7 @@ function RegisterForm() {
             id="regLastNameP"
             name="apellidoPaterno"
             value={formData.apellidoPaterno}
-            onChange={handleChange}
+            onChange={onChange}
             placeholder="Apellido paterno"
             required
           />
@@ -109,7 +47,7 @@ function RegisterForm() {
             id="regLastNameM"
             name="apellidoMaterno"
             value={formData.apellidoMaterno}
-            onChange={handleChange}
+            onChange={onChange}
             placeholder="Apellido materno"
             required
           />
@@ -127,7 +65,7 @@ function RegisterForm() {
             id="regMatricula"
             name="matricula"
             value={formData.matricula}
-            onChange={handleChange}
+            onChange={onChange}
             placeholder="Ej: 20243ds01"
             required
           />
@@ -142,7 +80,7 @@ function RegisterForm() {
             id="regEmail"
             name="correo"
             value={formData.correo}
-            onChange={handleChange}
+            onChange={onChange}
             placeholder="matricula@utez.edu.mx"
             required
           />
@@ -160,7 +98,7 @@ function RegisterForm() {
             id="regPassword"
             name="password"
             value={formData.password}
-            onChange={handleChange}
+            onChange={onChange}
             placeholder="••••••••"
             required
           />
@@ -184,7 +122,7 @@ function RegisterForm() {
             id="regBirthDate"
             name="fechaNacimiento"
             value={formData.fechaNacimiento}
-            onChange={handleBirthDateChange}
+            onChange={onBirthDateChange}
             required
           />
         </div>
@@ -210,7 +148,7 @@ function RegisterForm() {
             id="regSex" 
             name="sexo" 
             value={formData.sexo} 
-            onChange={handleChange} 
+            onChange={onChange} 
             required
           >
             <option value="">Seleccionar</option>
@@ -227,7 +165,7 @@ function RegisterForm() {
             id="regQuarter" 
             name="cuatrimestre" 
             value={formData.cuatrimestre} 
-            onChange={handleChange} 
+            onChange={onChange} 
             required
           >
             <option value="">Seleccionar</option>

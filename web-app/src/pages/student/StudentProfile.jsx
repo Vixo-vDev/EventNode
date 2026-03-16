@@ -1,15 +1,50 @@
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
+import { userService } from '../../services/userService'
 import CuentaVinculadaModal from '../../components/modals/CuentaVinculadaModal'
 import RestablecerContrasenaModal from '../../components/modals/RestablecerContrasenaModal'
 import VerificarCodigoModal from '../../components/modals/VerificarCodigoModal'
 import CodigoVerificadoModal from '../../components/modals/CodigoVerificadoModal'
 import NuevaContrasenaModal from '../../components/modals/NuevaContrasenaModal'
 import ContrasenaActualizadaModal from '../../components/modals/ContrasenaActualizadaModal'
-import profileAvatar from '../../assets/profile_avatar.png'
 
 function StudentProfile({ user }) {
-  const userName = user?.name || "Estudiante UTEZ";
-  const userInitials = userName.split(' ').map(n => n[0]).join('');
+  const [perfil, setPerfil] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    const fetchPerfil = async () => {
+      try {
+        const data = await userService.getPerfil(user.id)
+        setPerfil(data)
+      } catch (err) {
+        toast.error(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPerfil()
+  }, [user?.id])
+
+  const userName = perfil
+    ? `${perfil.nombre} ${perfil.apellidoPaterno}`
+    : user?.name || 'Estudiante UTEZ'
+  const userInitials = userName.split(' ').map(n => n[0]).join('')
+
+  const sexoLabel = perfil?.sexo === 'M' ? 'Masculino' : perfil?.sexo === 'F' ? 'Femenino' : perfil?.sexo || ''
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -24,7 +59,9 @@ function StudentProfile({ user }) {
             </div>
             <div className="text-center text-md-start">
               <h5 className="fw-bold mb-0">{userName}</h5>
-              <span className="badge bg-success bg-opacity-10 text-success small">Activo</span>
+              <span className={`badge ${perfil?.estado === 'ACTIVO' ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'} small`}>
+                {perfil?.estado || 'Activo'}
+              </span>
             </div>
             <div className="ms-md-auto">
               <button className="btn btn-link text-primary text-decoration-none small fw-semibold">
@@ -39,33 +76,37 @@ function StudentProfile({ user }) {
           </h6>
 
           <div className="row g-3 mb-4">
-            <div className="col-12 col-md-6">
+            <div className="col-12 col-md-4">
               <label className="form-label text-secondary small">Nombre(s)</label>
-              <input type="text" className="form-control bg-light" defaultValue="Sophia" readOnly />
+              <input type="text" className="form-control bg-light" value={perfil?.nombre || ''} readOnly />
             </div>
-            <div className="col-12 col-md-6">
-              <label className="form-label text-secondary small">Apellidos</label>
-              <input type="text" className="form-control bg-light" defaultValue="Díaz" readOnly />
+            <div className="col-12 col-md-4">
+              <label className="form-label text-secondary small">Apellido Paterno</label>
+              <input type="text" className="form-control bg-light" value={perfil?.apellidoPaterno || ''} readOnly />
+            </div>
+            <div className="col-12 col-md-4">
+              <label className="form-label text-secondary small">Apellido Materno</label>
+              <input type="text" className="form-control bg-light" value={perfil?.apellidoMaterno || ''} readOnly />
             </div>
             <div className="col-12 col-md-6">
               <label className="form-label text-secondary small">Correo</label>
-              <input type="email" className="form-control bg-light" defaultValue="20243ds01@utez.edu.mx" readOnly />
+              <input type="email" className="form-control bg-light" value={perfil?.correo || ''} readOnly />
             </div>
             <div className="col-12 col-md-6">
               <label className="form-label text-secondary small">Matrícula</label>
-              <input type="text" className="form-control bg-light" defaultValue="20243ds01" readOnly />
+              <input type="text" className="form-control bg-light" value={perfil?.matricula || ''} readOnly />
             </div>
-            <div className="col-12 col-md-6">
+            <div className="col-12 col-md-4">
               <label className="form-label text-secondary small">Edad</label>
-              <input type="text" className="form-control bg-light" defaultValue="21" readOnly />
+              <input type="text" className="form-control bg-light" value={perfil?.edad ?? ''} readOnly />
             </div>
-            <div className="col-12 col-md-6">
+            <div className="col-12 col-md-4">
               <label className="form-label text-secondary small">Sexo</label>
-              <input type="text" className="form-control bg-light" defaultValue="Femenino" readOnly />
+              <input type="text" className="form-control bg-light" value={sexoLabel} readOnly />
             </div>
-            <div className="col-12 col-md-6">
+            <div className="col-12 col-md-4">
               <label className="form-label text-secondary small">Cuatrimestre</label>
-              <input type="text" className="form-control bg-light" defaultValue="1" readOnly />
+              <input type="text" className="form-control bg-light" value={perfil?.cuatrimestre ?? ''} readOnly />
             </div>
           </div>
 
@@ -83,7 +124,7 @@ function StudentProfile({ user }) {
                 <span className="input-group-text bg-light border-end-0">
                   <i className="bi bi-lock text-secondary"></i>
                 </span>
-                <input type="password" className="form-control bg-light border-start-0" defaultValue="12345678" readOnly />
+                <input type="password" className="form-control bg-light border-start-0" defaultValue="••••••••" readOnly />
               </div>
               <button
                 className="btn btn-link text-primary text-decoration-none small fw-semibold p-0"

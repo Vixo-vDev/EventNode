@@ -24,23 +24,13 @@ function StudentHome() {
         }))
         setEventos(mapped)
       } catch {
-        setEventos([
-          { id: 1, image: eventAi, title: "Congreso Internacional de Inteligencia Artificial", date: "15 Ene 2025 | 9:00 AM", location: "Auditorio Principal, UTEZ" },
-          { id: 2, image: eventMarketing, title: "Workshop: Marketing Digitalización y Neuronas", date: "22 Ene 2025 | 11:00 AM", location: "Sala de Conferencias B" },
-          { id: 3, image: eventUiux, title: "Semana del Diseño UI/UX 2025", date: "29 Ene 2025 | 10:00 AM", location: "Laboratorio de Diseño" }
-        ])
+        setEventos([])
       } finally {
         setLoading(false)
       }
     }
     fetchEventos()
   }, [])
-
-  const mockDiplomas = [
-    { id: 4, image: eventMarketing, title: "Web Development Summit '25", date: "05 Feb 2025 | 8:00 AM", location: "Centro de Convenciones" },
-    { id: 5, image: eventAi, title: "Seminario Avanzado Big Data", date: "12 Feb 2025 | 2:00 PM", location: "Auditorio B, UTEZ" },
-    { id: 6, image: eventUiux, title: "Seminario Avanzado Big Data", date: "19 Feb 2025 | 3:00 PM", location: "Laboratorio de Cómputo" }
-  ]
 
   return (
     <div>
@@ -66,30 +56,48 @@ function StudentHome() {
         <i className="bi bi-calendar-event me-2 text-primary"></i>
         Próximos Eventos
       </h5>
-      <div className="row g-3 mb-5">
-        {loading ? (
-          <div className="col-12 text-center py-3">
-            <div className="spinner-border text-primary spinner-border-sm" role="status">
-              <span className="visually-hidden">Cargando...</span>
+      {loading ? (
+        <div className="text-center py-3">
+          <div className="spinner-border text-primary spinner-border-sm" role="status">
+            <span className="visually-hidden">Cargando...</span>
+          </div>
+        </div>
+      ) : eventos.length > 0 ? (
+        <div className="row g-3 mb-5">
+          {eventos.map(event => (
+            <div className="col-12 col-md-6 col-lg-4" key={event.id}>
+              <EventCard image={event.image} title={event.title} date={event.date} location={event.location} />
             </div>
+          ))}
+        </div>
+      ) : (
+        <div className="card border-0 shadow-sm rounded-3 mb-5">
+          <div className="card-body text-center py-5">
+            <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
+              <i className="bi bi-calendar-x text-primary fs-3"></i>
+            </div>
+            <h6 className="fw-bold mb-1">No hay eventos próximos</h6>
+            <p className="text-secondary small mb-0">
+              Cuando se publiquen nuevos eventos, aparecerán aquí.
+            </p>
           </div>
-        ) : eventos.map(event => (
-          <div className="col-12 col-md-6 col-lg-4" key={event.id}>
-            <EventCard image={event.image} title={event.title} date={event.date} location={event.location} />
-          </div>
-        ))}
-      </div>
+        </div>
+      )}
 
       <h5 className="fw-bold mb-3">
         <i className="bi bi-award me-2 text-primary"></i>
         Diploma
       </h5>
-      <div className="row g-3">
-        {mockDiplomas.map(diploma => (
-          <div className="col-12 col-md-6 col-lg-4" key={diploma.id}>
-             <EventCard image={diploma.image} title={diploma.title} date={diploma.date} location={diploma.location} />
+      <div className="card border-0 shadow-sm rounded-3">
+        <div className="card-body text-center py-5">
+          <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
+            <i className="bi bi-award text-primary fs-3"></i>
           </div>
-        ))}
+          <h6 className="fw-bold mb-1">Aún no tienes diplomas</h6>
+          <p className="text-secondary small mb-0">
+            Asiste a eventos para obtener tus diplomas y certificaciones.
+          </p>
+        </div>
       </div>
     </div>
   )

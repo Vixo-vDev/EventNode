@@ -55,11 +55,14 @@ public class AuthService {
         usuarioRepository.save(usuario);
 
         String rolNombre = usuario.getRol() != null ? usuario.getRol().getNombre() : null;
+        String nombreCompleto = usuario.getNombre() + " " + usuario.getApellidoPaterno();
 
         return new LoginResponse(
                 "Inicio de sesión exitoso",
                 rolNombre,
-                usuario.getIdUsuario()
+                usuario.getIdUsuario(),
+                nombreCompleto,
+                usuario.getCorreo()
         );
     }
 }

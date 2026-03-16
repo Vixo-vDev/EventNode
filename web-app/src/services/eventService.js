@@ -23,7 +23,6 @@ export const eventService = {
 
     const data = await response.json();
 
-    // Si el backend devuelve {mensaje: "No se encontraron resultados"}, retornar array vacío
     if (data.mensaje) {
       return [];
     }
@@ -32,15 +31,26 @@ export const eventService = {
   },
 
   /**
-   * Crear un nuevo evento (requiere autenticación HTTP Basic)
+   * Obtener las categorías disponibles para eventos
    */
-  crearEvento: async (eventoData, credentials) => {
+  getCategorias: async () => {
+    const response = await fetch(`${API_URL}/eventos/categorias`);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al consultar categorías');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Crear un nuevo evento
+   */
+  crearEvento: async (eventoData) => {
     const response = await fetch(`${API_URL}/eventos/crear`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa(`${credentials.email}:${credentials.password}`),
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(eventoData),
     });
 
@@ -53,15 +63,12 @@ export const eventService = {
   },
 
   /**
-   * Actualizar un evento existente (requiere autenticación HTTP Basic)
+   * Actualizar un evento existente
    */
-  actualizarEvento: async (idEvento, eventoData, credentials) => {
+  actualizarEvento: async (idEvento, eventoData) => {
     const response = await fetch(`${API_URL}/eventos/${idEvento}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa(`${credentials.email}:${credentials.password}`),
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(eventoData),
     });
 
@@ -74,15 +81,12 @@ export const eventService = {
   },
 
   /**
-   * Cancelar un evento (requiere autenticación HTTP Basic)
+   * Cancelar un evento
    */
-  cancelarEvento: async (idEvento, credentials) => {
+  cancelarEvento: async (idEvento) => {
     const response = await fetch(`${API_URL}/eventos/${idEvento}/cancelar`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa(`${credentials.email}:${credentials.password}`),
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
 
     if (!response.ok) {

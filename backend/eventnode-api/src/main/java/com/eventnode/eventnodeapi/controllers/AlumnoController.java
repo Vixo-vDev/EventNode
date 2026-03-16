@@ -5,6 +5,7 @@ import com.eventnode.eventnodeapi.services.AlumnoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,7 +37,26 @@ public class AlumnoController {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> manejarValidaciones(MethodArgumentNotValidException ex) {
         Map<String, String> body = new HashMap<>();
-        body.put("mensaje", "Ingrese una dirección de correo electrónico válida");
+        // Obtener el primer error de validación con su mensaje descriptivo
+        String mensaje = ex.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage())
+                .orElse("Error de validación en los datos enviados");
+        body.put("mensaje", mensaje);
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> manejarJsonInvalido(HttpMessageNotReadableException ex) {
+        Map<String, String> body = new HashMap<>();
+        String msg = ex.getMessage();
+        if (msg != null && msg.contains("fechaNacimiento")) {
+            body.put("mensaje", "Formato de fecha inválido. Use el formato AAAA-MM-DD");
+        } else if (msg != null && msg.contains("cuatrimestre")) {
+            body.put("mensaje", "El cuatrimestre debe ser un número válido");
+        } else {
+            body.put("mensaje", "Error en el formato de los datos enviados");
+        }
         return ResponseEntity.badRequest().body(body);
     }
 
@@ -54,4 +74,3 @@ public class AlumnoController {
         return ResponseEntity.badRequest().body(body);
     }
 }
-

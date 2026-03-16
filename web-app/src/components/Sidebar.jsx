@@ -3,16 +3,22 @@ import { NavLink, Link, useLocation } from 'react-router-dom'
 function Sidebar({ menuItems, user }) {
   const location = useLocation()
 
+  const userName = user?.name || 'Usuario'
+  const userInitials = userName.split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  const rolLabel = user?.role === 'ADMIN'
+    ? (user?.originalRole === 'SUPERADMIN' ? 'Super Administrador' : 'Administrador')
+    : 'Estudiante'
+
   return (
     <nav className="d-flex flex-column h-100 bg-white border-end py-3">
       <div className="d-flex align-items-center gap-2 px-3 mb-4">
-        <div className="rounded-circle bg-light d-flex align-items-center justify-content-center flex-shrink-0"
-          style={{ width: '40px', height: '40px' }}>
-          <i className="bi bi-person-fill text-secondary"></i>
+        <div className="rounded-circle border border-2 border-primary bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0 fw-bold text-primary"
+          style={{ width: '40px', height: '40px', fontSize: '14px' }}>
+          {userInitials}
         </div>
         <div className="text-truncate">
-          <div className="fw-semibold small text-truncate text-dark">{user?.name || 'Usuario'}</div>
-          <div className="text-secondary small text-truncate">{user?.role === 'ADMIN' ? 'Administrador' : 'Estudiante'}</div>
+          <div className="fw-semibold small text-truncate text-dark">{userName}</div>
+          <div className="text-secondary small text-truncate">{rolLabel}</div>
         </div>
       </div>
 

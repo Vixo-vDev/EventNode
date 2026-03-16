@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { eventService } from '../../services/eventService'
 import eventConcert from '../../assets/events/event_concert.png'
 import eventTechSummit from '../../assets/events/event_tech_summit.png'
@@ -110,45 +111,164 @@ function AdminEventCard({ image, title, location, date, status, capacityCurrent,
 // Imágenes de fallback para cuando la API no proporciona banner
 const fallbackImages = [eventConcert, eventTechSummit, eventGala, eventFestival, eventWorkshop]
 
-function GestionEventos() {
+const INITIAL_EVENT_FORM = {
+  nombre: '',
+  ubicacion: '',
+  descripcion: '',
+  fechaInicio: '',
+  fechaFin: '',
+  idCategoria: '',
+  capacidadMaxima: '',
+  tiempoCancelacionHoras: '',
+  tiempoToleranciaMinutos: '',
+  banner: '',
+}
+
+function GestionEventos({ user }) {
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState(null)
 
+  // Estado para crear evento
+  const [categorias, setCategorias] = useState([])
+  const [eventForm, setEventForm] = useState(INITIAL_EVENT_FORM)
+  const [eventError, setEventError] = useState('')
+  const [eventLoading, setEventLoading] = useState(false)
+
+  const fetchEventos = async () => {
+    try {
+      const data = await eventService.getEventos()
+      const mapped = data.map((e, index) => ({
+        id: e.idEvento,
+        image: e.banner && e.banner !== 'default_banner.png' ? e.banner : fallbackImages[index % fallbackImages.length],
+        title: e.nombre,
+        location: e.ubicacion,
+        date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '',
+        status: e.estado,
+        capacityCurrent: 0,
+        capacityMax: e.capacidadMaxima,
+        isFull: false,
+        isFinished: e.estado === 'FINALIZADO',
+      }))
+      setEventos(mapped)
+    } catch (err) {
+      setErrorMsg(err.message)
+      setEventos([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    const fetchEventos = async () => {
+    fetchEventos()
+
+    // Cargar categorías para el formulario
+    const fetchCategorias = async () => {
       try {
-        const data = await eventService.getEventos()
-        // Mapear la respuesta del backend al formato del componente
-        const mapped = data.map((e, index) => ({
-          id: e.idEvento,
-          image: e.banner || fallbackImages[index % fallbackImages.length],
-          title: e.nombre,
-          location: e.ubicacion,
-          date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '',
-          status: e.estado,
-          capacityCurrent: 0, // El backend no devuelve inscritos aún
-          capacityMax: e.capacidadMaxima,
-          isFull: false,
-          isFinished: e.estado === 'FINALIZADO',
-        }))
-        setEventos(mapped)
-      } catch (err) {
-        setErrorMsg(err.message)
-        // Fallback a datos mock si el backend no está disponible
-        setEventos([
-          { id: 1, image: eventConcert, title: "Concierto Rock en Vivo", location: "Estadio Nacional, Lima", date: "25 Oct", status: "ACTIVO", capacityCurrent: 65, capacityMax: 100 },
-          { id: 2, image: eventTechSummit, title: "Tech Summit 2023", location: "Centro de Convenciones", date: "12 Nov", status: "ACTIVO", capacityCurrent: 500, capacityMax: 500, isFull: true },
-          { id: 3, image: eventGala, title: "Gala de Aniversario", location: "Hotel Marriott", date: "Mañana", status: "ACTIVO", capacityCurrent: 120, capacityMax: 150 },
-          { id: 4, image: eventFestival, title: "Festival Gastronómico", location: "Parque de la Exposición", date: "15 Sep", status: "TERMINADO", capacityCurrent: 2000, capacityMax: 2000, isFinished: true },
-          { id: 5, image: eventWorkshop, title: "Taller de Innovación", location: "Auditorio Central", date: "30 Oct", status: "CANCELADO", capacityCurrent: 0, capacityMax: 50 },
-        ])
-      } finally {
-        setLoading(false)
+        const data = await eventService.getCategorias()
+        setCategorias(data)
+      } catch {
+        setCategorias([])
       }
     }
-    fetchEventos()
+    fetchCategorias()
   }, [])
+
+  const handleEventChange = (e) => {
+    const { name, value } = e.target
+    setEventForm(prev => ({ ...prev, [name]: value }))
+    setEventError('')
+  }
+
+  const handleEventSubmit = async (e) => {
+    e.preventDefault()
+    setEventError('')
+
+    // Validaciones frontend
+    const ahora = new Date()
+    const fechaInicio = new Date(eventForm.fechaInicio)
+    const fechaFin = new Date(eventForm.fechaFin)
+
+    if (fechaInicio <= ahora) {
+      setEventError('La fecha de inicio debe ser posterior a la fecha y hora actual')
+      return
+    }
+    if (fechaFin <= fechaInicio) {
+      setEventError('La fecha de fin debe ser posterior a la fecha de inicio')
+      return
+    }
+    if (!eventForm.idCategoria) {
+      setEventError('Selecciona una categoría')
+      return
+    }
+    if (parseInt(eventForm.capacidadMaxima) <= 0) {
+      setEventError('La capacidad máxima debe ser mayor a cero')
+      return
+    }
+    if (parseInt(eventForm.tiempoCancelacionHoras) <= 0) {
+      setEventError('El tiempo de cancelación debe ser mayor a cero')
+      return
+    }
+    if (parseInt(eventForm.tiempoToleranciaMinutos) < 0) {
+      setEventError('El tiempo de tolerancia debe ser mayor o igual a cero')
+      return
+    }
+
+    // Validar banner si se proporcionó
+    if (eventForm.banner && eventForm.banner.trim() !== '') {
+      const bannerLower = eventForm.banner.toLowerCase()
+      if (!bannerLower.endsWith('.jpg') && !bannerLower.endsWith('.jpeg') && !bannerLower.endsWith('.png')) {
+        setEventError('El banner debe ser una imagen .jpg, .jpeg o .png')
+        return
+      }
+    }
+
+    setEventLoading(true)
+    try {
+      // Formatear fechas para el backend: yyyy-MM-ddTHH:mm:ss
+      const fechaInicioStr = eventForm.fechaInicio.length === 16
+        ? eventForm.fechaInicio + ':00'
+        : eventForm.fechaInicio
+
+      const fechaFinStr = eventForm.fechaFin.length === 16
+        ? eventForm.fechaFin + ':00'
+        : eventForm.fechaFin
+
+      const payload = {
+        nombre: eventForm.nombre.trim(),
+        ubicacion: eventForm.ubicacion.trim(),
+        descripcion: eventForm.descripcion.trim(),
+        fechaInicio: fechaInicioStr,
+        fechaFin: fechaFinStr,
+        idCategoria: parseInt(eventForm.idCategoria),
+        capacidadMaxima: parseInt(eventForm.capacidadMaxima),
+        tiempoCancelacionHoras: parseInt(eventForm.tiempoCancelacionHoras),
+        tiempoToleranciaMinutos: parseInt(eventForm.tiempoToleranciaMinutos),
+        banner: eventForm.banner.trim() || null,
+        idCreador: user?.id,
+      }
+
+      await eventService.crearEvento(payload)
+      toast.success('Evento creado exitosamente')
+      setEventForm(INITIAL_EVENT_FORM)
+
+      // Cerrar modal
+      const modalEl = document.getElementById('crearEventoModal')
+      if (modalEl && window.bootstrap) {
+        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
+        if (bsModal) bsModal.hide()
+      }
+
+      // Refrescar lista
+      setLoading(true)
+      fetchEventos()
+    } catch (err) {
+      setEventError(err.message)
+      toast.error(err.message)
+    } finally {
+      setEventLoading(false)
+    }
+  }
 
   return (
     <div>
@@ -194,13 +314,7 @@ function GestionEventos() {
               <span className="visually-hidden">Cargando...</span>
             </div>
           </div>
-        ) : eventos.length === 0 ? (
-          <div className="col-12 text-center py-5 text-secondary">
-            <i className="bi bi-calendar-x" style={{ fontSize: '3rem' }}></i>
-            <h5 className="mt-3">No hay eventos registrados</h5>
-            <p className="small">Comience creando un nuevo evento en esta plataforma.</p>
-          </div>
-        ) : eventos.map(evento => (
+        ) : eventos.length > 0 ? eventos.map(evento => (
           <div className="col-12 col-md-6 col-lg-4" key={evento.id}>
             <AdminEventCard
               image={evento.image}
@@ -214,7 +328,7 @@ function GestionEventos() {
               isFinished={evento.isFinished}
             />
           </div>
-        ))}
+        )) : null}
         <div className="col-12 col-md-6 col-lg-4">
           <div
             className="card h-100 rounded-3 d-flex align-items-center justify-content-center text-center p-4"
@@ -235,7 +349,14 @@ function GestionEventos() {
         </div>
       </div>
 
-      <CrearEventoModal />
+      <CrearEventoModal
+        formData={eventForm}
+        categorias={categorias}
+        error={eventError}
+        isLoading={eventLoading}
+        onChange={handleEventChange}
+        onSubmit={handleEventSubmit}
+      />
       <EditarEventoModal />
       <QRCodeModal />
       <IngresoManualModal />

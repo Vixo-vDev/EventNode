@@ -4,10 +4,11 @@ import com.eventnode.eventnodeapi.dtos.EventoCreateRequest;
 import com.eventnode.eventnodeapi.dtos.EventoUpdateRequest;
 import com.eventnode.eventnodeapi.models.Categoria;
 import com.eventnode.eventnodeapi.models.Evento;
+import com.eventnode.eventnodeapi.models.Usuario;
 import com.eventnode.eventnodeapi.repositories.CategoriaRepository;
 import com.eventnode.eventnodeapi.repositories.EventoRepository;
 import com.eventnode.eventnodeapi.repositories.OrganizadorRepository;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,18 +23,29 @@ public class EventoService {
     private final EventoRepository eventoRepository;
     private final CategoriaRepository categoriaRepository;
     private final OrganizadorRepository organizadorRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public EventoService(EventoRepository eventoRepository,
                          CategoriaRepository categoriaRepository,
-                         OrganizadorRepository organizadorRepository) {
+                         OrganizadorRepository organizadorRepository,
+                         UsuarioRepository usuarioRepository) {
         this.eventoRepository = eventoRepository;
         this.categoriaRepository = categoriaRepository;
         this.organizadorRepository = organizadorRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Transactional
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SUPERADMIN')")
-    public void crearEvento(EventoCreateRequest request, Integer idUsuarioCreador) {
+    public void crearEvento(EventoCreateRequest request) {
+
+        // Validar que el creador existe y es admin
+        Usuario creador = usuarioRepository.findById(request.getIdCreador())
+                .orElseThrow(() -> new IllegalArgumentException("Usuario creador no encontrado"));
+
+        String rolCreador = creador.getRol() != null ? creador.getRol().getNombre() : null;
+        if (!"ADMINISTRADOR".equals(rolCreador) && !"SUPERADMIN".equals(rolCreador)) {
+            throw new SecurityException("Solo los administradores pueden crear eventos");
+        }
 
         if (eventoRepository.findByNombreAndFechaInicio(request.getNombre(), request.getFechaInicio()).isPresent()) {
             throw new IllegalStateException("Ya existe un evento con ese nombre en ese horario");
@@ -63,10 +75,12 @@ public class EventoService {
             throw new IllegalArgumentException("El tiempo de tolerancia debe ser un número mayor o igual a cero");
         }
 
+        // Banner es opcional - si se proporciona, validar extensión
         String banner = request.getBanner();
-        if (banner == null || banner.isBlank()
-                || !(banner.endsWith(".jpg") || banner.endsWith(".jpeg") || banner.endsWith(".png"))) {
-            throw new IllegalArgumentException("El banner del evento debe ser una imagen válida");
+        if (banner != null && !banner.isBlank()) {
+            if (!(banner.endsWith(".jpg") || banner.endsWith(".jpeg") || banner.endsWith(".png"))) {
+                throw new IllegalArgumentException("El banner del evento debe ser una imagen válida (.jpg, .jpeg, .png)");
+            }
         }
 
         Categoria categoria = categoriaRepository.findById(request.getIdCategoria())
@@ -81,10 +95,10 @@ public class EventoService {
         evento.setFechaFin(request.getFechaFin());
         evento.setTiempoCancelacionHoras(request.getTiempoCancelacionHoras());
         evento.setTiempoToleranciaMinutos(request.getTiempoToleranciaMinutos());
-        evento.setBanner(request.getBanner());
+        evento.setBanner(banner != null && !banner.isBlank() ? banner : "default_banner.png");
         evento.setEstado("ACTIVO");
         evento.setCategoria(categoria);
-        evento.setCreadoPor(idUsuarioCreador);
+        evento.setCreadoPor(request.getIdCreador());
         evento.setFechaCreacion(LocalDateTime.now());
 
         eventoRepository.save(evento);
@@ -97,7 +111,6 @@ public class EventoService {
         return eventoRepository.findAll((root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
 
-            // Solo eventos activos y no pasados
             predicates.add(cb.equal(root.get("estado"), "ACTIVO"));
             predicates.add(cb.greaterThanOrEqualTo(root.get("fechaFin"), ahora));
 
@@ -118,7 +131,6 @@ public class EventoService {
     }
 
     @Transactional
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SUPERADMIN')")
     public void cancelarEvento(Integer idEvento) {
         Evento evento = eventoRepository.findById(idEvento)
                 .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado"));
@@ -128,7 +140,6 @@ public class EventoService {
     }
 
     @Transactional
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SUPERADMIN')")
     public void actualizarEvento(Integer idEvento, EventoUpdateRequest request) {
         Evento evento = eventoRepository.findById(idEvento)
                 .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado"));
@@ -155,9 +166,6 @@ public class EventoService {
         if (request.getUbicacion() != null && request.getUbicacion().isBlank()) {
             throw new IllegalArgumentException("La ubicación no puede quedar vacía");
         }
-        if (request.getBanner() != null && request.getBanner().isBlank()) {
-            throw new IllegalArgumentException("El banner del evento no puede quedar vacío");
-        }
 
         if (request.getCapacidadMaxima() != null && request.getCapacidadMaxima() <= 0) {
             throw new IllegalArgumentException("La capacidad máxima debe ser un número mayor a cero");
@@ -172,8 +180,8 @@ public class EventoService {
         }
 
         if (request.getBanner() != null) {
-            String banner = request.getBanner();
-            if (!(banner.endsWith(".jpg") || banner.endsWith(".jpeg") || banner.endsWith(".png"))) {
+            String bannerUpd = request.getBanner();
+            if (!(bannerUpd.endsWith(".jpg") || bannerUpd.endsWith(".jpeg") || bannerUpd.endsWith(".png"))) {
                 throw new IllegalArgumentException("El banner del evento debe ser una imagen válida");
             }
         }
@@ -201,39 +209,21 @@ public class EventoService {
                 : evento.getTiempoCancelacionHoras();
 
         if (nuevoTiempoCancelacionHoras != null && nuevaFechaInicio != null && nuevaFechaInicio.isAfter(ahora)) {
-            long horasDisponibles = Duration.between(ahora, nuevaFechaInicio).toHours();
-            if (nuevoTiempoCancelacionHoras > horasDisponibles) {
+            long horasDisp = Duration.between(ahora, nuevaFechaInicio).toHours();
+            if (nuevoTiempoCancelacionHoras > horasDisp) {
                 throw new IllegalArgumentException("El tiempo de aceptación de cancelación no puede ser mayor al tiempo disponible antes del evento");
             }
         }
 
-        if (request.getNombre() != null) {
-            evento.setNombre(request.getNombre());
-        }
-        if (request.getDescripcion() != null) {
-            evento.setDescripcion(request.getDescripcion());
-        }
-        if (request.getUbicacion() != null) {
-            evento.setUbicacion(request.getUbicacion());
-        }
-        if (request.getCapacidadMaxima() != null) {
-            evento.setCapacidadMaxima(request.getCapacidadMaxima());
-        }
-        if (request.getTiempoCancelacionHoras() != null) {
-            evento.setTiempoCancelacionHoras(request.getTiempoCancelacionHoras());
-        }
-        if (request.getTiempoToleranciaMinutos() != null) {
-            evento.setTiempoToleranciaMinutos(request.getTiempoToleranciaMinutos());
-        }
-        if (request.getBanner() != null) {
-            evento.setBanner(request.getBanner());
-        }
-        if (request.getFechaInicio() != null) {
-            evento.setFechaInicio(request.getFechaInicio());
-        }
-        if (request.getFechaFin() != null) {
-            evento.setFechaFin(request.getFechaFin());
-        }
+        if (request.getNombre() != null) evento.setNombre(request.getNombre());
+        if (request.getDescripcion() != null) evento.setDescripcion(request.getDescripcion());
+        if (request.getUbicacion() != null) evento.setUbicacion(request.getUbicacion());
+        if (request.getCapacidadMaxima() != null) evento.setCapacidadMaxima(request.getCapacidadMaxima());
+        if (request.getTiempoCancelacionHoras() != null) evento.setTiempoCancelacionHoras(request.getTiempoCancelacionHoras());
+        if (request.getTiempoToleranciaMinutos() != null) evento.setTiempoToleranciaMinutos(request.getTiempoToleranciaMinutos());
+        if (request.getBanner() != null) evento.setBanner(request.getBanner());
+        if (request.getFechaInicio() != null) evento.setFechaInicio(request.getFechaInicio());
+        if (request.getFechaFin() != null) evento.setFechaFin(request.getFechaFin());
 
         if (request.getIdCategoria() != null) {
             Categoria categoria = categoriaRepository.findById(request.getIdCategoria())
@@ -244,4 +234,3 @@ public class EventoService {
         eventoRepository.save(evento);
     }
 }
-

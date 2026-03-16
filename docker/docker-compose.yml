@@ -1,21 +1,26 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: event_node_db
-    restart: always
+    container_name: event_node_mysql
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rooteventnode01
+      MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: event_node
       MYSQL_USER: vixo_dev
       MYSQL_PASSWORD: eventnode01
-    command: --port=3307
     ports:
-      - "3307:3307"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./mysql/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     networks:
       - eventos_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
@@ -25,23 +30,12 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3307/event_node?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/event_node?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: vixo_dev
       SPRING_DATASOURCE_PASSWORD: eventnode01
     depends_on:
-      - mysql
-    networks:
-      - eventos_network
-
-  frontend:
-    build:
-      context: ../web-app
-      dockerfile: Dockerfile
-    container_name: event_node_frontend
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
+      mysql:
+        condition: service_healthy
     networks:
       - eventos_network
 
