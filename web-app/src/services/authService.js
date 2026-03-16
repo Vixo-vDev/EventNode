@@ -1,3 +1,5 @@
+import { toast } from 'react-toastify'
+
 const API_URL = '/api';
 
 const rolMap = {
@@ -7,7 +9,7 @@ const rolMap = {
 };
 
 export const authService = {
-  login: async (correo, password) => {
+  login: async (correo, password, rememberMe = false) => {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
@@ -23,16 +25,33 @@ export const authService = {
 
     const data = await response.json();
 
-    // Mapear la respuesta del backend al formato que espera App.jsx
-    // Backend devuelve: { mensaje, rol, idUsuario, nombre, correo }
-    // Frontend espera: { id, name, role, email }
-    return {
+    // Backend devuelve: { mensaje, rol, idUsuario, nombre, apellidoPaterno,
+    //                     apellidoMaterno, correo, matricula, sexo, cuatrimestre }
+    // Frontend espera: { id, name, role, email, ... }
+    const userData = {
       id: data.idUsuario,
       name: data.nombre || 'Usuario',
       role: rolMap[data.rol] || 'STUDENT',
       originalRole: data.rol,
       email: data.correo || correo,
+      apellidoPaterno: data.apellidoPaterno,
+      apellidoMaterno: data.apellidoMaterno,
+      matricula: data.matricula,
+      sexo: data.sexo,
+      cuatrimestre: data.cuatrimestre,
     };
+
+    // Almacenar según preferencia
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem('auth_user', JSON.stringify(userData));
+    storage.setItem('auth_token', btoa(correo + ':' + password));
+
+    // Limpiar el otro storage por si acaso quedaron residuos
+    const otherStorage = rememberMe ? sessionStorage : localStorage;
+    otherStorage.removeItem('auth_user');
+    otherStorage.removeItem('auth_token');
+
+    return userData;
   },
 
   register: async (alumnoData) => {
@@ -53,6 +72,20 @@ export const authService = {
   },
 
   logout: () => {
-    sessionStorage.removeItem('loggedUser');
+    localStorage.removeItem('auth_user');
+    localStorage.removeItem('auth_token');
+    sessionStorage.removeItem('auth_user');
+    sessionStorage.removeItem('auth_token');
+    toast.info('Sesión cerrada exitosamente');
+  },
+
+  getAuthHeader: () => {
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    return token ? { 'Authorization': `Basic ${token}` } : {};
+  },
+
+  getCurrentUser: () => {
+    const userStr = localStorage.getItem('auth_user') || sessionStorage.getItem('auth_user');
+    return userStr ? JSON.parse(userStr) : null;
   }
 };

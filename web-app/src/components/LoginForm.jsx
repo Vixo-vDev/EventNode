@@ -1,8 +1,38 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { authService } from '../services/authService'
 
-function LoginForm({ correo, setCorreo, password, setPassword, error, isLoading, onSubmit }) {
+function LoginForm({ onLogin }) {
+  const [correo, setCorreo] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [keepSession, setKeepSession] = useState(false)
+  const navigate = useNavigate()
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      const userData = await authService.login(correo, password, keepSession)
+      onLogin(userData)
+
+      if (userData.role === 'ADMIN') {
+        navigate('/admin')
+      } else {
+        navigate('/estudiante')
+      }
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={handleSubmit}>
       {error && <div className="alert alert-danger mb-3 p-2 small text-center">{error}</div>}
       <div className="mb-3">
         <label className="form-label small fw-semibold" htmlFor="loginEmail">
@@ -60,6 +90,8 @@ function LoginForm({ correo, setCorreo, password, setPassword, error, isLoading,
           type="checkbox"
           className="form-check-input"
           id="keepSession"
+          checked={keepSession}
+          onChange={(e) => setKeepSession(e.target.checked)}
         />
         <label className="form-check-label small" htmlFor="keepSession">
           Mantener Sesión Iniciada
