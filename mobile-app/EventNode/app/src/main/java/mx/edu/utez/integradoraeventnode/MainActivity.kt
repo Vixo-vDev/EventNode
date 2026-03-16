@@ -32,7 +32,19 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             IntegradoraEventNodeTheme {
-                var currentScreen by remember { mutableStateOf(AppScreen.Login) }
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
+                val mantenerSesion = prefs.getBoolean("mantenerSesion", false)
+                val rol = prefs.getString("rol", "") ?: ""
+                
+                val startScreen = if (mantenerSesion) {
+                    if (rol.contains("ADMIN", ignoreCase = true)) AppScreen.AdminHome else AppScreen.Home
+                } else {
+                    AppScreen.Login
+                }
+                
+                var currentScreen by remember { mutableStateOf(startScreen) }
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
                         AppScreen.Login -> LoginScreen(
@@ -61,7 +73,10 @@ class MainActivity : ComponentActivity() {
                             onDiplomas = { currentScreen = AppScreen.AdminDiplomas },
                             onAnalitica = { currentScreen = AppScreen.AdminAnalytics },
                             onProfile = { currentScreen = AppScreen.AdminProfile },
-                            onLogout = { currentScreen = AppScreen.Login }
+                            onLogout = { 
+                                prefs.edit().putBoolean("mantenerSesion", false).apply()
+                                currentScreen = AppScreen.Login 
+                            }
                         )
                         AppScreen.AdminAgenda -> AdminAgendaScreen(
                             modifier = Modifier.padding(innerPadding),
@@ -174,7 +189,10 @@ class MainActivity : ComponentActivity() {
                             onAgenda = { currentScreen = AppScreen.Agenda },
                             onDiplomas = { currentScreen = AppScreen.Diplomas },
                             onEditProfile = { currentScreen = AppScreen.EditProfile },
-                            onLogout = { currentScreen = AppScreen.Login }
+                            onLogout = { 
+                                prefs.edit().putBoolean("mantenerSesion", false).apply()
+                                currentScreen = AppScreen.Login 
+                            }
                         )
                         AppScreen.EditProfile -> EditProfileScreen(
                             modifier = Modifier.padding(innerPadding),

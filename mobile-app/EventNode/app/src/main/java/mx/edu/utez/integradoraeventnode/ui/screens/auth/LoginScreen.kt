@@ -39,6 +39,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import kotlinx.coroutines.launch
+import mx.edu.utez.integradoraeventnode.data.network.ApiClient
+import mx.edu.utez.integradoraeventnode.data.network.models.LoginRequest
+import org.json.JSONObject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,6 +76,15 @@ fun LoginScreen(
     var showEmailSent by remember { mutableStateOf(false) }
     var recoverEmail by remember { mutableStateOf("") }
     var recoverCode by remember { mutableStateOf("") }
+    var showSuccessModal by remember { mutableStateOf(false) }
+    
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE) }
+    var attempts by remember { mutableIntStateOf(prefs.getInt("loginAttempts", 0)) }
+    var lockoutUntil by remember { mutableLongStateOf(prefs.getLong("lockoutUntil", 0L)) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(
@@ -131,6 +147,16 @@ fun LoginScreen(
                         
                         Spacer(modifier = Modifier.height(24.dp))
                         
+                        if (errorMessage != null) {
+                            Text(
+                                text = errorMessage!!,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                            )
+                        }
+                        
                         Text(
                             text = "Correo Institucional",
                             style = MaterialTheme.typography.labelLarge,
@@ -142,7 +168,7 @@ fun LoginScreen(
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it },
-                            placeholder = { Text("ejemplo@institucion.edu", color = Color(0xFF999999)) },
+                            placeholder = { Text("matricula@utez.edu.mx", color = Color(0xFF999999)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = TextFieldDefaults.colors(
@@ -233,14 +259,86 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(24.dp))
                         
                         Button(
-                            onClick = { onLogin(email.contains("admin")) },
+                            onClick = {
+                                val now = System.currentTimeMillis()
+                                if (lockoutUntil > now) {
+                                    val remaining = (lockoutUntil - now) / 60000 + 1
+                                    errorMessage = "Cuenta bloqueada por seguridad. Intente en $remaining minutos."
+                                    return@Button
+                                } else if (lockoutUntil > 0L) {
+                                    attempts = 0
+                                    lockoutUntil = 0L
+                                    prefs.edit().putInt("loginAttempts", 0).putLong("lockoutUntil", 0L).apply()
+                                }
+
+                                if (email.isBlank() || password.isBlank()) {
+                                    errorMessage = "Credenciales incorrectas"
+                                    return@Button
+                                }
+
+                                isLoading = true
+                                errorMessage = null
+                                
+                                scope.launch {
+                                    try {
+                                        val response = ApiClient.apiService.login(LoginRequest(email, password))
+                                        if (response.isSuccessful) {
+                                            val body = response.body()
+                                            val rol = body?.rol ?: ""
+                                            prefs.edit().apply {
+                                                putInt("loginAttempts", 0)
+                                                putString("nombre", body?.nombre ?: "")
+                                                putString("apellidoPaterno", body?.apellidoPaterno ?: "")
+                                                putString("apellidoMaterno", body?.apellidoMaterno ?: "")
+                                                putString("correo", body?.correo ?: "")
+                                                putString("matricula", body?.matricula ?: "")
+                                                putString("sexo", body?.sexo ?: "")
+                                                putInt("cuatrimestre", body?.cuatrimestre ?: 0)
+                                                putString("rol", rol)
+                                                putBoolean("mantenerSesion", keepSession)
+                                            }.apply()
+                                            attempts = 0
+                                            showSuccessModal = true
+                                            kotlinx.coroutines.delay(1500)
+                                            showSuccessModal = false
+                                            onLogin(rol.contains("ADMIN", ignoreCase = true))
+                                        } else {
+                                            attempts++
+                                            prefs.edit().putInt("loginAttempts", attempts).apply()
+                                            
+                                            val errorStr = response.errorBody()?.string()
+                                            var msg = "Credenciales incorrectas"
+                                            if (errorStr != null) {
+                                                try {
+                                                    val json = JSONObject(errorStr)
+                                                    msg = json.optString("mensaje", "Credenciales incorrectas")
+                                                } catch(e: Exception) {}
+                                            }
+                                            
+                                            if (attempts >= 3) {
+                                                val lockTime = System.currentTimeMillis() + 15 * 60 * 1000
+                                                lockoutUntil = lockTime
+                                                prefs.edit().putLong("lockoutUntil", lockTime).apply()
+                                                errorMessage = "Ha fallado 3 veces. El sistema bloquea el acceso por 15 minutos."
+                                            } else {
+                                                errorMessage = msg
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        errorMessage = "Error de conexión"
+                                    } finally {
+                                        isLoading = false
+                                    }
+                                }
+                            },
+                            enabled = !isLoading,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
                         ) {
-                            Text("Iniciar Sesión", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text(if (isLoading) "Cargando..." else "Iniciar Sesión", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
                         
                         Spacer(modifier = Modifier.height(24.dp))
@@ -267,6 +365,22 @@ fun LoginScreen(
                                 color = Color(0xFF2F6FED),
                                 modifier = Modifier.clickable { onCreateAccount() }
                             )
+                        }
+                    }
+                }
+            }
+
+            if (showSuccessModal) {
+                Box(modifier = Modifier.fillMaxSize().background(Color(0x80000000)).clickable(enabled = false) {}, contentAlignment = Alignment.Center) {
+                    Card(modifier = Modifier.fillMaxWidth().padding(24.dp).widthIn(max = 360.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
+                        Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFE8F5E9)), contentAlignment = Alignment.Center) {
+                                Image(bitmap = assetImageBitmap("check-circle.png"), contentDescription = null, modifier = Modifier.size(32.dp), colorFilter = ColorFilter.tint(Color(0xFF4CAF50)))
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text("¡Inicio de sesión exitoso!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text("Conectando con el servidor...", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF666666), textAlign = TextAlign.Center)
                         }
                     }
                 }

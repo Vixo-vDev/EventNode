@@ -66,6 +66,23 @@ fun ProfileScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("********") }
 
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE) }
+    
+    val nombre = prefs.getString("nombre", "") ?: ""
+    val apellidoPaterno = prefs.getString("apellidoPaterno", "") ?: ""
+    val apellidoMaterno = prefs.getString("apellidoMaterno", "") ?: ""
+    val correo = prefs.getString("correo", "") ?: ""
+    val matricula = prefs.getString("matricula", "") ?: ""
+    val sexo = prefs.getString("sexo", "") ?: ""
+    val cuatrimestre = prefs.getInt("cuatrimestre", 0)
+    val rol = prefs.getString("rol", "ALUMNO") ?: "ALUMNO"
+
+    val fullName = listOf(nombre, apellidoPaterno, apellidoMaterno)
+        .filter { it.isNotBlank() }
+        .joinToString(" ")
+        .ifBlank { "Usuario" }
+
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -116,36 +133,38 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
-                        text = "Panfila Portillo",
+                        text = fullName,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "DESARROLLO DE SOFTWARE",
+                        text = rol.uppercase(),
                         style = MaterialTheme.typography.labelMedium,
                         color = Color(0xFF2F6FED),
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "panfila.portilla@eventnode.edu",
+                        text = correo.ifBlank { "Sin correo" },
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF7A7A7A)
                     )
                     
                     Spacer(modifier = Modifier.height(12.dp))
                     
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFFF0F2F5))
-                            .padding(horizontal = 12.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "ID: 2024098231",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF555555),
-                            fontWeight = FontWeight.Bold
-                        )
+                    if (matricula.isNotBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color(0xFFF0F2F5))
+                                .padding(horizontal = 12.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "Matrícula: $matricula",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF555555),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
 
@@ -158,18 +177,18 @@ fun ProfileScreen(
                         .padding(horizontal = 24.dp)
                 ) {
                     Text(
-                        text = "Datos del Alumno",
+                        text = "Datos del Usuario",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    InfoRow(label = "Nombre", value = "Panfila", icon = "user.png")
-                    InfoRow(label = "Apellidos", value = "Portillo", icon = "user.png")
-                    InfoRow(label = "Correo", value = "panfila.portillo@eventnode.edu", icon = "correo.png")
-                    InfoRow(label = "Matrícula", value = "2024098231", icon = "diploma.png")
-                    InfoRow(label = "Sexo", value = "Femenino", icon = "user.png")
-                    InfoRow(label = "Cuatrimestre", value = "7mo", icon = "book-open-reader.png")
+                    InfoRow(label = "Nombre", value = nombre.ifBlank { "N/A" }, icon = "user.png")
+                    InfoRow(label = "Apellidos", value = "$apellidoPaterno $apellidoMaterno".trim().ifBlank { "N/A" }, icon = "user.png")
+                    InfoRow(label = "Correo", value = correo.ifBlank { "N/A" }, icon = "correo.png")
+                    if (matricula.isNotBlank()) InfoRow(label = "Matrícula", value = matricula, icon = "diploma.png")
+                    if (sexo.isNotBlank()) InfoRow(label = "Sexo", value = sexo, icon = "user.png")
+                    if (cuatrimestre > 0) InfoRow(label = "Cuatrimestre", value = "$cuatrimestre°", icon = "book-open-reader.png")
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -362,7 +381,7 @@ private fun InfoRow(label: String, value: String, icon: String) {
 }
 
 @Composable
-fun ProfileBottomNav(onHome: () -> Unit, onAgenda: () -> Unit, onDiplomas: () -> Unit, onProfile: () -> Unit) {
+fun ProfileBottomNav(currentScreen: String = "Perfil", onHome: () -> Unit, onAgenda: () -> Unit, onDiplomas: () -> Unit, onProfile: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -377,10 +396,10 @@ fun ProfileBottomNav(onHome: () -> Unit, onAgenda: () -> Unit, onDiplomas: () ->
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BottomNavItem(label = "Inicio", icon = "home.png", selected = false, onClick = onHome)
-            BottomNavItem(label = "Agenda", icon = "book-open-reader.png", selected = false, onClick = onAgenda)
-            BottomNavItem(label = "Diplomas", icon = "diploma.png", selected = false, onClick = onDiplomas)
-            BottomNavItem(label = "Perfil", icon = "user.png", selected = true, onClick = onProfile)
+            BottomNavItem(label = "Inicio", icon = "home.png", selected = currentScreen == "Inicio", onClick = onHome)
+            BottomNavItem(label = "Agenda", icon = "book-open-reader.png", selected = currentScreen == "Agenda", onClick = onAgenda)
+            BottomNavItem(label = "Diplomas", icon = "diploma.png", selected = currentScreen == "Diplomas", onClick = onDiplomas)
+            BottomNavItem(label = "Perfil", icon = "user.png", selected = currentScreen == "Perfil", onClick = onProfile)
         }
     }
 }

@@ -103,7 +103,13 @@ fun DiplomasScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                ProfileBottomNav(onHome = onHome, onAgenda = onAgenda, onDiplomas = {}, onProfile = onProfile)
+                ProfileBottomNav(
+                    currentScreen = "Diplomas",
+                    onHome = onHome,
+                    onAgenda = onAgenda,
+                    onDiplomas = {},
+                    onProfile = onProfile
+                )
             }
         }
     }

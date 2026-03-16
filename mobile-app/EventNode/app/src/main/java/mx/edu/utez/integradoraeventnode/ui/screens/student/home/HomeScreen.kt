@@ -1,7 +1,6 @@
 package mx.edu.utez.integradoraeventnode.ui.screens.student.home
 
 import android.graphics.BitmapFactory
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,9 +28,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +49,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import mx.edu.utez.integradoraeventnode.data.network.ApiClient
+import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.student.profile.ProfileBottomNav
@@ -61,6 +65,28 @@ fun HomeScreen(
     onProfile: () -> Unit = {}
 ) {
     var searchText by remember { mutableStateOf("") }
+    
+    var eventos by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    
+    LaunchedEffect(Unit) {
+        isLoading = true
+        try {
+            val response = ApiClient.apiService.getEventos()
+            if (response.isSuccessful) {
+                eventos = response.body() ?: emptyList()
+            } else {
+                errorMessage = "Error al cargar eventos"
+            }
+        } catch (e: Exception) {
+            errorMessage = "Error de conexión"
+        } finally {
+            isLoading = false
+        }
+    }
+
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -101,18 +127,57 @@ fun HomeScreen(
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                     SectionHeader(title = "Próximos Eventos", action = "Ver más eventos")
                     Spacer(modifier = Modifier.height(12.dp))
-                    EventCard(
-                        tag = "REGISTRARSE",
-                        category = "AI CONGRESS",
-                        mainText = "TECH",
-                        title = "Congreso Internacional de Inteligencia Artificial",
-                        date = "15 Oct 2025 • 9:00 AM",
-                        location = "Auditorio",
-                        buttonText = "Ver Detalles",
-                        accent = Color(0xFF6F9EA6),
-                        onDetailsClick = onViewDetails
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    if (isLoading) {
+                        Text(
+                            text = "Cargando eventos...", 
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    } else if (errorMessage != null) {
+                        Text(
+                            text = errorMessage!!,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    } else if (eventos.isEmpty()) {
+                        Text(
+                            text = "No hay eventos próximos",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    } else {
+                        eventos.forEach { evento ->
+                            val cat = evento.nombreCategoria ?: "EVENTO"
+                            val mainTextLength = if (evento.nombre.length > 15) 15 else evento.nombre.length
+                            val main = evento.nombre.substring(0, mainTextLength).uppercase()
+                            
+                            val dateStr = if (evento.fechaInicio.length >= 16) {
+                                evento.fechaInicio.substring(0, 10).replace("-", "/") + " • " + evento.fechaInicio.substring(11, 16)
+                            } else {
+                                evento.fechaInicio
+                            }
+
+                            EventCard(
+                                tag = evento.estado.uppercase(),
+                                category = cat,
+                                mainText = main,
+                                title = evento.nombre,
+                                date = dateStr,
+                                location = evento.ubicacion,
+                                buttonText = "Ver Detalles",
+                                accent = Color(0xFF6F9EA6),
+                                onDetailsClick = onViewDetails
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+                    }
+
                     SectionHeader(title = "Diploma", action = "Ver historial", onActionClick = onDiplomas)
                     Spacer(modifier = Modifier.height(12.dp))
                     SimpleEventCard(
@@ -143,6 +208,7 @@ fun HomeScreen(
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 ProfileBottomNav(
+                    currentScreen = "Inicio",
                     onHome = {},
                     onAgenda = onAgenda,
                     onDiplomas = onDiplomas,
@@ -230,7 +296,7 @@ private fun EventCard(
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF2F6FED))
+                            .background(if(tag == "ACTIVO") Color(0xFF2F6FED) else Color(0xFF757575))
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                     
@@ -385,72 +451,6 @@ private fun SimpleEventCard(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun BottomNav(
-    selected: String,
-    onHome: () -> Unit,
-    onAgenda: () -> Unit,
-    onDiplomas: () -> Unit,
-    onProfile: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = Color(0xFFF5F6FA),
-        shadowElevation = 0.dp,
-        tonalElevation = 0.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BottomNavItem(
-                label = "Inicio",
-                icon = "home.png",
-                selected = selected == "Inicio",
-                onClick = onHome
-            )
-            BottomNavItem(
-                label = "Agenda",
-                icon = "book-open-reader.png",
-                selected = selected == "Agenda",
-                onClick = onAgenda
-            )
-            BottomNavItem(
-                label = "Diplomas",
-                icon = "diploma.png",
-                selected = selected == "Diplomas",
-                onClick = onDiplomas
-            )
-            BottomNavItem(
-                label = "Perfil",
-                icon = "user.png",
-                selected = selected == "Perfil",
-                onClick = onProfile
-            )
-        }
-    }
-}
-
-@Composable
-private fun BottomNavItem(label: String, icon: String, selected: Boolean, onClick: () -> Unit) {
-    val color = if (selected) Color(0xFF2F6FED) else Color(0xFF8B8B8B)
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onClick() }
-    ) {
-        Image(
-            bitmap = assetImageBitmap(icon),
-            contentDescription = null,
-            modifier = Modifier.size(18.dp)
-        )
-        Text(text = label, style = MaterialTheme.typography.labelMedium, color = color)
     }
 }
 

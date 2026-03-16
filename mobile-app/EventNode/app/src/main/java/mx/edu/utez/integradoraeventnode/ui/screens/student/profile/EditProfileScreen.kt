@@ -38,16 +38,19 @@ fun EditProfileScreen(
     onBack: () -> Unit = {},
     onHome: () -> Unit = {}
 ) {
-    var name by remember { mutableStateOf("Alejandro") }
-    var lastName by remember { mutableStateOf("García Mendoza") }
-    var email by remember { mutableStateOf("a.garcia@universidad.edu.mx") }
-    var enrollment by remember { mutableStateOf("2023045621") }
-    var gender by remember { mutableStateOf("Masculino") }
-    var quarter by remember { mutableStateOf("4°") }
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
+
+    var name by remember { mutableStateOf(prefs.getString("nombre", "") ?: "") }
+    var lastName by remember { mutableStateOf(prefs.getString("apellidoPaterno", "") + " " + prefs.getString("apellidoMaterno", "")) }
+    var email by remember { mutableStateOf(prefs.getString("correo", "") ?: "") }
+    var enrollment by remember { mutableStateOf(prefs.getString("matricula", "") ?: "") }
+    var gender by remember { mutableStateOf(prefs.getString("sexo", "") ?: "") }
+    var quarter by remember { mutableStateOf(prefs.getInt("cuatrimestre", 0).toString()) }
     
-    var currentPassword by remember { mutableStateOf("********") }
-    var newPassword by remember { mutableStateOf("********") }
-    var confirmPassword by remember { mutableStateOf("********") }
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
 
     var currentPasswordVisible by remember { mutableStateOf(false) }
     var newPasswordVisible by remember { mutableStateOf(false) }

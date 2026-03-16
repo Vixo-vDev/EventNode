@@ -7,6 +7,7 @@ function LoginForm({ onLogin }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [keepSession, setKeepSession] = useState(false)
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -15,7 +16,7 @@ function LoginForm({ onLogin }) {
     setIsLoading(true)
     
     try {
-      const userData = await authService.login(correo, password)
+      const userData = await authService.login(correo, password, keepSession)
       onLogin(userData)
       
       if (userData.role === 'ADMIN') {
@@ -89,6 +90,8 @@ function LoginForm({ onLogin }) {
           type="checkbox"
           className="form-check-input"
           id="keepSession"
+          checked={keepSession}
+          onChange={(e) => setKeepSession(e.target.checked)}
         />
         <label className="form-check-label small" htmlFor="keepSession">
           Mantener Sesión Iniciada

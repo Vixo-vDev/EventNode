@@ -3,21 +3,26 @@ package com.eventnode.eventnodeapi.services;
 import com.eventnode.eventnodeapi.dtos.LoginRequest;
 import com.eventnode.eventnodeapi.dtos.LoginResponse;
 import com.eventnode.eventnodeapi.models.Usuario;
+import com.eventnode.eventnodeapi.models.Alumno;
 import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
+import com.eventnode.eventnodeapi.repositories.AlumnoRepository;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
+    private final AlumnoRepository alumnoRepository;
 
-    public AuthService(UsuarioRepository usuarioRepository) {
+    public AuthService(UsuarioRepository usuarioRepository, AlumnoRepository alumnoRepository) {
         this.usuarioRepository = usuarioRepository;
+        this.alumnoRepository = alumnoRepository;
     }
 
     public LoginResponse login(LoginRequest request) {
@@ -56,11 +61,31 @@ public class AuthService {
 
         String rolNombre = usuario.getRol() != null ? usuario.getRol().getNombre() : null;
 
+        String matricula = null;
+        String sexo = null;
+        Integer cuatrimestre = null;
+
+        if ("ALUMNO".equalsIgnoreCase(rolNombre)) {
+            Optional<Alumno> alumnoOpt = alumnoRepository.findById(usuario.getIdUsuario());
+            if (alumnoOpt.isPresent()) {
+                Alumno alumno = alumnoOpt.get();
+                matricula = alumno.getMatricula();
+                sexo = alumno.getSexo();
+                cuatrimestre = alumno.getCuatrimestre();
+            }
+        }
+
         return new LoginResponse(
                 "Inicio de sesión exitoso",
                 rolNombre,
-                usuario.getIdUsuario()
+                usuario.getIdUsuario(),
+                usuario.getNombre(),
+                usuario.getApellidoPaterno(),
+                usuario.getApellidoMaterno(),
+                usuario.getCorreo(),
+                matricula,
+                sexo,
+                cuatrimestre
         );
     }
 }
-

@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 const API_URL = '/api';
 
 export const authService = {
-  login: async (correo, password) => {
+  login: async (correo, password, rememberMe = false) => {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
@@ -34,9 +34,15 @@ export const authService = {
       email: correo,
     };
 
-    // Almacenar en localStorage
-    localStorage.setItem('auth_user', JSON.stringify(userData));
-    localStorage.setItem('auth_token', btoa(correo + ':' + password));
+    // Almacenar según preferencia
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem('auth_user', JSON.stringify(userData));
+    storage.setItem('auth_token', btoa(correo + ':' + password));
+
+    // Limpiar el otro storage por si acaso quedaron residuos
+    const otherStorage = rememberMe ? sessionStorage : localStorage;
+    otherStorage.removeItem('auth_user');
+    otherStorage.removeItem('auth_token');
 
     return userData;
   },
@@ -61,16 +67,18 @@ export const authService = {
   logout: () => {
     localStorage.removeItem('auth_user');
     localStorage.removeItem('auth_token');
+    sessionStorage.removeItem('auth_user');
+    sessionStorage.removeItem('auth_token');
     toast.info('Sesión cerrada exitosamente');
   },
 
   getAuthHeader: () => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     return token ? { 'Authorization': `Basic ${token}` } : {};
   },
   
   getCurrentUser: () => {
-    const userStr = localStorage.getItem('auth_user');
+    const userStr = localStorage.getItem('auth_user') || sessionStorage.getItem('auth_user');
     return userStr ? JSON.parse(userStr) : null;
   }
 };
