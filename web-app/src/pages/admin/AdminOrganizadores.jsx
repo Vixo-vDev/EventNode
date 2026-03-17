@@ -320,9 +320,8 @@ function AdminOrganizadores() {
       </div>
       {/* Detail View Modal */}
       {detailTarget && (
-        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content border-0 rounded-4 shadow">
+        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }}>
+          <div className="bg-white border-0 rounded-4 shadow" style={{ maxWidth: '500px', width: '90%' }}>
               <div className="modal-header border-0 px-4 pt-4 pb-0">
                 <h5 className="fw-bold">Detalle del Organizador</h5>
                 <button type="button" className="btn-close" onClick={() => setDetailTarget(null)}></button>
@@ -346,7 +345,6 @@ function AdminOrganizadores() {
               <div className="modal-footer border-top px-4 py-3">
                 <button className="btn btn-primary rounded-pill px-4" onClick={() => setDetailTarget(null)}>Cerrar</button>
               </div>
-            </div>
           </div>
         </div>
       )}
