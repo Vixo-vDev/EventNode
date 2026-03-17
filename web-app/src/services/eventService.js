@@ -45,6 +45,39 @@ export const eventService = {
   },
 
   /**
+   * Buscar organizadores por nombre
+   */
+  buscarOrganizadores: async (nombre = '') => {
+    const params = nombre ? `?nombre=${encodeURIComponent(nombre)}` : '';
+    const response = await fetch(`${API_URL}/eventos/organizadores${params}`);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al buscar organizadores');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Crear un nuevo organizador
+   */
+  crearOrganizador: async (datos) => {
+    const response = await fetch(`${API_URL}/eventos/organizadores`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datos),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al crear organizador');
+    }
+
+    return response.json();
+  },
+
+  /**
    * Crear un nuevo evento
    */
   crearEvento: async (eventoData) => {
@@ -94,6 +127,18 @@ export const eventService = {
       throw new Error(errorData.mensaje || 'Error al cancelar evento');
     }
 
+    return response.json();
+  },
+
+  /**
+   * Obtener un evento por su ID
+   */
+  getEvento: async (idEvento) => {
+    const response = await fetch(`${API_URL}/eventos/${idEvento}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al obtener evento');
+    }
     return response.json();
   },
 };

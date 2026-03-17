@@ -11,19 +11,22 @@ const fallbackImages = [eventAi, eventMarketing, eventUiux]
 function StudentEvents() {
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const fetchEventos = async () => {
       try {
         const data = await eventService.getEventos()
-        const mapped = data.map((e, index) => ({
-          id: e.idEvento,
-          image: e.banner || fallbackImages[index % fallbackImages.length],
-          title: e.nombre,
-          date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + new Date(e.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '',
-          location: e.ubicacion,
-          category: e.categoriaNombre || 'GENERAL',
-        }))
+        const mapped = data
+          .filter(e => e.estado === 'ACTIVO')
+          .map((e, index) => ({
+            id: e.idEvento,
+            image: e.banner && e.banner.startsWith('data:image/') ? e.banner : fallbackImages[index % fallbackImages.length],
+            title: e.nombre,
+            date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + new Date(e.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '',
+            location: e.ubicacion,
+            category: e.categoriaNombre || 'GENERAL',
+          }))
         setEventos(mapped)
       } catch {
         setEventos([])
@@ -33,6 +36,10 @@ function StudentEvents() {
     }
     fetchEventos()
   }, [])
+
+  const filtered = search
+    ? eventos.filter(e => e.title.toLowerCase().includes(search.toLowerCase()) || e.category.toLowerCase().includes(search.toLowerCase()))
+    : eventos
 
   return (
     <div>
@@ -51,6 +58,8 @@ function StudentEvents() {
             type="text"
             className="form-control border-start-0"
             placeholder="Buscar por nombre o categoría..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
@@ -74,9 +83,9 @@ function StudentEvents() {
             <span className="visually-hidden">Cargando...</span>
           </div>
         </div>
-      ) : eventos.length > 0 ? (
+      ) : filtered.length > 0 ? (
         <div className="row g-3 mb-4">
-          {eventos.map(event => (
+          {filtered.map(event => (
             <div className="col-12 col-md-6 col-lg-4" key={event.id}>
               <EventCard
                 image={event.image}
@@ -84,6 +93,7 @@ function StudentEvents() {
                 date={event.date}
                 location={event.location}
                 category={event.category}
+                detailUrl={`/estudiante/evento/${event.id}`}
               />
             </div>
           ))}

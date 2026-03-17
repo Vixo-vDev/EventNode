@@ -13,7 +13,7 @@ import QRCodeModal from '../../components/modals/QRCodeModal'
 import IngresoManualModal from '../../components/modals/IngresoManualModal'
 import AsistenciaExitosaModal from '../../components/modals/AsistenciaExitosaModal'
 
-function AdminEventCard({ image, title, location, date, status, capacityCurrent, capacityMax, isFull, isFinished }) {
+function AdminEventCard({ id, image, title, location, date, status, capacityCurrent, capacityMax, isFull, isFinished }) {
   const isActive = status === 'ACTIVO'
   const isCancelled = status === 'CANCELADO'
   const isTerminado = status === 'TERMINADO' || status === 'FINALIZADO'
@@ -24,7 +24,7 @@ function AdminEventCard({ image, title, location, date, status, capacityCurrent,
       className="card border-0 shadow-sm rounded-3 h-100 overflow-hidden"
       style={isFull ? { border: '2px solid #dc3545' } : {}}
     >
-      <Link to="/admin/evento/1" className="text-decoration-none text-dark">
+      <Link to={`/admin/evento/${id}`} className="text-decoration-none text-dark">
         <div className="position-relative">
           <img
             src={image}
@@ -111,17 +111,14 @@ function AdminEventCard({ image, title, location, date, status, capacityCurrent,
 // Imágenes de fallback para cuando la API no proporciona banner
 const fallbackImages = [eventConcert, eventTechSummit, eventGala, eventFestival, eventWorkshop]
 
-const INITIAL_EVENT_FORM = {
-  nombre: '',
-  ubicacion: '',
-  descripcion: '',
-  fechaInicio: '',
-  fechaFin: '',
-  idCategoria: '',
-  capacidadMaxima: '',
-  tiempoCancelacionHoras: '',
-  tiempoToleranciaMinutos: '',
-  banner: '',
+// Utilidad: convierte un File a Base64 data URI
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
 }
 
 function GestionEventos({ user }) {
@@ -129,10 +126,7 @@ function GestionEventos({ user }) {
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState(null)
 
-  // Estado para crear evento
   const [categorias, setCategorias] = useState([])
-  const [eventForm, setEventForm] = useState(INITIAL_EVENT_FORM)
-  const [eventError, setEventError] = useState('')
   const [eventLoading, setEventLoading] = useState(false)
 
   const fetchEventos = async () => {
@@ -140,7 +134,7 @@ function GestionEventos({ user }) {
       const data = await eventService.getEventos()
       const mapped = data.map((e, index) => ({
         id: e.idEvento,
-        image: e.banner && e.banner !== 'default_banner.png' ? e.banner : fallbackImages[index % fallbackImages.length],
+        image: e.banner && e.banner.startsWith('data:image/') ? e.banner : fallbackImages[index % fallbackImages.length],
         title: e.nombre,
         location: e.ubicacion,
         date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '',
@@ -162,7 +156,6 @@ function GestionEventos({ user }) {
   useEffect(() => {
     fetchEventos()
 
-    // Cargar categorías para el formulario
     const fetchCategorias = async () => {
       try {
         const data = await eventService.getCategorias()
@@ -174,97 +167,48 @@ function GestionEventos({ user }) {
     fetchCategorias()
   }, [])
 
-  const handleEventChange = (e) => {
-    const { name, value } = e.target
-    setEventForm(prev => ({ ...prev, [name]: value }))
-    setEventError('')
-  }
-
-  const handleEventSubmit = async (e) => {
-    e.preventDefault()
-    setEventError('')
-
-    // Validaciones frontend
-    const ahora = new Date()
-    const fechaInicio = new Date(eventForm.fechaInicio)
-    const fechaFin = new Date(eventForm.fechaFin)
-
-    if (fechaInicio <= ahora) {
-      setEventError('La fecha de inicio debe ser posterior a la fecha y hora actual')
-      return
-    }
-    if (fechaFin <= fechaInicio) {
-      setEventError('La fecha de fin debe ser posterior a la fecha de inicio')
-      return
-    }
-    if (!eventForm.idCategoria) {
-      setEventError('Selecciona una categoría')
-      return
-    }
-    if (parseInt(eventForm.capacidadMaxima) <= 0) {
-      setEventError('La capacidad máxima debe ser mayor a cero')
-      return
-    }
-    if (parseInt(eventForm.tiempoCancelacionHoras) <= 0) {
-      setEventError('El tiempo de cancelación debe ser mayor a cero')
-      return
-    }
-    if (parseInt(eventForm.tiempoToleranciaMinutos) < 0) {
-      setEventError('El tiempo de tolerancia debe ser mayor o igual a cero')
-      return
-    }
-
-    // Validar banner si se proporcionó
-    if (eventForm.banner && eventForm.banner.trim() !== '') {
-      const bannerLower = eventForm.banner.toLowerCase()
-      if (!bannerLower.endsWith('.jpg') && !bannerLower.endsWith('.jpeg') && !bannerLower.endsWith('.png')) {
-        setEventError('El banner debe ser una imagen .jpg, .jpeg o .png')
-        return
-      }
-    }
-
+  const handleEventSubmit = async (formData) => {
     setEventLoading(true)
     try {
-      // Formatear fechas para el backend: yyyy-MM-ddTHH:mm:ss
-      const fechaInicioStr = eventForm.fechaInicio.length === 16
-        ? eventForm.fechaInicio + ':00'
-        : eventForm.fechaInicio
+      // Convertir banner File a Base64 si existe
+      let bannerBase64 = null
+      if (formData.banner && formData.banner instanceof File) {
+        bannerBase64 = await fileToBase64(formData.banner)
+      }
 
-      const fechaFinStr = eventForm.fechaFin.length === 16
-        ? eventForm.fechaFin + ':00'
-        : eventForm.fechaFin
+      // Formatear fechas para el backend: yyyy-MM-ddTHH:mm:ss
+      const fechaInicioStr = formData.fechaInicio.length === 16
+        ? formData.fechaInicio + ':00'
+        : formData.fechaInicio
+
+      const fechaFinStr = formData.fechaFin.length === 16
+        ? formData.fechaFin + ':00'
+        : formData.fechaFin
 
       const payload = {
-        nombre: eventForm.nombre.trim(),
-        ubicacion: eventForm.ubicacion.trim(),
-        descripcion: eventForm.descripcion.trim(),
+        nombre: formData.nombre.trim(),
+        ubicacion: formData.ubicacion.trim(),
+        descripcion: formData.descripcion.trim(),
         fechaInicio: fechaInicioStr,
         fechaFin: fechaFinStr,
-        idCategoria: parseInt(eventForm.idCategoria),
-        capacidadMaxima: parseInt(eventForm.capacidadMaxima),
-        tiempoCancelacionHoras: parseInt(eventForm.tiempoCancelacionHoras),
-        tiempoToleranciaMinutos: parseInt(eventForm.tiempoToleranciaMinutos),
-        banner: eventForm.banner.trim() || null,
+        idCategoria: parseInt(formData.idCategoria),
+        capacidadMaxima: parseInt(formData.capacidadMaxima),
+        tiempoCancelacionHoras: parseInt(formData.tiempoCancelacionHoras),
+        tiempoToleranciaMinutos: parseInt(formData.tiempoToleranciaMinutos),
+        banner: bannerBase64,
         idCreador: user?.id,
+        organizadores: formData.organizadores || [],
       }
 
       await eventService.crearEvento(payload)
       toast.success('Evento creado exitosamente')
-      setEventForm(INITIAL_EVENT_FORM)
-
-      // Cerrar modal
-      const modalEl = document.getElementById('crearEventoModal')
-      if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
-      }
 
       // Refrescar lista
       setLoading(true)
       fetchEventos()
     } catch (err) {
-      setEventError(err.message)
       toast.error(err.message)
+      throw err // Re-lanzar para que el modal muestre su error interno
     } finally {
       setEventLoading(false)
     }
@@ -317,6 +261,7 @@ function GestionEventos({ user }) {
         ) : eventos.length > 0 ? eventos.map(evento => (
           <div className="col-12 col-md-6 col-lg-4" key={evento.id}>
             <AdminEventCard
+              id={evento.id}
               image={evento.image}
               title={evento.title}
               location={evento.location}
@@ -350,11 +295,8 @@ function GestionEventos({ user }) {
       </div>
 
       <CrearEventoModal
-        formData={eventForm}
         categorias={categorias}
-        error={eventError}
         isLoading={eventLoading}
-        onChange={handleEventChange}
         onSubmit={handleEventSubmit}
       />
       <EditarEventoModal />

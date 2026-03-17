@@ -110,7 +110,7 @@ CREATE TABLE eventos (
     tiempo_cancelacion_horas INT NOT NULL,
     tiempo_tolerancia_minutos INT DEFAULT 0,
     
-    banner VARCHAR(255),
+    banner LONGTEXT,
     
     estado ENUM('ACTIVO','CANCELADO','FINALIZADO') DEFAULT 'ACTIVO',
     

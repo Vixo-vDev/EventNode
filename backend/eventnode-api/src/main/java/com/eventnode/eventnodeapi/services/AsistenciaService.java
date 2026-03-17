@@ -1,0 +1,128 @@
+package com.eventnode.eventnodeapi.services;
+
+import com.eventnode.eventnodeapi.models.Asistencia;
+import com.eventnode.eventnodeapi.models.Evento;
+import com.eventnode.eventnodeapi.models.PreCheckin;
+import com.eventnode.eventnodeapi.models.Usuario;
+import com.eventnode.eventnodeapi.models.Alumno;
+import com.eventnode.eventnodeapi.repositories.AsistenciaRepository;
+import com.eventnode.eventnodeapi.repositories.PreCheckinRepository;
+import com.eventnode.eventnodeapi.repositories.EventoRepository;
+import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
+import com.eventnode.eventnodeapi.repositories.AlumnoRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
+
+@Service
+public class AsistenciaService {
+
+    private final AsistenciaRepository asistenciaRepository;
+    private final PreCheckinRepository preCheckinRepository;
+    private final EventoRepository eventoRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final AlumnoRepository alumnoRepository;
+
+    public AsistenciaService(AsistenciaRepository asistenciaRepository,
+                            PreCheckinRepository preCheckinRepository,
+                            EventoRepository eventoRepository,
+                            UsuarioRepository usuarioRepository,
+                            AlumnoRepository alumnoRepository) {
+        this.asistenciaRepository = asistenciaRepository;
+        this.preCheckinRepository = preCheckinRepository;
+        this.eventoRepository = eventoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.alumnoRepository = alumnoRepository;
+    }
+
+    @Transactional
+    public void registrarAsistencia(Integer idUsuario, Integer idEvento, String metodo) {
+        // Validate user is enrolled with ACTIVO precheckin
+        PreCheckin preCheckin = preCheckinRepository.findByIdUsuarioAndIdEvento(idUsuario, idEvento)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no está inscrito en este evento"));
+
+        if (!"ACTIVO".equals(preCheckin.getEstado())) {
+            throw new IllegalStateException("La inscripción no está activa");
+        }
+
+        // Validate event is ACTIVO
+        Evento evento = eventoRepository.findById(idEvento)
+                .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado"));
+
+        if (!"ACTIVO".equals(evento.getEstado())) {
+            throw new IllegalStateException("El evento no está activo");
+        }
+
+        // Check if already checked in
+        if (asistenciaRepository.findByIdUsuarioAndIdEvento(idUsuario, idEvento).isPresent()) {
+            throw new IllegalStateException("El usuario ya ha registrado asistencia");
+        }
+
+        // Check time tolerance
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startTolerance = evento.getFechaInicio().minusMinutes(evento.getTiempoToleranciaMinutos());
+        LocalDateTime endTolerance = evento.getFechaInicio().plusMinutes(evento.getTiempoToleranciaMinutos());
+
+        if (now.isBefore(startTolerance) || now.isAfter(endTolerance)) {
+            throw new IllegalStateException("No estás dentro del tiempo permitido para registrar asistencia");
+        }
+
+        // Create Asistencia
+        Asistencia asistencia = new Asistencia();
+        asistencia.setIdUsuario(idUsuario);
+        asistencia.setIdEvento(idEvento);
+        asistencia.setFechaCheckin(now);
+        asistencia.setMetodo(metodo);
+
+        asistenciaRepository.save(asistencia);
+    }
+
+    @Transactional
+    public void registrarAsistenciaManual(String matricula, Integer idEvento) {
+        Alumno alumno = alumnoRepository.findByMatricula(matricula)
+                .orElseThrow(() -> new IllegalArgumentException("Alumno no encontrado con esa matrícula"));
+
+        registrarAsistencia(alumno.getIdUsuario(), idEvento, "MANUAL");
+    }
+
+    public List<Map<String, Object>> listarAsistencias(Integer idEvento) {
+        List<Asistencia> asistencias = asistenciaRepository.findByIdEvento(idEvento);
+
+        return asistencias.stream().map(a -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("idAsistencia", a.getIdAsistencia());
+            map.put("idUsuario", a.getIdUsuario());
+
+            Usuario usuario = usuarioRepository.findById(a.getIdUsuario()).orElse(null);
+            if (usuario != null) {
+                String fullName = usuario.getNombre() + " " + usuario.getApellidoPaterno();
+                if (usuario.getApellidoMaterno() != null && !usuario.getApellidoMaterno().isEmpty()) {
+                    fullName += " " + usuario.getApellidoMaterno();
+                }
+                map.put("nombre", fullName);
+                map.put("correo", usuario.getCorreo());
+
+                // Get alumno info if exists
+                Alumno alumno = alumnoRepository.findById(a.getIdUsuario()).orElse(null);
+                if (alumno != null) {
+                    map.put("cuatrimestre", alumno.getCuatrimestre());
+                }
+            }
+
+            map.put("metodo", a.getMetodo());
+            map.put("fechaCheckin", a.getFechaCheckin());
+
+            return map;
+        }).collect(Collectors.toList());
+    }
+
+    public long contarAsistencias(Integer idEvento) {
+        return asistenciaRepository.countByIdEvento(idEvento);
+    }
+}

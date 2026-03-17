@@ -9,6 +9,7 @@ import com.eventnode.eventnodeapi.repositories.CategoriaRepository;
 import com.eventnode.eventnodeapi.repositories.EventoRepository;
 import com.eventnode.eventnodeapi.repositories.OrganizadorRepository;
 import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
+import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,15 +25,18 @@ public class EventoService {
     private final CategoriaRepository categoriaRepository;
     private final OrganizadorRepository organizadorRepository;
     private final UsuarioRepository usuarioRepository;
+    private final EntityManager entityManager;
 
     public EventoService(EventoRepository eventoRepository,
                          CategoriaRepository categoriaRepository,
                          OrganizadorRepository organizadorRepository,
-                         UsuarioRepository usuarioRepository) {
+                         UsuarioRepository usuarioRepository,
+                         EntityManager entityManager) {
         this.eventoRepository = eventoRepository;
         this.categoriaRepository = categoriaRepository;
         this.organizadorRepository = organizadorRepository;
         this.usuarioRepository = usuarioRepository;
+        this.entityManager = entityManager;
     }
 
     @Transactional
@@ -75,11 +79,11 @@ public class EventoService {
             throw new IllegalArgumentException("El tiempo de tolerancia debe ser un número mayor o igual a cero");
         }
 
-        // Banner es opcional - si se proporciona, validar extensión
+        // Banner es opcional - si se proporciona, validar que sea Base64 de imagen
         String banner = request.getBanner();
         if (banner != null && !banner.isBlank()) {
-            if (!(banner.endsWith(".jpg") || banner.endsWith(".jpeg") || banner.endsWith(".png"))) {
-                throw new IllegalArgumentException("El banner del evento debe ser una imagen válida (.jpg, .jpeg, .png)");
+            if (!banner.startsWith("data:image/")) {
+                throw new IllegalArgumentException("El banner debe ser una imagen válida (PNG, JPG, JPEG)");
             }
         }
 
@@ -95,24 +99,37 @@ public class EventoService {
         evento.setFechaFin(request.getFechaFin());
         evento.setTiempoCancelacionHoras(request.getTiempoCancelacionHoras());
         evento.setTiempoToleranciaMinutos(request.getTiempoToleranciaMinutos());
-        evento.setBanner(banner != null && !banner.isBlank() ? banner : "default_banner.png");
+        evento.setBanner(banner != null && !banner.isBlank() ? banner : null);
         evento.setEstado("ACTIVO");
         evento.setCategoria(categoria);
         evento.setCreadoPor(request.getIdCreador());
         evento.setFechaCreacion(LocalDateTime.now());
 
-        eventoRepository.save(evento);
+        Evento saved = eventoRepository.save(evento);
+
+        // Insertar asociaciones evento-organizador en la tabla junction
+        List<Integer> organizadorIds = request.getOrganizadores();
+        if (organizadorIds != null && !organizadorIds.isEmpty()) {
+            for (Integer idOrg : organizadorIds) {
+                entityManager.createNativeQuery(
+                    "INSERT INTO evento_organizador (id_evento, id_organizador) VALUES (:idEvento, :idOrg)")
+                    .setParameter("idEvento", saved.getIdEvento())
+                    .setParameter("idOrg", idOrg)
+                    .executeUpdate();
+            }
+        }
     }
 
     @Transactional(readOnly = true)
-    public List<Evento> consultarEventosDisponibles(String nombre, Integer mes, Integer idCategoria) {
-        LocalDateTime ahora = LocalDateTime.now();
+    public List<Evento> consultarEventosDisponibles(String nombre, Integer mes, Integer idCategoria, String estado) {
 
         return eventoRepository.findAll((root, query, cb) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
 
-            predicates.add(cb.equal(root.get("estado"), "ACTIVO"));
-            predicates.add(cb.greaterThanOrEqualTo(root.get("fechaFin"), ahora));
+            // Filtrar por estado si se especifica; si no, devolver todos
+            if (estado != null && !estado.isBlank()) {
+                predicates.add(cb.equal(root.get("estado"), estado.toUpperCase()));
+            }
 
             if (nombre != null && !nombre.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("nombre")), "%" + nombre.toLowerCase() + "%"));
@@ -126,8 +143,16 @@ public class EventoService {
                 predicates.add(cb.equal(root.get("categoria").get("idCategoria"), idCategoria));
             }
 
+            query.orderBy(cb.desc(root.get("fechaCreacion")));
+
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         });
+    }
+
+    @Transactional(readOnly = true)
+    public Evento consultarEventoPorId(Integer idEvento) {
+        return eventoRepository.findById(idEvento)
+                .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado"));
     }
 
     @Transactional
@@ -179,10 +204,9 @@ public class EventoService {
             throw new IllegalArgumentException("El tiempo de tolerancia debe ser un número mayor o igual a cero");
         }
 
-        if (request.getBanner() != null) {
-            String bannerUpd = request.getBanner();
-            if (!(bannerUpd.endsWith(".jpg") || bannerUpd.endsWith(".jpeg") || bannerUpd.endsWith(".png"))) {
-                throw new IllegalArgumentException("El banner del evento debe ser una imagen válida");
+        if (request.getBanner() != null && !request.getBanner().isBlank()) {
+            if (!request.getBanner().startsWith("data:image/")) {
+                throw new IllegalArgumentException("El banner debe ser una imagen válida");
             }
         }
 

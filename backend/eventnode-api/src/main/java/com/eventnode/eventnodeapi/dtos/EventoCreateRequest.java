@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class EventoCreateRequest {
 
@@ -43,6 +44,8 @@ public class EventoCreateRequest {
 
     private Integer idOrganizador;
 
+    private List<Integer> organizadores;
+
     @NotNull(message = "Se debe indicar quién crea el evento")
     private Integer idCreador;
 
@@ -81,6 +84,9 @@ public class EventoCreateRequest {
 
     public Integer getIdOrganizador() { return idOrganizador; }
     public void setIdOrganizador(Integer idOrganizador) { this.idOrganizador = idOrganizador; }
+
+    public List<Integer> getOrganizadores() { return organizadores; }
+    public void setOrganizadores(List<Integer> organizadores) { this.organizadores = organizadores; }
 
     public Integer getIdCreador() { return idCreador; }
     public void setIdCreador(Integer idCreador) { this.idCreador = idCreador; }

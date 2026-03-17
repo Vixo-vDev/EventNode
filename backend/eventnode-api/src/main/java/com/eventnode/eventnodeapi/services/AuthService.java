@@ -20,7 +20,7 @@ public class AuthService {
     private final UsuarioRepository usuarioRepository;
     private final AlumnoRepository alumnoRepository;
 
-    public AuthService(UsuarioRepository usuarioRepository, AlumnoRepository alumnoRepository) {
+    public AuthService(UsuarioRepository usuarioRepository, AlumnoRepository alumnoRepository) {    
         this.usuarioRepository = usuarioRepository;
         this.alumnoRepository = alumnoRepository;
     }

@@ -1,7 +1,73 @@
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import { diplomaService } from '../../services/diplomaService'
+import { eventService } from '../../services/eventService'
 import CrearDiplomaModal from '../../components/modals/CrearDiplomaModal'
-import EditarDiplomaModal from '../../components/modals/EditarDiplomaModal'
 
 function AdminDiplomas() {
+  const [diplomas, setDiplomas] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [eventos, setEventos] = useState([])
+  const [creating, setCreating] = useState(false)
+  const [formData, setFormData] = useState({ idEvento: '', firma: '', diseno: 'Jasper Classic' })
+
+  const fetchDiplomas = async () => {
+    try {
+      const data = await diplomaService.listarDiplomas()
+      setDiplomas(data)
+    } catch {
+      setDiplomas([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDiplomas()
+    const fetchEventos = async () => {
+      try {
+        const data = await eventService.getEventos()
+        setEventos(data)
+      } catch {
+        setEventos([])
+      }
+    }
+    fetchEventos()
+  }, [])
+
+  const handleCreateDiploma = async () => {
+    if (!formData.idEvento || !formData.firma) {
+      toast.error('Completa todos los campos obligatorios')
+      return
+    }
+    setCreating(true)
+    try {
+      await diplomaService.crearDiploma({
+        idEvento: parseInt(formData.idEvento),
+        firma: formData.firma,
+        diseno: formData.diseno,
+      })
+      toast.success('Diploma creado exitosamente')
+      setFormData({ idEvento: '', firma: '', diseno: 'Jasper Classic' })
+      const modalEl = document.getElementById('crearDiplomaModal')
+      if (modalEl && window.bootstrap) {
+        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
+        if (bsModal) bsModal.hide()
+      }
+      setLoading(true)
+      fetchDiplomas()
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const totalCertificaciones = diplomas.length
+  const totalEntregados = diplomas.reduce((sum, d) => sum + (d.totalEmitidos || 0), 0)
+  const totalPendientes = diplomas.reduce((sum, d) => sum + (d.totalPendientes || 0), 0)
+
   return (
     <div>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
@@ -18,7 +84,6 @@ function AdminDiplomas() {
         </button>
       </div>
 
-      {/* Tarjetas de Estadísticas */}
       <div className="row g-3 mb-4">
         <div className="col-12 col-md-4">
           <div className="card border-0 shadow-sm rounded-4 h-100 p-3">
@@ -29,7 +94,7 @@ function AdminDiplomas() {
                 </div>
               </div>
               <div className="text-secondary small mb-1" style={{ fontSize: '13px' }}>Total de Certificaciones</div>
-              <h3 className="fw-bold mb-0">0</h3>
+              <h3 className="fw-bold mb-0">{totalCertificaciones}</h3>
             </div>
           </div>
         </div>
@@ -42,7 +107,7 @@ function AdminDiplomas() {
                 </div>
               </div>
               <div className="text-secondary small mb-1" style={{ fontSize: '13px' }}>Certificados Entregados</div>
-              <h3 className="fw-bold mb-0">0</h3>
+              <h3 className="fw-bold mb-0">{totalEntregados}</h3>
             </div>
           </div>
         </div>
@@ -55,34 +120,70 @@ function AdminDiplomas() {
                 </div>
               </div>
               <div className="text-secondary small mb-1" style={{ fontSize: '13px' }}>Certificados Pendientes</div>
-              <h3 className="fw-bold mb-0">0</h3>
+              <h3 className="fw-bold mb-0">{totalPendientes}</h3>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Estado vacío */}
-      <div className="card border-0 shadow-sm rounded-4 mb-4">
-        <div className="card-body text-center py-5">
-          <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
-            <i className="bi bi-award text-primary fs-3"></i>
+      {loading ? (
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Cargando...</span>
           </div>
-          <h6 className="fw-bold mb-1">No hay diplomas registrados</h6>
-          <p className="text-secondary small mb-2">
-            Crea eventos y registra asistencias para poder emitir diplomas y certificaciones.
-          </p>
-          <button
-            className="btn btn-primary btn-sm rounded-pill px-4"
-            data-bs-toggle="modal"
-            data-bs-target="#crearDiplomaModal"
-          >
-            Crear Primer Certificado
-          </button>
         </div>
-      </div>
+      ) : diplomas.length > 0 ? (
+        <div className="row g-3">
+          {diplomas.map(d => (
+            <div className="col-12 col-md-6 col-lg-4" key={d.idDiploma}>
+              <div className="card border-0 shadow-sm rounded-4 h-100">
+                <div className="card-body p-4">
+                  <div className="d-flex align-items-center gap-3 mb-3">
+                    <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style={{ width: '44px', height: '44px' }}>
+                      <i className="bi bi-award fs-5"></i>
+                    </div>
+                    <div>
+                      <h6 className="fw-bold mb-0">{d.nombreEvento}</h6>
+                      <div className="text-secondary" style={{ fontSize: '11px' }}>{d.diseno}</div>
+                    </div>
+                  </div>
+                  <div className="d-flex justify-content-between mb-2">
+                    <span className="text-secondary small">Emitidos</span>
+                    <span className="fw-bold small">{d.totalEmitidos || 0}</span>
+                  </div>
+                  <div className="d-flex justify-content-between">
+                    <span className="text-secondary small">Pendientes</span>
+                    <span className="fw-bold small">{d.totalPendientes || 0}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="card border-0 shadow-sm rounded-4 mb-4">
+          <div className="card-body text-center py-5">
+            <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
+              <i className="bi bi-award text-primary fs-3"></i>
+            </div>
+            <h6 className="fw-bold mb-1">No hay diplomas registrados</h6>
+            <p className="text-secondary small mb-2">
+              Crea eventos y registra asistencias para poder emitir diplomas y certificaciones.
+            </p>
+            <button className="btn btn-primary btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#crearDiplomaModal">
+              Crear Primer Certificado
+            </button>
+          </div>
+        </div>
+      )}
 
-      <CrearDiplomaModal />
-      <EditarDiplomaModal />
+      <CrearDiplomaModal
+        eventos={eventos}
+        formData={formData}
+        onChange={(e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+        onSubmit={handleCreateDiploma}
+        isLoading={creating}
+      />
     </div>
   )
 }

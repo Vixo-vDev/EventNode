@@ -3,6 +3,7 @@ services:
     image: mysql:8.0
     container_name: event_node_mysql
     restart: unless-stopped
+    command: --max-allowed-packet=16M
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: event_node

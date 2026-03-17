@@ -34,10 +34,10 @@ function StudentDashboard({ loggedUser, onLogout }) {
       <Routes>
         <Route path="/" element={<StudentHome />} />
         <Route path="/eventos" element={<StudentEvents />} />
-        <Route path="/mis-eventos" element={<StudentMyEvents />} />
-        <Route path="/evento/:id" element={<StudentEventDetail />} />
+        <Route path="/mis-eventos" element={<StudentMyEvents user={loggedUser} />} />
+        <Route path="/evento/:id" element={<StudentEventDetail user={loggedUser} />} />
         <Route path="/evento/:id/inscrito" element={<StudentEventEnrolled />} />
-        <Route path="/diplomas" element={<StudentDiplomas />} />
+        <Route path="/diplomas" element={<StudentDiplomas user={loggedUser} />} />
         <Route path="/diplomas/:id" element={<StudentDiplomaDetail />} />
         <Route path="/perfil" element={<StudentProfile user={loggedUser} />} />
       </Routes>

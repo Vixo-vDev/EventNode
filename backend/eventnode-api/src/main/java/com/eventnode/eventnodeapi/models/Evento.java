@@ -37,7 +37,8 @@ public class Evento {
     @Column(name = "tiempo_tolerancia_minutos", nullable = false)
     private Integer tiempoToleranciaMinutos;
 
-    @Column(name = "banner")
+    @Lob
+    @Column(name = "banner", columnDefinition = "LONGTEXT")
     private String banner;
 
     @Column(name = "estado", nullable = false, columnDefinition = "enum('ACTIVO','CANCELADO','FINALIZADO')")

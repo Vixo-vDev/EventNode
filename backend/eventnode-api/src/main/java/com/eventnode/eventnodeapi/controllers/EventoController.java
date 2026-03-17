@@ -5,7 +5,11 @@ import com.eventnode.eventnodeapi.dtos.EventoResponse;
 import com.eventnode.eventnodeapi.dtos.EventoUpdateRequest;
 import com.eventnode.eventnodeapi.models.Categoria;
 import com.eventnode.eventnodeapi.models.Evento;
+import com.eventnode.eventnodeapi.models.Organizador;
 import com.eventnode.eventnodeapi.repositories.CategoriaRepository;
+import com.eventnode.eventnodeapi.repositories.OrganizadorRepository;
+import com.eventnode.eventnodeapi.repositories.PreCheckinRepository;
+import com.eventnode.eventnodeapi.repositories.AsistenciaRepository;
 import com.eventnode.eventnodeapi.services.EventoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,10 +28,20 @@ public class EventoController {
 
     private final EventoService eventoService;
     private final CategoriaRepository categoriaRepository;
+    private final OrganizadorRepository organizadorRepository;
+    private final PreCheckinRepository preCheckinRepository;
+    private final AsistenciaRepository asistenciaRepository;
 
-    public EventoController(EventoService eventoService, CategoriaRepository categoriaRepository) {
+    public EventoController(EventoService eventoService,
+                            CategoriaRepository categoriaRepository,
+                            OrganizadorRepository organizadorRepository,
+                            PreCheckinRepository preCheckinRepository,
+                            AsistenciaRepository asistenciaRepository) {
         this.eventoService = eventoService;
         this.categoriaRepository = categoriaRepository;
+        this.organizadorRepository = organizadorRepository;
+        this.preCheckinRepository = preCheckinRepository;
+        this.asistenciaRepository = asistenciaRepository;
     }
 
     @PostMapping("/crear")
@@ -52,9 +66,10 @@ public class EventoController {
     public ResponseEntity<?> consultarEventos(
             @RequestParam(required = false) String nombre,
             @RequestParam(required = false) Integer mes,
-            @RequestParam(required = false) Integer categoriaId
+            @RequestParam(required = false) Integer categoriaId,
+            @RequestParam(required = false) String estado
     ) {
-        List<Evento> eventos = eventoService.consultarEventosDisponibles(nombre, mes, categoriaId);
+        List<Evento> eventos = eventoService.consultarEventosDisponibles(nombre, mes, categoriaId, estado);
         if (eventos.isEmpty()) {
             Map<String, String> body = new HashMap<>();
             body.put("mensaje", "No se encontraron resultados");
@@ -81,6 +96,41 @@ public class EventoController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{idEvento}")
+    public ResponseEntity<?> obtenerEventoDetalle(@PathVariable Integer idEvento) {
+        Evento evento = eventoService.consultarEventoPorId(idEvento);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("idEvento", evento.getIdEvento());
+        response.put("nombre", evento.getNombre());
+        response.put("descripcion", evento.getDescripcion());
+        response.put("ubicacion", evento.getUbicacion());
+        response.put("capacidadMaxima", evento.getCapacidadMaxima());
+        response.put("tiempoCancelacionHoras", evento.getTiempoCancelacionHoras());
+        response.put("fechaInicio", evento.getFechaInicio());
+        response.put("fechaFin", evento.getFechaFin());
+        response.put("tiempoToleranciaMinutos", evento.getTiempoToleranciaMinutos());
+        response.put("estado", evento.getEstado());
+        response.put("banner", evento.getBanner());
+        response.put("creadoPor", evento.getCreadoPor());
+        response.put("fechaCreacion", evento.getFechaCreacion());
+
+        if (evento.getCategoria() != null) {
+            response.put("idCategoria", evento.getCategoria().getIdCategoria());
+            response.put("categoriaNombre", evento.getCategoria().getNombre());
+        }
+
+        // Add inscritos count
+        long inscritos = preCheckinRepository.countByIdEventoAndEstado(idEvento, "ACTIVO");
+        response.put("inscritos", inscritos);
+
+        // Add asistencias count
+        long asistencias = asistenciaRepository.countByIdEvento(idEvento);
+        response.put("asistencias", asistencias);
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/categorias")
     public ResponseEntity<List<Map<String, Object>>> listarCategorias() {
         List<Categoria> categorias = categoriaRepository.findAll();
@@ -91,6 +141,46 @@ public class EventoController {
             return map;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/organizadores")
+    public ResponseEntity<List<Map<String, Object>>> buscarOrganizadores(
+            @RequestParam(required = false, defaultValue = "") String nombre) {
+        List<Organizador> organizadores;
+        if (nombre.isBlank()) {
+            organizadores = organizadorRepository.findAll();
+        } else {
+            organizadores = organizadorRepository.findByNombreContainingIgnoreCase(nombre);
+        }
+        List<Map<String, Object>> result = organizadores.stream().map(o -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("idOrganizador", o.getIdOrganizador());
+            map.put("nombre", o.getNombre());
+            map.put("correo", o.getCorreo());
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/organizadores")
+    public ResponseEntity<Map<String, Object>> crearOrganizador(@RequestBody Map<String, String> body) {
+        String nombreOrg = body.get("nombre");
+        if (nombreOrg == null || nombreOrg.isBlank()) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("mensaje", "El nombre del organizador es obligatorio");
+            return ResponseEntity.badRequest().body(error);
+        }
+        Organizador org = new Organizador();
+        org.setNombre(nombreOrg.trim());
+        org.setCorreo(body.get("correo"));
+        org.setDescripcion(body.get("descripcion"));
+        Organizador saved = organizadorRepository.save(org);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("idOrganizador", saved.getIdOrganizador());
+        result.put("nombre", saved.getNombre());
+        result.put("correo", saved.getCorreo());
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @PutMapping("/{idEvento}")
