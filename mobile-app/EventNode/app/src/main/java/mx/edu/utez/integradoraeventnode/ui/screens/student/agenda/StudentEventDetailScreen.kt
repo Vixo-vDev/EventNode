@@ -46,11 +46,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mx.edu.utez.integradoraeventnode.data.network.ApiClient
+import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import android.util.Base64
 
 @Composable
 fun StudentEventDetailScreen(
+    eventId: Int = -1,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
     onHome: () -> Unit = {},
@@ -61,6 +68,67 @@ fun StudentEventDetailScreen(
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
     var showSuccessDialog by remember { mutableStateOf(false) }
+    var evento by remember { mutableStateOf<EventoResponse?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var isCancelling by remember { mutableStateOf(false) }
+    var isCheckingIn by remember { mutableStateOf(false) }
+    var isEnrolled by remember { mutableStateOf(true) } // Assume enrolled if coming from agenda initially, or check real status.
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
+    val usuarioId = prefs.getInt("id", -1)
+    val token = prefs.getString("token", "") ?: ""
+    val bearerToken = if (token.isNotEmpty()) "Bearer $token" else ""
+
+    LaunchedEffect(eventId) {
+        if (eventId == -1) {
+            errorMessage = "ID de evento no válido"
+            isLoading = false
+            return@LaunchedEffect
+        }
+        try {
+            // Fetch Event Details
+            val response = ApiClient.apiService.getEvento(eventId)
+            if (response.isSuccessful) {
+                evento = response.body()
+                
+                // Fetch user's enrolled events to determine button state
+                if (usuarioId != -1 && bearerToken.isNotEmpty()) {
+                    val enrollResponse = ApiClient.apiService.listarMisEventos(bearerToken, usuarioId)
+                    if (enrollResponse.isSuccessful) {
+                        val misEventos = enrollResponse.body() ?: emptyList()
+                        isEnrolled = misEventos.any { 
+                            (it["idEvento"] as? Double)?.toInt() == eventId && 
+                            it["inscripcionEstado"] == "ACTIVO" 
+                        }
+                    }
+                }
+            } else {
+                errorMessage = "No se pudo cargar la información del evento"
+            }
+        } catch (e: Exception) {
+            errorMessage = "Error de conexión"
+        } finally {
+            isLoading = false
+        }
+    }
+
+    // Helper function to decode base64 images that might start with 'data:image/...;base64,'
+    fun decodeBase64Image(base64Str: String?): ImageBitmap? {
+        if (base64Str.isNullOrEmpty()) return null
+        return try {
+            val cleanBase64 = if (base64Str.contains(",")) {
+                base64Str.substringAfter(",")
+            } else {
+                base64Str
+            }
+            val imageBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)?.asImageBitmap()
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -75,8 +143,18 @@ fun StudentEventDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(240.dp)
-                        .background(Color(0xFF7FA7C6)) // Placeholder for image
+                        .background(Color(0xFF7FA7C6)) // Placeholder color
                 ) {
+                    val bitmap = decodeBase64Image(evento?.banner)
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap,
+                            contentDescription = "Banner del evento",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        )
+                    }
+                    
                     // Back button
                     Box(
                         modifier = Modifier
@@ -96,7 +174,17 @@ fun StudentEventDetailScreen(
                     }
                 }
 
-                // Event Details Card
+                if (isLoading) {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        Text("Cargando detalles...")
+                    }
+                } else if (errorMessage != null) {
+                   Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
+                    }
+                } else if (evento != null) {
+                    val ev = evento!!
+                    // Event Details Card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -113,31 +201,39 @@ fun StudentEventDetailScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Festival en el campus",
+                                text = ev.nombre,
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.weight(1f)
                             )
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFE6F0FF))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = "CULTURA",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color(0xFF2F6FED),
-                                    fontWeight = FontWeight.Bold
-                                )
+                            if (ev.nombreCategoria != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFFE6F0FF))
+                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = ev.nombreCategoria.uppercase(),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFF2F6FED),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                         
                         Spacer(modifier = Modifier.height(24.dp))
                         
+                        val fechaStr = if (ev.fechaInicio.length >= 16) {
+                            ev.fechaInicio.substring(0, 10).replace("-", "/") + " - " + ev.fechaInicio.substring(11, 16)
+                        } else {
+                            ev.fechaInicio
+                        }
+
                         DetailItem(
                             label = "FECHA Y HORA",
-                            value = "Viernes, 24 Octubre - 16:00 - 20:00",
+                            value = fechaStr,
                             icon = "chart-histogram.png"
                         )
                         
@@ -145,7 +241,7 @@ fun StudentEventDetailScreen(
                         
                         DetailItem(
                             label = "UBICACIÓN",
-                            value = "Auditorio Principal,\nEdificio Central",
+                            value = ev.ubicacion,
                             icon = "book-open-reader.png"
                         )
                         
@@ -160,7 +256,7 @@ fun StudentEventDetailScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         
                         Text(
-                            text = "Únete a nosotros en la celebración anual del campus. Disfrutaremos de música en vivo, stands de comida local y presentaciones de los clubes universitarios. Un espacio perfecto para conectar con otros estudiantes y disfrutar de la vida universitaria fuera de las aulas.",
+                            text = ev.descripcion ?: "Sin descripción",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color(0xFF666666),
                             lineHeight = 20.sp
@@ -168,21 +264,75 @@ fun StudentEventDetailScreen(
                         
                         Spacer(modifier = Modifier.height(32.dp))
                         
-                        Button(
-                            onClick = { showCancelDialog = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350))
-                        ) {
-                            Text(
-                                "Cancelar inscripción",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color.White
-                            )
+                        if (isEnrolled) {
+                            Button(
+                                onClick = { showCancelDialog = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350)),
+                                enabled = !isCancelling
+                            ) {
+                                Text(
+                                    if (isCancelling) "Cancelando..." else "Cancelar inscripción",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.White
+                                )
+                            }
+                        } else if (ev.estado == "ACTIVO") {
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        isCheckingIn = true
+                                        try {
+                                            val body = mapOf("idUsuario" to usuarioId, "idEvento" to ev.idEvento)
+                                            val res = ApiClient.apiService.inscribirse(bearerToken, body)
+                                            if (res.isSuccessful) {
+                                                isEnrolled = true
+                                                // Optional: Show success toast
+                                            } else {
+                                                // Handle full capacity or other errors here
+                                            }
+                                        } catch (e: Exception) {
+                                            // Handling error
+                                        } finally {
+                                            isCheckingIn = false
+                                        }
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED)),
+                                enabled = !isCheckingIn
+                            ) {
+                                Text(
+                                    if (isCheckingIn) "Inscribiendo..." else "Inscribirme",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.White
+                                )
+                            }
+                        } else {
+                            Button(
+                                onClick = { },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                                enabled = false
+                            ) {
+                                Text(
+                                    "Evento ${ev.estado}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
+                }
                 }
             }
 
@@ -196,13 +346,31 @@ fun StudentEventDetailScreen(
                 StudentBottomNav(selected = "Agenda", onHome = onHome, onAgenda = onAgenda, onDiplomas = onDiplomas, onProfile = onProfile)
             }
 
-            // Cancel Confirmation Dialog
-            if (showCancelDialog) {
+            if (showCancelDialog && evento != null) {
+                val ev = evento!!
                 DialogOverlay {
                     CancelDialog(
+                        isCancelling = isCancelling,
                         onConfirm = {
-                            showCancelDialog = false
-                            showSuccessDialog = true
+                            scope.launch {
+                                isCancelling = true
+                                try {
+                                    val body = mapOf("idUsuario" to usuarioId, "idEvento" to ev.idEvento)
+                                    val res = ApiClient.apiService.cancelarInscripcion(bearerToken, body)
+                                    if (res.isSuccessful) {
+                                        showCancelDialog = false
+                                        showSuccessDialog = true
+                                        isEnrolled = false
+                                    } else {
+                                        showCancelDialog = false // Or show error toast
+                                    }
+                                } catch(e: Exception) {
+                                    // Handle network error
+                                    showCancelDialog = false
+                                } finally {
+                                    isCancelling = false
+                                }
+                            }
                         },
                         onDismiss = { showCancelDialog = false }
                     )
@@ -273,7 +441,7 @@ private fun DialogOverlay(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun CancelDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun CancelDialog(isCancelling: Boolean, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -328,9 +496,10 @@ private fun CancelDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED)),
+                enabled = !isCancelling
             ) {
-                Text("Confirmar cancelación", fontWeight = FontWeight.Bold)
+                Text(if (isCancelling) "Procesando..." else "Confirmar cancelación", fontWeight = FontWeight.Bold)
             }
             
             Spacer(modifier = Modifier.height(12.dp))

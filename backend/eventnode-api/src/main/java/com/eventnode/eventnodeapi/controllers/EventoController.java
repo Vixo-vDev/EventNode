@@ -211,6 +211,16 @@ public class EventoController {
         long asistencias = asistenciaRepository.countByIdEvento(idEvento);
         response.put("asistencias", asistencias);
 
+        List<Organizador> organizadores = organizadorRepository.findByEventoId(idEvento);
+        List<Map<String, Object>> orgsList = organizadores.stream().map(o -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("idOrganizador", o.getIdOrganizador());
+            map.put("nombre", o.getNombre());
+            map.put("correo", o.getCorreo());
+            return map;
+        }).collect(Collectors.toList());
+        response.put("organizadores", orgsList);
+
         return ResponseEntity.ok(response);
     }
 

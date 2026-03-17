@@ -119,6 +119,26 @@ function StudentEventDetail({ user }) {
                 Acerca de este evento
               </h6>
               <p className="text-secondary small mb-0">{evento.descripcion}</p>
+
+              {evento.organizadores && evento.organizadores.length > 0 && (
+                <div className="mt-4">
+                  <h6 className="fw-bold mb-3">
+                    <i className="bi bi-person-badge text-primary me-2"></i>
+                    Organizadores
+                  </h6>
+                  <ul className="list-unstyled mb-0">
+                    {evento.organizadores.map(org => (
+                      <li key={org.idOrganizador} className="text-secondary small mb-2 d-flex align-items-start gap-2">
+                        <i className="bi bi-person-circle fs-5"></i>
+                        <div>
+                          <div className="fw-semibold text-dark">{org.nombre}</div>
+                          {org.correo && <div className="text-muted" style={{fontSize: '0.8rem'}}>{org.correo}</div>}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </div>

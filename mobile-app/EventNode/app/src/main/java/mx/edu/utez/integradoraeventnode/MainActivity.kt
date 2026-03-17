@@ -36,14 +36,16 @@ class MainActivity : ComponentActivity() {
                 val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
                 val mantenerSesion = prefs.getBoolean("mantenerSesion", false)
                 val rol = prefs.getString("rol", "") ?: ""
+                val token = prefs.getString("token", "") ?: ""
                 
-                val startScreen = if (mantenerSesion) {
+                val startScreen = if (mantenerSesion && token.isNotEmpty()) {
                     if (rol.contains("ADMIN", ignoreCase = true)) AppScreen.AdminHome else AppScreen.Home
                 } else {
                     AppScreen.Login
                 }
                 
                 var currentScreen by remember { mutableStateOf(startScreen) }
+                var selectedEventId by remember { mutableStateOf<Int?>(null) }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
@@ -60,7 +62,10 @@ class MainActivity : ComponentActivity() {
                         )
                         AppScreen.Home -> HomeScreen(
                             modifier  = Modifier.padding(innerPadding),
-                            onViewDetails = { currentScreen = AppScreen.EventDetail },
+                            onViewDetails = { eventId ->
+                                selectedEventId = eventId
+                                currentScreen = AppScreen.StudentEventDetail 
+                            },
                             onAgenda = { currentScreen = AppScreen.Agenda },
                             onDiplomas = { currentScreen = AppScreen.Diplomas },
                             onProfile = { currentScreen = AppScreen.Profile }
@@ -151,7 +156,10 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(innerPadding),
                             onHome = { currentScreen = AppScreen.Home },
                             onViewQr = { currentScreen = AppScreen.CheckinQr },
-                            onViewDetail = { currentScreen = AppScreen.StudentEventDetail },
+                            onViewDetail = { eventId -> 
+                                selectedEventId = eventId
+                                currentScreen = AppScreen.StudentEventDetail 
+                            },
                             onDiplomas = { currentScreen = AppScreen.Diplomas },
                             onProfile = { currentScreen = AppScreen.Profile }
                         )
@@ -170,6 +178,7 @@ class MainActivity : ComponentActivity() {
                             onProfile = { currentScreen = AppScreen.Profile }
                         )
                         AppScreen.StudentEventDetail -> StudentEventDetailScreen(
+                            eventId = selectedEventId ?: -1,
                             modifier = Modifier.padding(innerPadding),
                             onBack = { currentScreen = AppScreen.Agenda },
                             onHome = { currentScreen = AppScreen.Home },

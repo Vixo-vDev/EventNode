@@ -41,16 +41,66 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
+import mx.edu.utez.integradoraeventnode.data.network.ApiClient
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
+import android.util.Base64
 
 @Composable
 fun AgendaScreen(
     modifier: Modifier = Modifier,
     onHome: () -> Unit = {},
     onViewQr: () -> Unit = {},
-    onViewDetail: () -> Unit = {},
+    onViewDetail: (Int) -> Unit = {},
     onDiplomas: () -> Unit = {},
     onProfile: () -> Unit = {}
 ) {
+    var enrolledEvents by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
+    val usuarioId = prefs.getInt("id", -1)
+    val token = prefs.getString("token", "") ?: ""
+    val bearerToken = if (token.isNotEmpty()) "Bearer $token" else ""
+
+    fun decodeBase64Image(base64Str: String?): ImageBitmap? {
+        if (base64Str.isNullOrEmpty()) return null
+        return try {
+            val cleanBase64 = if (base64Str.contains(",")) base64Str.substringAfter(",") else base64Str
+            val imageBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)?.asImageBitmap()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (usuarioId != -1 && bearerToken.isNotEmpty()) {
+            try {
+                val response = ApiClient.apiService.listarMisEventos(bearerToken, usuarioId)
+                if (response.isSuccessful) {
+                    val allEvents = response.body() ?: emptyList()
+                    // Filter only those where inscripcionEstado == "ACTIVO" to be safe
+                    enrolledEvents = allEvents.filter { it["inscripcionEstado"] == "ACTIVO" }
+                } else {
+                    errorMessage = "Error al cargar tu agenda"
+                }
+            } catch (e: Exception) {
+                errorMessage = "Error de conexión"
+            } finally {
+                isLoading = false
+            }
+        } else {
+            isLoading = false
+            errorMessage = "No has iniciado sesión correctamente"
+        }
+    }
+
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -102,87 +152,45 @@ fun AgendaScreen(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "Hoy, 24 de Octubre",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Color(0xFF1F1F1F)
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                AgendaCard(
-                    title = "Charla tecnológica: IA en el campus",
-                    time = "10:00 AM - 12:30 PM",
-                    location = "Auditorio Principal, Campus Central",
-                    tag = "EN VIVO",
-                    imageColor = Color(0xFF9B7A4A),
-                    onViewQr = onViewQr,
-                    onViewDetail = onViewDetail
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                AgendaCard(
-                    title = "Workshop: Desarrollo Web Sostenible",
-                    time = "03:00 PM - 05:00 PM",
-                    location = "Laboratorio de Cómputo B2",
-                    tag = "",
-                    imageColor = Color(0xFF8CB1A0),
-                    onViewQr = onViewQr,
-                    onViewDetail = onViewDetail
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "Mañana, 25 de Octubre",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Color(0xFF1F1F1F)
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = 420.dp)
-                        .clickable { onViewDetail() },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFFE7F0FF))
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("25", style = MaterialTheme.typography.titleSmall, color = Color(0xFF2F6FED))
-                            Text("OCT", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2F6FED))
+                // EVENT CARDS
+                if (isLoading) {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        Text("Cargando tu agenda...")
+                    }
+                } else if (errorMessage != null) {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
+                    }
+                } else if (enrolledEvents.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        Text("No estás inscrito a ningún evento aún.", color = Color.Gray)
+                    }
+                } else {
+                    enrolledEvents.forEach { ev ->
+                        val eventId = (ev["idEvento"] as? Double)?.toInt() ?: -1
+                        val nombre = ev["nombre"] as? String ?: "Evento"
+                        val fechaInicio = ev["fechaInicio"] as? String ?: ""
+                        val ubicacion = ev["ubicacion"] as? String ?: "Varias ubicaciones"
+                        val bannerBase64 = ev["banner"] as? String
+
+                        val dateStr = if (fechaInicio.length >= 16) {
+                            fechaInicio.substring(0, 10).replace("-", "/") + " • " + fechaInicio.substring(11, 16)
+                        } else {
+                            fechaInicio
                         }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Feria de Empleo 2024",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = "9:00 AM - Explanada Norte",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF6C6C6C)
-                            )
-                            Text(
-                                text = "Próximamente",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF6C6C6C)
-                            )
-                        }
-                        Text(
-                            text = "Ver detalles",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF2F6FED),
-                            modifier = Modifier.clickable { onViewDetail() }
+
+                        AgendaCard(
+                            title = nombre,
+                            time = dateStr,
+                            location = ubicacion,
+                            tag = "EN VIVO",
+                            imageColor = Color(0xFF9B7A4A),
+                            bannerBase64 = bannerBase64,
+                            bannerDecoder = ::decodeBase64Image,
+                            onViewQr = onViewQr,
+                            onViewDetail = { onViewDetail(eventId) }
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
             }
@@ -205,6 +213,8 @@ private fun AgendaCard(
     location: String,
     tag: String,
     imageColor: Color,
+    bannerBase64: String? = null,
+    bannerDecoder: (String?) -> ImageBitmap? = { null },
     onViewQr: () -> Unit,
     onViewDetail: () -> Unit
 ) {
@@ -224,6 +234,18 @@ private fun AgendaCard(
                     .height(120.dp)
                     .background(imageColor)
             ) {
+                // Background Image
+                val decodedBanner = bannerDecoder(bannerBase64)
+                if (decodedBanner != null) {
+                    Image(
+                        bitmap = decodedBanner,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        alpha = 0.6f
+                    )
+                }
+
                 if (tag.isNotEmpty()) {
                     Box(
                         modifier = Modifier

@@ -10,5 +10,6 @@ data class LoginResponse(
     val correo: String?,
     val matricula: String?,
     val sexo: String?,
-    val cuatrimestre: Int?
+    val cuatrimestre: Int?,
+    val token: String?
 )

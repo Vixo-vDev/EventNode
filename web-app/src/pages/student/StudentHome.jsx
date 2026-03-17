@@ -21,6 +21,7 @@ function StudentHome() {
           title: e.nombre,
           date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ' | ' + new Date(e.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '',
           location: e.ubicacion,
+          detailUrl: `/estudiante/evento/${e.idEvento}`
         }))
         setEventos(mapped)
       } catch {
@@ -66,7 +67,13 @@ function StudentHome() {
         <div className="row g-3 mb-5">
           {eventos.map(event => (
             <div className="col-12 col-md-6 col-lg-4" key={event.id}>
-              <EventCard image={event.image} title={event.title} date={event.date} location={event.location} />
+              <EventCard 
+                image={event.image} 
+                title={event.title} 
+                date={event.date} 
+                location={event.location} 
+                detailUrl={event.detailUrl} 
+              />
             </div>
           ))}
         </div>

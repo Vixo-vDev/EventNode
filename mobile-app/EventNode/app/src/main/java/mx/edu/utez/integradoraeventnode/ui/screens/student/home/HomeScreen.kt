@@ -50,20 +50,38 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import android.util.Base64
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.student.profile.ProfileBottomNav
+import androidx.compose.ui.graphics.asImageBitmap
+
 
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    onViewDetails: () -> Unit = {},
+    onViewDetails: (Int) -> Unit = {},
     onAgenda: () -> Unit = {},
     onDiplomas: () -> Unit = {},
     onProfile: () -> Unit = {}
 ) {
+    // Helper function to decode base64 images
+    fun decodeBase64Image(base64Str: String?): ImageBitmap? {
+        if (base64Str.isNullOrEmpty()) return null
+        return try {
+            val cleanBase64 = if (base64Str.contains(",")) {
+                base64Str.substringAfter(",")
+            } else {
+                base64Str
+            }
+            val imageBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)?.asImageBitmap()
+        } catch (e: Exception) {
+            null
+        }
+    }
     var searchText by remember { mutableStateOf("") }
     
     var eventos by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
@@ -172,7 +190,9 @@ fun HomeScreen(
                                 location = evento.ubicacion,
                                 buttonText = "Ver Detalles",
                                 accent = Color(0xFF6F9EA6),
-                                onDetailsClick = onViewDetails
+                                bannerBase64 = evento.banner,
+                                bannerDecoder = ::decodeBase64Image,
+                                onDetailsClick = { onViewDetails(evento.idEvento) }
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                         }
@@ -259,6 +279,8 @@ private fun EventCard(
     location: String,
     buttonText: String,
     accent: Color,
+    bannerBase64: String? = null,
+    bannerDecoder: (String?) -> ImageBitmap? = { null },
     onDetailsClick: () -> Unit
 ) {
     Card(
@@ -276,14 +298,25 @@ private fun EventCard(
                     .height(160.dp)
                     .background(accent)
             ) {
-                // Background Image Placeholder
-                Image(
-                    bitmap = assetImageBitmap("Gemini_Generated_Image_j7p5usj7p5usj7p5.png"),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                    alpha = 0.6f
-                )
+                // Background Image
+                val decodedBanner = bannerDecoder(bannerBase64)
+                if (decodedBanner != null) {
+                    Image(
+                        bitmap = decodedBanner,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        alpha = 0.6f
+                    )
+                } else {
+                    Image(
+                        bitmap = assetImageBitmap("Gemini_Generated_Image_j7p5usj7p5usj7p5.png"),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        alpha = 0.6f
+                    )
+                }
                 
                 Column(
                     modifier = Modifier.fillMaxSize().padding(16.dp),

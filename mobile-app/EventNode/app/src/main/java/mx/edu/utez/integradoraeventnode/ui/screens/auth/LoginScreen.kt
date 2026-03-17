@@ -287,6 +287,7 @@ fun LoginScreen(
                                             val rol = body?.rol ?: ""
                                             prefs.edit().apply {
                                                 putInt("loginAttempts", 0)
+                                                putInt("id", body?.idUsuario ?: -1)
                                                 putString("nombre", body?.nombre ?: "")
                                                 putString("apellidoPaterno", body?.apellidoPaterno ?: "")
                                                 putString("apellidoMaterno", body?.apellidoMaterno ?: "")
@@ -295,6 +296,7 @@ fun LoginScreen(
                                                 putString("sexo", body?.sexo ?: "")
                                                 putInt("cuatrimestre", body?.cuatrimestre ?: 0)
                                                 putString("rol", rol)
+                                                putString("token", body?.token ?: "")
                                                 putBoolean("mantenerSesion", keepSession)
                                             }.apply()
                                             attempts = 0
