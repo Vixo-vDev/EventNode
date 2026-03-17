@@ -469,9 +469,8 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
       </div>
     </div>
     {showSuccess && (
-      <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content border-0 rounded-4 shadow text-center p-4">
+      <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
+          <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '400px', width: '90%' }}>
               <div className="mb-3">
                 <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '3rem' }}></i>
               </div>
@@ -487,22 +486,19 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
               }}>
                 Aceptar
               </button>
-            </div>
           </div>
         </div>
       )}
 
       {showError && (
-        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
-          <div className="modal-dialog modal-dialog-centered modal-sm">
-            <div className="modal-content border-0 rounded-4 shadow text-center p-4">
+        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
+          <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '350px', width: '90%' }}>
               <div className="mb-3">
                 <i className="bi bi-x-circle-fill text-danger" style={{ fontSize: '3rem' }}></i>
               </div>
               <h5>Revisa los datos</h5>
               <p className="text-secondary small">Por favor, asegúrate de completar todos los campos obligatorios (*) antes de continuar.</p>
               <button className="btn btn-danger rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowError(false)}>Entendido</button>
-            </div>
           </div>
         </div>
       )}

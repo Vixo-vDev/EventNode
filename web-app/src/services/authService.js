@@ -82,5 +82,44 @@ export const authService = {
   getCurrentUser: () => {
     const userStr = localStorage.getItem('auth_user') || sessionStorage.getItem('auth_user');
     return userStr ? JSON.parse(userStr) : null;
-  }
+  },
+
+  enviarCodigoRecuperacion: async (correo) => {
+    const response = await fetch(`${API_URL}/auth/recuperar/enviar-codigo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ correo }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al enviar el código');
+    }
+    return response.json();
+  },
+
+  verificarCodigo: async (correo, codigo) => {
+    const response = await fetch(`${API_URL}/auth/recuperar/verificar-codigo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ correo, codigo }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al verificar el código');
+    }
+    return response.json();
+  },
+
+  restablecerPassword: async (correo, codigo, nuevaPassword) => {
+    const response = await fetch(`${API_URL}/auth/recuperar/restablecer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ correo, codigo, nuevaPassword }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al restablecer la contraseña');
+    }
+    return response.json();
+  },
 };

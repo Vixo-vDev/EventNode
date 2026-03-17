@@ -1,19 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { authService } from '../services/authService'
-import ForgotPasswordHeader from '../components/ForgotPasswordHeader'
+import { authService } from '../../services/authService'
 
-function ForgotPassword() {
-  const navigate = useNavigate()
-
-  // Flow steps: 'email' -> 'code' -> 'newPassword' -> 'success'
-  const [step, setStep] = useState('email')
-  const [correo, setCorreo] = useState('')
-  const [codigo, setCodigo] = useState(['', '', '', '', '', ''])
+function CambiarContrasenaModal({ correo }) {
+  // Flow: 'send' -> 'code' -> 'newPassword' -> 'success'
+  const [step, setStep] = useState('send')
   const [loading, setLoading] = useState(false)
-
-  // New password state
+  const [codigo, setCodigo] = useState(['', '', '', '', '', ''])
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -21,22 +14,45 @@ function ForgotPassword() {
 
   const codeInputRefs = useRef([])
 
-  // Password validations
   const hasMinLength = newPassword.length >= 8
   const hasUppercase = /[A-Z]/.test(newPassword)
   const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword)
   const passwordsMatch = newPassword === confirmPassword && newPassword.length > 0
 
-  // --- Step 1: Send code ---
-  const handleSendCode = async (e) => {
-    e.preventDefault()
-    if (!correo.trim()) {
-      toast.error('Ingresa tu correo electrónico')
+  const resetAll = () => {
+    setStep('send')
+    setLoading(false)
+    setCodigo(['', '', '', '', '', ''])
+    setNewPassword('')
+    setConfirmPassword('')
+    setShowPassword(false)
+    setShowConfirm(false)
+  }
+
+  // Reset when modal opens
+  useEffect(() => {
+    const modalEl = document.getElementById('cambiarContrasenaModal')
+    if (!modalEl) return
+    const handleShow = () => resetAll()
+    modalEl.addEventListener('show.bs.modal', handleShow)
+    return () => modalEl.removeEventListener('show.bs.modal', handleShow)
+  }, [])
+
+  // Focus first code input when entering code step
+  useEffect(() => {
+    if (step === 'code') {
+      setTimeout(() => codeInputRefs.current[0]?.focus(), 100)
+    }
+  }, [step])
+
+  const handleSendCode = async () => {
+    if (!correo) {
+      toast.error('No se encontró el correo de tu cuenta')
       return
     }
     setLoading(true)
     try {
-      await authService.enviarCodigoRecuperacion(correo.trim())
+      await authService.enviarCodigoRecuperacion(correo)
       toast.success('Código enviado a tu correo')
       setStep('code')
     } catch (err) {
@@ -46,7 +62,6 @@ function ForgotPassword() {
     }
   }
 
-  // --- Step 2: Verify code ---
   const handleCodeChange = (index, value) => {
     if (!/^\d*$/.test(value)) return
     const newCode = [...codigo]
@@ -85,7 +100,7 @@ function ForgotPassword() {
     }
     setLoading(true)
     try {
-      await authService.verificarCodigo(correo.trim(), codigoStr)
+      await authService.verificarCodigo(correo, codigoStr)
       toast.success('Código verificado correctamente')
       setStep('newPassword')
     } catch (err) {
@@ -98,7 +113,7 @@ function ForgotPassword() {
   const handleResendCode = async () => {
     setLoading(true)
     try {
-      await authService.enviarCodigoRecuperacion(correo.trim())
+      await authService.enviarCodigoRecuperacion(correo)
       toast.success('Código reenviado a tu correo')
       setCodigo(['', '', '', '', '', ''])
     } catch (err) {
@@ -108,7 +123,6 @@ function ForgotPassword() {
     }
   }
 
-  // --- Step 3: Reset password ---
   const handleResetPassword = async () => {
     if (!hasMinLength || !hasUppercase || !hasSpecialChar) {
       toast.error('La contraseña no cumple con los requisitos de seguridad')
@@ -120,8 +134,8 @@ function ForgotPassword() {
     }
     setLoading(true)
     try {
-      await authService.restablecerPassword(correo.trim(), codigo.join(''), newPassword)
-      toast.success('Contraseña restablecida exitosamente')
+      await authService.restablecerPassword(correo, codigo.join(''), newPassword)
+      toast.success('Contraseña actualizada exitosamente')
       setStep('success')
     } catch (err) {
       toast.error(err.message)
@@ -130,67 +144,57 @@ function ForgotPassword() {
     }
   }
 
-  // Focus first code input when entering code step
-  useEffect(() => {
-    if (step === 'code') {
-      setTimeout(() => codeInputRefs.current[0]?.focus(), 100)
+  const closeModal = () => {
+    const modalEl = document.getElementById('cambiarContrasenaModal')
+    if (modalEl && window.bootstrap) {
+      const bsModal = window.bootstrap.Modal.getInstance(modalEl)
+      if (bsModal) bsModal.hide()
     }
-  }, [step])
+  }
 
   return (
-    <div className="bg-light min-vh-100 d-flex justify-content-center align-items-center p-3">
-      <div className="col-11 col-sm-8 col-md-6 col-lg-5 col-xl-4">
-        <div className="card shadow-sm border-0 rounded-4">
-          <div className="card-body p-4 p-md-5">
+    <div className="modal fade" id="cambiarContrasenaModal" tabIndex="-1" aria-hidden="true">
+      <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-content border-0 rounded-4 shadow">
+          <div className="modal-header border-0 pb-0 pt-3 pe-3">
+            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div className="modal-body px-4 pb-4 pt-0">
 
-            {/* Step 1: Email */}
-            {step === 'email' && (
-              <>
-                <ForgotPasswordHeader />
-                <form onSubmit={handleSendCode}>
-                  <div className="mb-4">
-                    <label className="form-label small fw-semibold" htmlFor="recoveryEmail">
-                      Correo institucional
-                    </label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-white border-end-0">
-                        <i className="bi bi-envelope text-secondary"></i>
-                      </span>
-                      <input
-                        type="email"
-                        className="form-control border-start-0"
-                        id="recoveryEmail"
-                        placeholder="matricula@utez.edu.mx"
-                        value={correo}
-                        onChange={(e) => setCorreo(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="submit"
-                    className="btn btn-primary w-100 py-2 rounded-pill fw-semibold"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                        Enviando...
-                      </>
-                    ) : (
-                      <>Enviar código <i className="bi bi-arrow-right ms-1"></i></>
-                    )}
-                  </button>
-                  <p className="text-center mt-4 mb-0 small">
-                    <Link to="/login" className="text-primary text-decoration-none fw-semibold">
-                      <i className="bi bi-arrow-left me-1"></i>
-                      Volver al inicio de sesión
-                    </Link>
-                  </p>
-                </form>
-              </>
+            {/* Step 1: Confirm send code */}
+            {step === 'send' && (
+              <div className="text-center">
+                <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
+                  style={{ width: '48px', height: '48px' }}>
+                  <i className="bi bi-arrow-repeat text-primary fs-4"></i>
+                </div>
+                <h5 className="fw-bold mb-2">Cambiar Contraseña</h5>
+                <p className="text-secondary small mb-4">
+                  Te enviaremos un código de verificación a <strong>{correo}</strong> para confirmar tu identidad.
+                </p>
+                <button
+                  className="btn btn-primary rounded-pill w-100 fw-semibold mb-2"
+                  onClick={handleSendCode}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Enviando...
+                    </>
+                  ) : 'Enviar código'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-link text-secondary text-decoration-none small w-100"
+                  data-bs-dismiss="modal"
+                >
+                  Cancelar
+                </button>
+              </div>
             )}
 
-            {/* Step 2: Verify Code */}
+            {/* Step 2: Verify code */}
             {step === 'code' && (
               <div className="text-center">
                 <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3"
@@ -201,7 +205,6 @@ function ForgotPassword() {
                 <p className="text-secondary small mb-4">
                   Ingresa el código de 6 dígitos que enviamos a <strong>{correo}</strong>
                 </p>
-
                 <div className="d-flex justify-content-center gap-2 mb-4" onPaste={handleCodePaste}>
                   {codigo.map((digit, i) => (
                     <input
@@ -218,7 +221,6 @@ function ForgotPassword() {
                     />
                   ))}
                 </div>
-
                 <button
                   className="btn btn-primary rounded-pill w-100 fw-semibold mb-3"
                   onClick={handleVerifyCode}
@@ -231,7 +233,6 @@ function ForgotPassword() {
                     </>
                   ) : 'Verificar'}
                 </button>
-
                 <p className="text-secondary small mb-0">
                   ¿No recibiste el código?{' '}
                   <button
@@ -245,7 +246,7 @@ function ForgotPassword() {
               </div>
             )}
 
-            {/* Step 3: New Password */}
+            {/* Step 3: New password */}
             {step === 'newPassword' && (
               <div>
                 <div className="d-flex align-items-center gap-2 mb-3">
@@ -256,9 +257,8 @@ function ForgotPassword() {
                   <h6 className="fw-bold mb-0">Establecer nueva contraseña</h6>
                 </div>
                 <p className="text-secondary small mb-4">
-                  Crea una contraseña segura que no hayas utilizado antes para proteger tu cuenta.
+                  Crea una contraseña segura que no hayas utilizado antes.
                 </p>
-
                 <div className="mb-3">
                   <label className="form-label text-secondary small">Nueva contraseña</label>
                   <div className="input-group">
@@ -269,20 +269,13 @@ function ForgotPassword() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                     />
-                    <button
-                      className="btn btn-outline-secondary border-start-0"
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
+                    <button className="btn btn-outline-secondary border-start-0" type="button" onClick={() => setShowPassword(!showPassword)}>
                       <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'} text-secondary`}></i>
                     </button>
                   </div>
                 </div>
-
                 <div className="mb-3">
-                  <div className="text-uppercase text-secondary small fw-bold mb-2">
-                    Requisitos de seguridad
-                  </div>
+                  <div className="text-uppercase text-secondary small fw-bold mb-2">Requisitos de seguridad</div>
                   <div className="d-flex flex-column gap-1">
                     <div className={`d-flex align-items-center gap-2 small ${hasMinLength ? 'text-success' : 'text-secondary'}`}>
                       <i className={`bi ${hasMinLength ? 'bi-check-circle-fill' : 'bi-circle'}`} style={{ fontSize: '10px' }}></i>
@@ -298,7 +291,6 @@ function ForgotPassword() {
                     </div>
                   </div>
                 </div>
-
                 <div className="mb-4">
                   <label className="form-label text-secondary small">Confirmar nueva contraseña</label>
                   <div className="input-group">
@@ -309,11 +301,7 @@ function ForgotPassword() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                     />
-                    <button
-                      className="btn btn-outline-secondary border-start-0"
-                      type="button"
-                      onClick={() => setShowConfirm(!showConfirm)}
-                    >
+                    <button className="btn btn-outline-secondary border-start-0" type="button" onClick={() => setShowConfirm(!showConfirm)}>
                       <i className={`bi ${showConfirm ? 'bi-eye-slash' : 'bi-eye'} text-secondary`}></i>
                     </button>
                   </div>
@@ -321,7 +309,6 @@ function ForgotPassword() {
                     <div className="text-danger small mt-1">Las contraseñas no coinciden</div>
                   )}
                 </div>
-
                 <button
                   className="btn btn-primary rounded-pill w-100 fw-semibold mb-2"
                   onClick={handleResetPassword}
@@ -334,11 +321,7 @@ function ForgotPassword() {
                     </>
                   ) : 'Restablecer contraseña'}
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-link text-secondary text-decoration-none small w-100"
-                  onClick={() => setStep('email')}
-                >
+                <button type="button" className="btn btn-link text-secondary text-decoration-none small w-100" data-bs-dismiss="modal">
                   Cancelar
                 </button>
               </div>
@@ -354,14 +337,13 @@ function ForgotPassword() {
                 <h5 className="fw-bold mb-2">¡Contraseña Actualizada!</h5>
                 <p className="text-secondary small mb-4">
                   Tu contraseña ha sido cambiada con éxito.
-                  Ahora puedes iniciar sesión con tu nueva clave.
                 </p>
-                <Link
-                  to="/login"
+                <button
                   className="btn btn-primary rounded-pill w-100 fw-semibold"
+                  onClick={closeModal}
                 >
-                  Ir al Inicio de Sesión
-                </Link>
+                  Aceptar
+                </button>
               </div>
             )}
 
@@ -372,4 +354,4 @@ function ForgotPassword() {
   )
 }
 
-export default ForgotPassword
+export default CambiarContrasenaModal

@@ -411,9 +411,8 @@ function GestionEventos({ user }) {
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }}>
-          <div className="modal-dialog modal-dialog-centered modal-sm">
-            <div className="modal-content border-0 rounded-4 shadow text-center p-4">
+        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }}>
+          <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '350px', width: '90%' }}>
               <div className="mb-3">
                 <i className="bi bi-exclamation-triangle-fill text-danger" style={{ fontSize: '3rem' }}></i>
               </div>
@@ -437,7 +436,6 @@ function GestionEventos({ user }) {
                   {deleteLoading ? 'Eliminando...' : 'Eliminar'}
                 </button>
               </div>
-            </div>
           </div>
         </div>
       )}
