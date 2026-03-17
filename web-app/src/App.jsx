@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ToastContainer } from 'react-toastify'
+import { authService } from './services/authService'
 
 // Vistas de Autenticación
 import Login from './pages/Login'
@@ -12,19 +13,24 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import StudentDashboard from './pages/student/StudentDashboard'
 
 function App() {
-  // Estado del usuario logueado, persistido en sessionStorage
-  const [loggedUser, setLoggedUser] = useState(() => {
-    const saved = sessionStorage.getItem('loggedUser')
-    return saved ? JSON.parse(saved) : null
-  })
+  // Estado del usuario logueado, sincronizado con authService
+  const [loggedUser, setLoggedUser] = useState(() => authService.getCurrentUser())
+
+  // Sincronizar estado cuando cambie el storage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setLoggedUser(authService.getCurrentUser())
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
 
   const handleLogin = (userData) => {
-    sessionStorage.setItem('loggedUser', JSON.stringify(userData))
     setLoggedUser(userData)
   }
 
   const handleLogout = () => {
-    sessionStorage.removeItem('loggedUser')
+    authService.logout()
     setLoggedUser(null)
   }
 

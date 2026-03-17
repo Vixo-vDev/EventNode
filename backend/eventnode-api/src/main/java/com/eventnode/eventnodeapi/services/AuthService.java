@@ -6,9 +6,13 @@ import com.eventnode.eventnodeapi.models.Usuario;
 import com.eventnode.eventnodeapi.models.Alumno;
 import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
 import com.eventnode.eventnodeapi.repositories.AlumnoRepository;
+import com.eventnode.eventnodeapi.security.JwtTokenProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,10 +23,17 @@ public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final AlumnoRepository alumnoRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public AuthService(UsuarioRepository usuarioRepository, AlumnoRepository alumnoRepository) {    
+    public AuthService(UsuarioRepository usuarioRepository, 
+                       AlumnoRepository alumnoRepository, 
+                       PasswordEncoder passwordEncoder, 
+                       JwtTokenProvider jwtTokenProvider) {    
         this.usuarioRepository = usuarioRepository;
         this.alumnoRepository = alumnoRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     public LoginResponse login(LoginRequest request) {
@@ -39,10 +50,7 @@ public class AuthService {
             throw new DisabledException("Cuenta inactiva, contacte al administrador");
         }
 
-        String passwordIngresada = request.getPassword();
-        String passwordAlmacenada = usuario.getPassword();
-
-        if (!passwordAlmacenada.equals(passwordIngresada)) {
+        if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
             int intentos = usuario.getIntentosFallidos() == null ? 0 : usuario.getIntentosFallidos();
             intentos++;
             usuario.setIntentosFallidos(intentos);
@@ -54,6 +62,12 @@ public class AuthService {
             usuarioRepository.save(usuario);
             throw new BadCredentialsException("Credenciales incorrectas");
         }
+
+        // Generar token JWT
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                usuario.getCorreo(), null, null // Authorities will be loaded in the filter
+        );
+        String token = jwtTokenProvider.generateToken(authentication);
 
         usuario.setIntentosFallidos(0);
         usuario.setBloqueadoHasta(null);
@@ -85,7 +99,8 @@ public class AuthService {
                 usuario.getCorreo(),
                 matricula,
                 sexo,
-                cuatrimestre
+                cuatrimestre,
+                token
         );
     }
 }

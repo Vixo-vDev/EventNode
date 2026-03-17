@@ -10,6 +10,7 @@ import com.eventnode.eventnodeapi.repositories.AdministradorRepository;
 import com.eventnode.eventnodeapi.repositories.AlumnoRepository;
 import com.eventnode.eventnodeapi.repositories.RolRepository;
 import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,15 +26,18 @@ public class UsuarioService {
     private final AlumnoRepository alumnoRepository;
     private final AdministradorRepository administradorRepository;
     private final RolRepository rolRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           AlumnoRepository alumnoRepository,
                           AdministradorRepository administradorRepository,
-                          RolRepository rolRepository) {
+                          RolRepository rolRepository,
+                          PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.alumnoRepository = alumnoRepository;
         this.administradorRepository = administradorRepository;
         this.rolRepository = rolRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<PerfilResponse> listarTodos() {
@@ -111,7 +115,7 @@ public class UsuarioService {
         usuario.setApellidoPaterno(request.getApellidoPaterno());
         usuario.setApellidoMaterno(request.getApellidoMaterno());
         usuario.setCorreo(request.getCorreo());
-        usuario.setPassword(request.getPassword());
+        usuario.setPassword(passwordEncoder.encode(request.getPassword()));
         usuario.setEstado("ACTIVO");
         usuario.setIntentosFallidos(0);
         usuario.setRol(rolAdmin);

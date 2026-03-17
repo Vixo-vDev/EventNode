@@ -14,13 +14,14 @@ public class LoginResponse {
     private String matricula;
     private String sexo;
     private Integer cuatrimestre;
+    private String token;
 
     public LoginResponse() {
     }
 
     public LoginResponse(String mensaje, String rol, Integer idUsuario, String nombre,
                          String apellidoPaterno, String apellidoMaterno, String correo,
-                         String matricula, String sexo, Integer cuatrimestre) {
+                         String matricula, String sexo, Integer cuatrimestre, String token) {
         this.mensaje = mensaje;
         this.rol = rol;
         this.idUsuario = idUsuario;
@@ -31,6 +32,7 @@ public class LoginResponse {
         this.matricula = matricula;
         this.sexo = sexo;
         this.cuatrimestre = cuatrimestre;
+        this.token = token;
     }
 
     public String getMensaje() { return mensaje; }
@@ -62,4 +64,7 @@ public class LoginResponse {
 
     public Integer getCuatrimestre() { return cuatrimestre; }
     public void setCuatrimestre(Integer cuatrimestre) { this.cuatrimestre = cuatrimestre; }
+
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
 }
