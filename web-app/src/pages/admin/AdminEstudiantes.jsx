@@ -22,6 +22,9 @@ function AdminEstudiantes({ user }) {
   const [adminError, setAdminError] = useState('')
   const [adminLoading, setAdminLoading] = useState(false)
 
+  // Estado para editar estudiante
+  const [selectedStudent, setSelectedStudent] = useState(null)
+
   const isSuperAdmin = user?.originalRole === 'SUPERADMIN'
 
   const fetchUsers = async () => {
@@ -33,8 +36,14 @@ function AdminEstudiantes({ user }) {
           id: u.idUsuario,
           initials: (u.nombre?.[0] || '') + (u.apellidoPaterno?.[0] || ''),
           name: `${u.nombre} ${u.apellidoPaterno}`,
+          nombre: u.nombre,
+          apellidoPaterno: u.apellidoPaterno,
+          apellidoMaterno: u.apellidoMaterno,
           matricula: u.matricula || '—',
           email: u.correo,
+          edad: u.edad,
+          sexo: u.sexo,
+          cuatrimestre: u.cuatrimestre,
           role: 'STUDENT',
           active: u.estado === 'ACTIVO',
         }))
@@ -167,6 +176,7 @@ function AdminEstudiantes({ user }) {
                             title="Editar"
                             data-bs-toggle="modal"
                             data-bs-target="#editarEstudianteModal"
+                            onClick={() => setSelectedStudent(student)}
                           >
                             <i className="bi bi-pencil" style={{ fontSize: '13px' }}></i>
                           </button>
@@ -234,7 +244,10 @@ function AdminEstudiantes({ user }) {
         </div>
       </div>
 
-      <EditarEstudianteModal />
+      <EditarEstudianteModal 
+        student={selectedStudent} 
+        onStudentUpdated={fetchUsers} 
+      />
 
       <CrearAdministradorModal
         formData={adminForm}

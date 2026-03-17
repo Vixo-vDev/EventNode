@@ -34,6 +34,16 @@ public class AlumnoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
+    @org.springframework.web.bind.annotation.PutMapping("/{id}")
+    public ResponseEntity<Map<String, String>> actualizarAlumno(
+            @org.springframework.web.bind.annotation.PathVariable Integer id,
+            @Valid @RequestBody com.eventnode.eventnodeapi.dtos.AlumnoActualizarRequest request) {
+        alumnoService.actualizarAlumno(id, request);
+        Map<String, String> body = new HashMap<>();
+        body.put("mensaje", "Alumno actualizado con éxito");
+        return ResponseEntity.ok(body);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> manejarValidaciones(MethodArgumentNotValidException ex) {
         Map<String, String> body = new HashMap<>();
