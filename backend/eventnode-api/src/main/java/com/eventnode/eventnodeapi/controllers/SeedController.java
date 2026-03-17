@@ -71,7 +71,11 @@ public class SeedController {
 
             result.put("mensaje", "Datos iniciales creados exitosamente. SuperAdmin: admin@eventnode.com / Admin@1234");
         } else {
-            result.put("mensaje", "Los datos iniciales ya existen");
+            // Asegurar que el password esté hasheado con BCrypt incluso si ya existe
+            Usuario admin = usuarioRepository.findByCorreo("admin@eventnode.com").get();
+            admin.setPassword(passwordEncoder.encode("Admin@1234"));
+            usuarioRepository.save(admin);
+            result.put("mensaje", "Password de SuperAdmin actualizado con BCrypt. SuperAdmin: admin@eventnode.com / Admin@1234");
         }
 
         return ResponseEntity.ok(result);

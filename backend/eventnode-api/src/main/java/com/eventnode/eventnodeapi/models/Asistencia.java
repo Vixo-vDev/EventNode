@@ -22,7 +22,7 @@ public class Asistencia {
     @Column(name = "fecha_checkin")
     private LocalDateTime fechaCheckin;
 
-    @Column(name = "metodo", nullable = false)
+    @Column(name = "metodo", nullable = false, columnDefinition = "ENUM('QR','MANUAL')")
     private String metodo;
 
     public Asistencia() {
