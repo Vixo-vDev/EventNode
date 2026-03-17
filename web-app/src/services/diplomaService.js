@@ -1,10 +1,15 @@
+import { authService } from './authService';
+
 const API_URL = '/api';
 
 export const diplomaService = {
   crearDiploma: async (datos) => {
     const response = await fetch(`${API_URL}/diplomas/crear`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
       body: JSON.stringify(datos),
     });
     if (!response.ok) {
@@ -15,7 +20,9 @@ export const diplomaService = {
   },
 
   listarDiplomas: async () => {
-    const response = await fetch(`${API_URL}/diplomas/`);
+    const response = await fetch(`${API_URL}/diplomas/`, {
+      headers: { ...authService.getAuthHeader() }
+    });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.mensaje || 'Error al listar diplomas');
@@ -24,7 +31,9 @@ export const diplomaService = {
   },
 
   obtenerDiploma: async (idDiploma) => {
-    const response = await fetch(`${API_URL}/diplomas/${idDiploma}`);
+    const response = await fetch(`${API_URL}/diplomas/${idDiploma}`, {
+      headers: { ...authService.getAuthHeader() }
+    });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.mensaje || 'Error al obtener diploma');
@@ -35,6 +44,7 @@ export const diplomaService = {
   emitirDiplomas: async (idDiploma) => {
     const response = await fetch(`${API_URL}/diplomas/${idDiploma}/emitir`, {
       method: 'POST',
+      headers: { ...authService.getAuthHeader() }
     });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -44,7 +54,9 @@ export const diplomaService = {
   },
 
   listarDiplomasEstudiante: async (idUsuario) => {
-    const response = await fetch(`${API_URL}/diplomas/estudiante/${idUsuario}`);
+    const response = await fetch(`${API_URL}/diplomas/estudiante/${idUsuario}`, {
+      headers: { ...authService.getAuthHeader() }
+    });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.mensaje || 'Error al listar diplomas');

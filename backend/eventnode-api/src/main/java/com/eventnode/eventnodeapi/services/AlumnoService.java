@@ -7,6 +7,7 @@ import com.eventnode.eventnodeapi.models.Usuario;
 import com.eventnode.eventnodeapi.repositories.AlumnoRepository;
 import com.eventnode.eventnodeapi.repositories.RolRepository;
 import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ public class AlumnoService {
     private final UsuarioRepository usuarioRepository;
     private final AlumnoRepository alumnoRepository;
     private final RolRepository rolRepository;
+    private final PasswordEncoder passwordEncoder;
 
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).{8,}$"
@@ -28,10 +30,12 @@ public class AlumnoService {
 
     public AlumnoService(UsuarioRepository usuarioRepository,
                          AlumnoRepository alumnoRepository,
-                         RolRepository rolRepository) {
+                         RolRepository rolRepository,
+                         PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.alumnoRepository = alumnoRepository;
         this.rolRepository = rolRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -64,7 +68,7 @@ public class AlumnoService {
         usuario.setApellidoPaterno(request.getApellidoPaterno());
         usuario.setApellidoMaterno(request.getApellidoMaterno());
         usuario.setCorreo(request.getCorreo());
-        usuario.setPassword(request.getPassword());
+        usuario.setPassword(passwordEncoder.encode(request.getPassword()));
         usuario.setEstado("ACTIVO");
         usuario.setIntentosFallidos(0);
         usuario.setBloqueadoHasta(null);

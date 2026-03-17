@@ -25,9 +25,7 @@ export const authService = {
 
     const data = await response.json();
 
-    // Backend devuelve: { mensaje, rol, idUsuario, nombre, apellidoPaterno,
-    //                     apellidoMaterno, correo, matricula, sexo, cuatrimestre }
-    // Frontend espera: { id, name, role, email, ... }
+    // Backend devuelve: { mensaje, rol, idUsuario, nombre, ..., token }
     const userData = {
       id: data.idUsuario,
       name: data.nombre || 'Usuario',
@@ -44,7 +42,7 @@ export const authService = {
     // Almacenar según preferencia
     const storage = rememberMe ? localStorage : sessionStorage;
     storage.setItem('auth_user', JSON.stringify(userData));
-    storage.setItem('auth_token', btoa(correo + ':' + password));
+    storage.setItem('auth_token', data.token);
 
     // Limpiar el otro storage por si acaso quedaron residuos
     const otherStorage = rememberMe ? sessionStorage : localStorage;
@@ -81,7 +79,7 @@ export const authService = {
 
   getAuthHeader: () => {
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-    return token ? { 'Authorization': `Basic ${token}` } : {};
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
   },
 
   getCurrentUser: () => {

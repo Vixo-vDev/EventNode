@@ -7,6 +7,7 @@ import com.eventnode.eventnodeapi.repositories.AdministradorRepository;
 import com.eventnode.eventnodeapi.repositories.RolRepository;
 import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,13 +24,16 @@ public class SeedController {
     private final RolRepository rolRepository;
     private final UsuarioRepository usuarioRepository;
     private final AdministradorRepository administradorRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public SeedController(RolRepository rolRepository,
                           UsuarioRepository usuarioRepository,
-                          AdministradorRepository administradorRepository) {
+                          AdministradorRepository administradorRepository,
+                          PasswordEncoder passwordEncoder) {
         this.rolRepository = rolRepository;
         this.usuarioRepository = usuarioRepository;
         this.administradorRepository = administradorRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/init")
@@ -52,7 +56,7 @@ public class SeedController {
             admin.setApellidoPaterno("EventNode");
             admin.setApellidoMaterno("Principal");
             admin.setCorreo("admin@eventnode.com");
-            admin.setPassword("Admin@1234");
+            admin.setPassword(passwordEncoder.encode("Admin@1234"));
             admin.setEstado("ACTIVO");
             admin.setIntentosFallidos(0);
             admin.setRol(rolSuperAdmin);

@@ -1,10 +1,15 @@
+import { authService } from './authService';
+
 const API_URL = '/api';
 
 export const asistenciaService = {
   registrarAsistencia: async (idUsuario, idEvento, metodo = 'QR') => {
     const response = await fetch(`${API_URL}/asistencias/registrar`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
       body: JSON.stringify({ idUsuario, idEvento, metodo }),
     });
     if (!response.ok) {
@@ -17,7 +22,10 @@ export const asistenciaService = {
   registrarManual: async (matricula, idEvento) => {
     const response = await fetch(`${API_URL}/asistencias/manual`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
       body: JSON.stringify({ matricula, idEvento }),
     });
     if (!response.ok) {
@@ -28,7 +36,9 @@ export const asistenciaService = {
   },
 
   listarAsistencias: async (idEvento) => {
-    const response = await fetch(`${API_URL}/asistencias/evento/${idEvento}`);
+    const response = await fetch(`${API_URL}/asistencias/evento/${idEvento}`, {
+      headers: { ...authService.getAuthHeader() }
+    });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.mensaje || 'Error al listar asistencias');

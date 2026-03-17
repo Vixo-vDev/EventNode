@@ -1,3 +1,5 @@
+import { authService } from './authService';
+
 const API_URL = '/api';
 
 export const eventService = {
@@ -65,7 +67,10 @@ export const eventService = {
   crearOrganizador: async (datos) => {
     const response = await fetch(`${API_URL}/eventos/organizadores`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
       body: JSON.stringify(datos),
     });
 
@@ -83,7 +88,10 @@ export const eventService = {
   crearEvento: async (eventoData) => {
     const response = await fetch(`${API_URL}/eventos/crear`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
       body: JSON.stringify(eventoData),
     });
 
@@ -101,7 +109,10 @@ export const eventService = {
   actualizarEvento: async (idEvento, eventoData) => {
     const response = await fetch(`${API_URL}/eventos/${idEvento}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
       body: JSON.stringify(eventoData),
     });
 
@@ -119,7 +130,10 @@ export const eventService = {
   cancelarEvento: async (idEvento) => {
     const response = await fetch(`${API_URL}/eventos/${idEvento}/cancelar`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
     });
 
     if (!response.ok) {

@@ -1,8 +1,12 @@
+import { authService } from './authService';
+
 const API_URL = '/api';
 
 export const userService = {
   getPerfil: async (idUsuario) => {
-    const response = await fetch(`${API_URL}/usuarios/${idUsuario}/perfil`);
+    const response = await fetch(`${API_URL}/usuarios/${idUsuario}/perfil`, {
+      headers: { ...authService.getAuthHeader() }
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -13,7 +17,9 @@ export const userService = {
   },
 
   getUsuarios: async () => {
-    const response = await fetch(`${API_URL}/usuarios`);
+    const response = await fetch(`${API_URL}/usuarios`, {
+      headers: { ...authService.getAuthHeader() }
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -26,7 +32,10 @@ export const userService = {
   crearAdmin: async (datos) => {
     const response = await fetch(`${API_URL}/usuarios/admin`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
       body: JSON.stringify(datos),
     });
 

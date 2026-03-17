@@ -1,7 +1,12 @@
 package com.eventnode.eventnodeapi.config;
 
+import com.eventnode.eventnodeapi.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -9,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -19,6 +25,12 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -28,10 +40,39 @@ public class SecurityConfig {
             .formLogin(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
+                // Endpoints Públicos
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/alumnos/registro").permitAll()
+                .requestMatchers("/api/seed/init").permitAll()
+                
+                // Endpoints de Eventos
+                .requestMatchers(HttpMethod.GET, "/api/eventos/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/eventos/crear").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/eventos/**").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/eventos/*/cancelar").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
+                
+                // Endpoints de Inscripciones (PreCheckin)
+                .requestMatchers("/api/precheckin/inscribirse").hasRole("ALUMNO")
+                .requestMatchers("/api/precheckin/cancelar").hasRole("ALUMNO")
+                .requestMatchers("/api/precheckin/evento/**").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
+                
+                // Endpoints de Usuarios
+                .requestMatchers(HttpMethod.GET, "/api/usuarios").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/usuarios/*/perfil").authenticated()
+                .requestMatchers("/api/usuarios/admin").hasRole("SUPERADMIN")
+                
+                // Cualquier otra petición necesita autenticación
+                .anyRequest().authenticated()
             );
 
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 
     @Bean
@@ -41,9 +82,9 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
-        return new UrlBasedCorsConfigurationSource() {{
-            registerCorsConfiguration("/**", config);
-        }};
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean
