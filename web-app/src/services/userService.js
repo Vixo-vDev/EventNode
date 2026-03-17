@@ -45,5 +45,37 @@ export const userService = {
     }
 
     return response.json();
+  },
+
+  actualizarAlumno: async (idUsuario, datos) => {
+    const response = await fetch(`${API_URL}/alumnos/${idUsuario}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
+      body: JSON.stringify(datos)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al actualizar el alumno');
+    }
+
+    return response.json();
+  },
+
+  cambiarEstado: async (idUsuario) => {
+    const response = await fetch(`${API_URL}/usuarios/${idUsuario}/estado`, {
+      method: 'PATCH',
+      headers: { ...authService.getAuthHeader() }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al cambiar el estado del usuario');
+    }
+
+    return response.json();
   }
 };

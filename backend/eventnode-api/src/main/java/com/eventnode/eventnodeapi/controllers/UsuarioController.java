@@ -56,6 +56,20 @@ public class UsuarioController {
         }
     }
 
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<?> cambiarEstado(@PathVariable("id") Integer id) {
+        try {
+            usuarioService.cambiarEstado(id);
+            Map<String, String> body = new HashMap<>();
+            body.put("mensaje", "Estado actualizado con éxito");
+            return ResponseEntity.ok(body);
+        } catch (IllegalArgumentException ex) {
+            Map<String, String> body = new HashMap<>();
+            body.put("mensaje", ex.getMessage());
+            return ResponseEntity.badRequest().body(body);
+        }
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
         String mensaje = ex.getBindingResult().getFieldErrors().stream()
