@@ -21,7 +21,7 @@ function AdminEventCard({ id, image, title, location, date, status, capacityCurr
 
   return (
     <div
-      className="card border-0 shadow-sm rounded-3 h-100 overflow-hidden"
+      className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden card-hover"
       style={isFull ? { border: '2px solid #dc3545' } : {}}
     >
       <Link to={`/admin/evento/${id}`} className="text-decoration-none text-dark">
@@ -233,22 +233,22 @@ function GestionEventos({ user }) {
         </button>
       </div>
 
-      <div className="input-group mb-3" style={{ maxWidth: '400px' }}>
-        <span className="input-group-text bg-white border-end-0">
+      <div className="input-group mb-3 shadow-sm rounded-3 overflow-hidden" style={{ maxWidth: '400px' }}>
+        <span className="input-group-text bg-white border-end-0 border-0">
           <i className="bi bi-search text-secondary"></i>
         </span>
         <input
           type="text"
-          className="form-control border-start-0"
+          className="form-control border-start-0 border-0 shadow-none"
           placeholder="Buscar eventos por nombre..."
         />
       </div>
 
       <div className="d-flex gap-2 mb-4 flex-wrap">
-        <button className="btn btn-primary btn-sm rounded-pill px-3">Todos</button>
-        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3">Activo</button>
-        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3">Terminado</button>
-        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3">Cancelado</button>
+        <button className="btn btn-primary btn-sm rounded-pill px-3 fw-semibold">Todos</button>
+        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">Activo</button>
+        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">Terminado</button>
+        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">Cancelado</button>
       </div>
 
       <div className="row g-3">
@@ -276,8 +276,8 @@ function GestionEventos({ user }) {
         )) : null}
         <div className="col-12 col-md-6 col-lg-4">
           <div
-            className="card h-100 rounded-3 d-flex align-items-center justify-content-center text-center p-4"
-            style={{ border: '2px dashed #dee2e6', cursor: 'pointer' }}
+            className="card h-100 rounded-4 d-flex align-items-center justify-content-center text-center p-4 card-dashed"
+            style={{ cursor: 'pointer' }}
             data-bs-toggle="modal"
             data-bs-target="#crearEventoModal"
             role="button"

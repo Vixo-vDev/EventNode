@@ -102,7 +102,7 @@ function StudentEventDetail({ user }) {
         <h5 className="fw-bold mb-0">Detalles del Evento</h5>
       </div>
 
-      <div className="rounded-4 overflow-hidden mb-4 position-relative" style={{ maxHeight: '300px' }}>
+      <div className="rounded-4 overflow-hidden mb-4 position-relative shadow" style={{ maxHeight: '300px' }}>
         <img src={bannerSrc} alt={evento.nombre} className="w-100" style={{ objectFit: 'cover', height: '300px' }} />
         <div className="position-absolute bottom-0 start-0 p-4 w-100" style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' }}>
           <span className="badge bg-primary rounded-pill mb-2">{evento.categoriaNombre || 'GENERAL'}</span>
@@ -112,7 +112,7 @@ function StudentEventDetail({ user }) {
 
       <div className="row g-4">
         <div className="col-12 col-lg-8">
-          <div className="card border-0 shadow-sm rounded-3 mb-4">
+          <div className="card border-0 shadow-sm rounded-4 mb-4">
             <div className="card-body p-4">
               <h6 className="fw-bold mb-3">
                 <i className="bi bi-info-circle text-primary me-2"></i>
@@ -124,7 +124,7 @@ function StudentEventDetail({ user }) {
         </div>
 
         <div className="col-12 col-lg-4">
-          <div className="card border-0 shadow-sm rounded-3">
+          <div className="card border-0 shadow-sm rounded-4">
             <div className="card-body p-4">
               <h6 className="text-uppercase text-secondary small fw-bold mb-3">Detalles del Horario</h6>
 

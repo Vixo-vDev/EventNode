@@ -50,7 +50,7 @@ function StudentEvents() {
             Descubre y únete a los próximos eventos académicos y talleres.
           </p>
         </div>
-        <div className="input-group" style={{ maxWidth: '280px' }}>
+        <div className="input-group shadow-sm rounded-3 overflow-hidden" style={{ maxWidth: '280px' }}>
           <span className="input-group-text bg-white border-end-0">
             <i className="bi bi-search text-secondary"></i>
           </span>
@@ -99,7 +99,7 @@ function StudentEvents() {
           ))}
         </div>
       ) : (
-        <div className="card border-0 shadow-sm rounded-3">
+        <div className="card border-0 shadow-sm rounded-4">
           <div className="card-body text-center py-5">
             <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
               <i className="bi bi-calendar-plus text-primary fs-3"></i>

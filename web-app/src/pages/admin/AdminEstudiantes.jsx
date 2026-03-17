@@ -214,7 +214,7 @@ function AdminEstudiantes({ user }) {
             <div className="row g-3">
               {admins.map((admin, index) => (
                 <div key={index} className="col-12 col-md-4">
-                  <div className="border border-light-subtle rounded-4 p-3 d-flex align-items-center justify-content-between">
+                  <div className="border border-light-subtle rounded-4 p-3 d-flex align-items-center justify-content-between card-hover" style={{ transition: 'all 0.2s ease' }}>
                     <div className="d-flex align-items-center gap-3">
                       <div className={`rounded-circle d-flex align-items-center justify-content-center fw-bold ${admin.bg}`} style={{ width: '40px', height: '40px' }}>
                         <i className="bi bi-person-fill"></i>

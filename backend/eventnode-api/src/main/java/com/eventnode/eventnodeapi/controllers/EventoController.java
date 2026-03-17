@@ -96,41 +96,6 @@ public class EventoController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{idEvento}")
-    public ResponseEntity<?> obtenerEventoDetalle(@PathVariable Integer idEvento) {
-        Evento evento = eventoService.consultarEventoPorId(idEvento);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("idEvento", evento.getIdEvento());
-        response.put("nombre", evento.getNombre());
-        response.put("descripcion", evento.getDescripcion());
-        response.put("ubicacion", evento.getUbicacion());
-        response.put("capacidadMaxima", evento.getCapacidadMaxima());
-        response.put("tiempoCancelacionHoras", evento.getTiempoCancelacionHoras());
-        response.put("fechaInicio", evento.getFechaInicio());
-        response.put("fechaFin", evento.getFechaFin());
-        response.put("tiempoToleranciaMinutos", evento.getTiempoToleranciaMinutos());
-        response.put("estado", evento.getEstado());
-        response.put("banner", evento.getBanner());
-        response.put("creadoPor", evento.getCreadoPor());
-        response.put("fechaCreacion", evento.getFechaCreacion());
-
-        if (evento.getCategoria() != null) {
-            response.put("idCategoria", evento.getCategoria().getIdCategoria());
-            response.put("categoriaNombre", evento.getCategoria().getNombre());
-        }
-
-        // Add inscritos count
-        long inscritos = preCheckinRepository.countByIdEventoAndEstado(idEvento, "ACTIVO");
-        response.put("inscritos", inscritos);
-
-        // Add asistencias count
-        long asistencias = asistenciaRepository.countByIdEvento(idEvento);
-        response.put("asistencias", asistencias);
-
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping("/categorias")
     public ResponseEntity<List<Map<String, Object>>> listarCategorias() {
         List<Categoria> categorias = categoriaRepository.findAll();
@@ -181,6 +146,39 @@ public class EventoController {
         result.put("nombre", saved.getNombre());
         result.put("correo", saved.getCorreo());
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    @GetMapping("/{idEvento}")
+    public ResponseEntity<?> obtenerEventoDetalle(@PathVariable Integer idEvento) {
+        Evento evento = eventoService.consultarEventoPorId(idEvento);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("idEvento", evento.getIdEvento());
+        response.put("nombre", evento.getNombre());
+        response.put("descripcion", evento.getDescripcion());
+        response.put("ubicacion", evento.getUbicacion());
+        response.put("capacidadMaxima", evento.getCapacidadMaxima());
+        response.put("tiempoCancelacionHoras", evento.getTiempoCancelacionHoras());
+        response.put("fechaInicio", evento.getFechaInicio());
+        response.put("fechaFin", evento.getFechaFin());
+        response.put("tiempoToleranciaMinutos", evento.getTiempoToleranciaMinutos());
+        response.put("estado", evento.getEstado());
+        response.put("banner", evento.getBanner());
+        response.put("creadoPor", evento.getCreadoPor());
+        response.put("fechaCreacion", evento.getFechaCreacion());
+
+        if (evento.getCategoria() != null) {
+            response.put("idCategoria", evento.getCategoria().getIdCategoria());
+            response.put("categoriaNombre", evento.getCategoria().getNombre());
+        }
+
+        long inscritos = preCheckinRepository.countByIdEventoAndEstado(idEvento, "ACTIVO");
+        response.put("inscritos", inscritos);
+
+        long asistencias = asistenciaRepository.countByIdEvento(idEvento);
+        response.put("asistencias", asistencias);
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{idEvento}")

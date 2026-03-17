@@ -40,7 +40,7 @@ function StudentHome() {
       </p>
 
       <div className="d-flex align-items-center gap-2 mb-4">
-        <div className="input-group">
+        <div className="input-group shadow-sm rounded-3 overflow-hidden">
           <span className="input-group-text bg-white border-end-0">
             <i className="bi bi-search text-secondary"></i>
           </span>
@@ -71,7 +71,7 @@ function StudentHome() {
           ))}
         </div>
       ) : (
-        <div className="card border-0 shadow-sm rounded-3 mb-5">
+        <div className="card border-0 shadow-sm rounded-4 mb-5">
           <div className="card-body text-center py-5">
             <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
               <i className="bi bi-calendar-x text-primary fs-3"></i>
@@ -88,7 +88,7 @@ function StudentHome() {
         <i className="bi bi-award me-2 text-primary"></i>
         Diploma
       </h5>
-      <div className="card border-0 shadow-sm rounded-3">
+      <div className="card border-0 shadow-sm rounded-4">
         <div className="card-body text-center py-5">
           <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
             <i className="bi bi-award text-primary fs-3"></i>

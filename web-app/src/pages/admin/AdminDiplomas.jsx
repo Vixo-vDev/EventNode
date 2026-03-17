@@ -86,7 +86,7 @@ function AdminDiplomas() {
 
       <div className="row g-3 mb-4">
         <div className="col-12 col-md-4">
-          <div className="card border-0 shadow-sm rounded-4 h-100 p-3">
+          <div className="card border-0 shadow-sm rounded-4 h-100 p-3 card-stat">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-start mb-3">
                 <div className="bg-primary bg-opacity-10 text-primary rounded pt-1 px-2 pb-1 d-flex align-items-center justify-content-center">
@@ -99,7 +99,7 @@ function AdminDiplomas() {
           </div>
         </div>
         <div className="col-12 col-md-4">
-          <div className="card border-0 shadow-sm rounded-4 h-100 p-3">
+          <div className="card border-0 shadow-sm rounded-4 h-100 p-3 card-stat">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-start mb-3">
                 <div className="bg-success bg-opacity-10 text-success rounded pt-1 px-2 pb-1 d-flex align-items-center justify-content-center">
@@ -112,7 +112,7 @@ function AdminDiplomas() {
           </div>
         </div>
         <div className="col-12 col-md-4">
-          <div className="card border-0 shadow-sm rounded-4 h-100 p-3">
+          <div className="card border-0 shadow-sm rounded-4 h-100 p-3 card-stat">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-start mb-3">
                 <div className="bg-danger bg-opacity-10 text-danger rounded pt-1 px-2 pb-1 d-flex align-items-center justify-content-center">
@@ -136,7 +136,7 @@ function AdminDiplomas() {
         <div className="row g-3">
           {diplomas.map(d => (
             <div className="col-12 col-md-6 col-lg-4" key={d.idDiploma}>
-              <div className="card border-0 shadow-sm rounded-4 h-100">
+              <div className="card border-0 shadow-sm rounded-4 h-100 card-hover">
                 <div className="card-body p-4">
                   <div className="d-flex align-items-center gap-3 mb-3">
                     <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style={{ width: '44px', height: '44px' }}>

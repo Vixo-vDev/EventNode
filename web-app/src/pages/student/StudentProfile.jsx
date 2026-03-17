@@ -50,10 +50,10 @@ function StudentProfile({ user }) {
     <div>
       <h2 className="fw-bold mb-4">Perfil</h2>
 
-      <div className="card border-0 shadow-sm rounded-3 mb-4">
+      <div className="card border-0 shadow-sm rounded-4 mb-4">
         <div className="card-body p-4">
           <div className="d-flex flex-column flex-md-row align-items-center gap-3 mb-4">
-            <div className="rounded-circle border border-3 border-primary bg-primary bg-opacity-10 d-flex align-items-center justify-content-center fw-bold text-primary fs-2"
+            <div className="rounded-circle border border-3 border-primary bg-primary bg-opacity-10 d-flex align-items-center justify-content-center fw-bold text-primary fs-2 avatar-ring"
                  style={{ width: '90px', height: '90px' }}>
               {userInitials}
             </div>
@@ -150,7 +150,7 @@ function StudentProfile({ user }) {
       </div>
 
       <div
-        className="d-flex align-items-center gap-2 p-3 bg-white rounded-3 shadow-sm"
+        className="d-flex align-items-center gap-2 p-3 bg-white rounded-4 shadow-sm card-hover"
         style={{ cursor: 'pointer' }}
         data-bs-toggle="modal"
         data-bs-target="#verifyModal"

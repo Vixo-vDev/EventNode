@@ -47,7 +47,7 @@ function AdminPerfil({ user }) {
     <div>
       <h2 className="fw-bold mb-4">Perfil</h2>
 
-      <div className="card border-0 shadow-sm rounded-3 mb-4">
+      <div className="card border-0 shadow-sm rounded-4 mb-4">
         <div className="card-body p-4">
           <div className="d-flex flex-column flex-md-row align-items-center gap-3 mb-4">
             <div className="rounded-circle border border-2 border-primary bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0 fw-bold text-primary"

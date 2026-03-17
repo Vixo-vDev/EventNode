@@ -55,7 +55,7 @@ function AdminCheckIn() {
   return (
     <div>
       <div className="d-flex align-items-center gap-3 mb-4">
-        <Link to={`/admin/evento/${id}`} className="btn btn-light rounded-circle d-flex align-items-center justify-content-center p-0" style={{ width: '40px', height: '40px' }}>
+        <Link to={`/admin/evento/${id}`} className="btn btn-light rounded-circle shadow-sm d-flex align-items-center justify-content-center p-0" style={{ width: '40px', height: '40px' }}>
           <i className="bi bi-arrow-left text-secondary fs-5"></i>
         </Link>
         <span className="fw-semibold small">{evento?.nombre || 'Cargando...'}</span>

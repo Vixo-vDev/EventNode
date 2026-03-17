@@ -105,9 +105,9 @@ function AdminEventDetail() {
         </div>
       </div>
 
-      <div className="rounded-4 overflow-hidden mb-4 position-relative" style={{ height: '220px' }}>
+      <div className="rounded-4 overflow-hidden mb-4 position-relative shadow" style={{ height: '240px' }}>
         <img src={bannerSrc} alt={evento.nombre} className="w-100 h-100" style={{ objectFit: 'cover', filter: !isActive ? 'grayscale(100%) brightness(0.4)' : 'brightness(0.4)' }} />
-        <div className="position-absolute bottom-0 start-0 p-4">
+        <div className="position-absolute bottom-0 start-0 p-4 w-100" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.75) 100%)' }}>
           <div className="d-flex gap-2 mb-2">
             <span className={`badge rounded-pill px-3 small ${isActive ? 'bg-success text-white' : 'bg-danger text-white'}`}>{evento.estado}</span>
             <span className="badge rounded-pill px-3 small text-white" style={{ backgroundColor: '#7c3aed' }}>{evento.categoriaNombre || 'GENERAL'}</span>
@@ -119,7 +119,7 @@ function AdminEventDetail() {
 
       <div className="row g-3 mb-4">
         <div className="col-12 col-md-4">
-          <div className="card border-0 shadow-sm rounded-3 h-100">
+          <div className="card border-0 shadow-sm rounded-4 h-100 card-stat">
             <div className="card-body p-3">
               <div className="d-flex align-items-center gap-2 mb-2">
                 <i className="bi bi-people-fill text-primary"></i>
@@ -139,7 +139,7 @@ function AdminEventDetail() {
         </div>
 
         <div className="col-12 col-md-4">
-          <div className="card border-0 shadow-sm rounded-3 h-100">
+          <div className="card border-0 shadow-sm rounded-4 h-100 card-stat">
             <div className="card-body p-3">
               <div className="d-flex align-items-center gap-2 mb-2">
                 <i className="bi bi-award-fill text-primary"></i>

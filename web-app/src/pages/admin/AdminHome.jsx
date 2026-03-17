@@ -39,31 +39,31 @@ function AdminHome() {
 
       <div className="row g-3 mb-4">
         <div className="col-12 col-md-4">
-          <div className="card border-0 shadow-sm rounded-3 h-100">
+          <div className="card border-0 shadow-sm rounded-4 h-100 card-stat">
             <div className="card-body p-3">
               <div className="d-flex justify-content-between align-items-start mb-2">
-                <div className="rounded-2 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center"
-                  style={{ width: '36px', height: '36px' }}>
+                <div className="rounded-3 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center"
+                  style={{ width: '40px', height: '40px' }}>
                   <i className="bi bi-people-fill text-primary"></i>
                 </div>
               </div>
               <div className="text-secondary small mb-1">Asistencia</div>
               <div className="fw-bold fs-2">{totalEventos > 0 ? '—' : '0%'}</div>
-              <div className="text-secondary small">Sin datos de asistencia aún</div>
+              <div className="text-secondary" style={{ fontSize: '12px' }}>Sin datos de asistencia aun</div>
             </div>
           </div>
         </div>
 
         <div className="col-12 col-md-4">
-          <div className="card border-0 shadow-sm rounded-3 h-100">
+          <div className="card border-0 shadow-sm rounded-4 h-100 card-stat">
             <div className="card-body p-3">
               <div className="d-flex justify-content-between align-items-start mb-2">
-                <div className="rounded-2 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center"
-                  style={{ width: '36px', height: '36px' }}>
-                  <i className="bi bi-calendar-check text-primary"></i>
+                <div className="rounded-3 bg-success bg-opacity-10 d-flex align-items-center justify-content-center"
+                  style={{ width: '40px', height: '40px' }}>
+                  <i className="bi bi-calendar-check text-success"></i>
                 </div>
                 {eventosActivos > 0 && (
-                  <span className="badge bg-danger bg-opacity-10 text-danger small fw-semibold">LIVE</span>
+                  <span className="badge bg-danger bg-opacity-10 text-danger small fw-semibold rounded-pill px-2">LIVE</span>
                 )}
               </div>
               <div className="text-secondary small mb-1">Eventos Activos</div>
@@ -73,17 +73,17 @@ function AdminHome() {
         </div>
 
         <div className="col-12 col-md-4">
-          <div className="card border-0 shadow-sm rounded-3 h-100 border-top border-3 border-primary">
+          <div className="card border-0 shadow-sm rounded-4 h-100 card-stat" style={{ borderTop: '3px solid var(--bs-primary)' }}>
             <div className="card-body p-3">
-              <div className="text-uppercase text-secondary small fw-bold mb-2">Diplomas</div>
+              <div className="text-uppercase text-secondary small fw-bold mb-2" style={{ letterSpacing: '0.5px' }}>Diplomas</div>
               <div className="d-flex justify-content-between align-items-end">
                 <div>
                   <div className="fw-bold fs-3 mb-0">0</div>
-                  <div className="text-secondary small">Emitidos</div>
+                  <div className="text-secondary" style={{ fontSize: '12px' }}>Emitidos</div>
                 </div>
                 <div className="text-end">
                   <div className="fw-bold fs-3 mb-0">0</div>
-                  <div className="text-secondary small">Pendientes</div>
+                  <div className="text-secondary" style={{ fontSize: '12px' }}>Pendientes</div>
                 </div>
               </div>
             </div>
@@ -91,7 +91,7 @@ function AdminHome() {
         </div>
       </div>
 
-      <div className="card border-0 shadow-sm rounded-3">
+      <div className="card border-0 shadow-sm rounded-4">
         <div className="card-body p-0">
           <div className="d-flex justify-content-between align-items-center p-3 pb-2">
             <h5 className="fw-bold mb-0">Detalles de Eventos</h5>

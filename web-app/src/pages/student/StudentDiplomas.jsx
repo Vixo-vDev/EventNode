@@ -41,7 +41,7 @@ function StudentDiplomas({ user }) {
         <div className="row g-3">
           {diplomas.map(d => (
             <div className="col-12 col-md-6 col-lg-4" key={d.idEmitido}>
-              <div className="card border-0 shadow-sm rounded-3 h-100">
+              <div className="card border-0 shadow-sm rounded-4 h-100 card-hover">
                 <div className="card-body p-4 text-center">
                   <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
                     <i className="bi bi-award text-primary fs-4"></i>
@@ -59,7 +59,7 @@ function StudentDiplomas({ user }) {
           ))}
         </div>
       ) : (
-        <div className="card border-0 shadow-sm rounded-3">
+        <div className="card border-0 shadow-sm rounded-4">
           <div className="card-body text-center py-5">
             <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
               <i className="bi bi-award text-primary fs-3"></i>

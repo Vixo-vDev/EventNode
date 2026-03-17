@@ -35,7 +35,7 @@ function DashboardLayout({ sidebar, user, children }) {
           </div>
         </div>
 
-        <main className="flex-grow-1 bg-light p-3 p-md-4 overflow-auto">
+        <main className="flex-grow-1 p-3 p-md-4 overflow-auto" style={{ backgroundColor: '#f8f9fc' }}>
           {children}
           <Footer />
         </main>
