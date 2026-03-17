@@ -9,11 +9,8 @@ import eventFestival from '../../assets/events/event_festival.png'
 import eventWorkshop from '../../assets/events/event_workshop.png'
 import CrearEventoModal from '../../components/modals/CrearEventoModal'
 import EditarEventoModal from '../../components/modals/EditarEventoModal'
-import QRCodeModal from '../../components/modals/QRCodeModal'
-import IngresoManualModal from '../../components/modals/IngresoManualModal'
-import AsistenciaExitosaModal from '../../components/modals/AsistenciaExitosaModal'
 
-function AdminEventCard({ id, image, title, location, date, status, capacityCurrent, capacityMax, isFull, isFinished }) {
+function AdminEventCard({ id, image, title, location, date, status, capacityCurrent, capacityMax, isFull, isFinished, onEdit, onDelete }) {
   const isActive = status === 'ACTIVO'
   const isCancelled = status === 'CANCELADO'
   const isTerminado = status === 'TERMINADO' || status === 'FINALIZADO'
@@ -79,28 +76,17 @@ function AdminEventCard({ id, image, title, location, date, status, capacityCurr
               title="Editar"
               data-bs-toggle="modal"
               data-bs-target="#editarEventoModal"
-              onClick={(e) => e.preventDefault()}
+              onClick={(e) => { e.preventDefault(); onEdit && onEdit() }}
             >
               <i className="bi bi-pencil"></i>
             </button>
-            <button className="btn btn-link text-secondary p-0" title="Duplicar">
-              <i className="bi bi-files"></i>
-            </button>
-            <button className="btn btn-link text-secondary p-0" title="Vista previa">
-              <i className="bi bi-eye"></i>
-            </button>
-            <button
-              className="btn btn-link text-secondary p-0"
-              title="QR"
-              data-bs-toggle="modal"
-              data-bs-target="#qrCodeModal"
-              onClick={(e) => e.preventDefault()}
-            >
-              <i className="bi bi-qr-code"></i>
-            </button>
           </>
         )}
-        <button className="btn btn-link text-secondary p-0" title="Eliminar">
+        <button
+          className="btn btn-link text-secondary p-0"
+          title="Eliminar"
+          onClick={(e) => { e.preventDefault(); onDelete && onDelete() }}
+        >
           <i className="bi bi-trash"></i>
         </button>
       </div>
@@ -121,6 +107,13 @@ function fileToBase64(file) {
   })
 }
 
+const STATUS_FILTERS = [
+  { label: 'Todos', value: '' },
+  { label: 'ACTIVO', value: 'ACTIVO' },
+  { label: 'CANCELADO', value: 'CANCELADO' },
+  { label: 'FINALIZADO', value: 'FINALIZADO' },
+]
+
 function GestionEventos({ user }) {
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -129,9 +122,20 @@ function GestionEventos({ user }) {
   const [categorias, setCategorias] = useState([])
   const [eventLoading, setEventLoading] = useState(false)
 
-  const fetchEventos = async () => {
+  // Search & Filter state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [activeFilter, setActiveFilter] = useState('')
+
+  // Delete modal state
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+
+  // Edit modal state
+  const [editTarget, setEditTarget] = useState(null)
+
+  const fetchEventos = async (nombre, estado) => {
     try {
-      const data = await eventService.getEventos()
+      const data = await eventService.getEventos(nombre || undefined, undefined, undefined, estado || undefined)
       const mapped = data.map((e, index) => ({
         id: e.idEvento,
         image: e.banner && e.banner.startsWith('data:image/') ? e.banner : fallbackImages[index % fallbackImages.length],
@@ -139,10 +143,12 @@ function GestionEventos({ user }) {
         location: e.ubicacion,
         date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '',
         status: e.estado,
-        capacityCurrent: 0,
+        capacityCurrent: e.inscritos || 0,
         capacityMax: e.capacidadMaxima,
-        isFull: false,
+        isFull: e.inscritos >= e.capacidadMaxima,
         isFinished: e.estado === 'FINALIZADO',
+        // Raw data for edit modal
+        raw: e,
       }))
       setEventos(mapped)
     } catch (err) {
@@ -154,7 +160,7 @@ function GestionEventos({ user }) {
   }
 
   useEffect(() => {
-    fetchEventos()
+    fetchEventos(searchTerm, activeFilter)
 
     const fetchCategorias = async () => {
       try {
@@ -166,6 +172,22 @@ function GestionEventos({ user }) {
     }
     fetchCategorias()
   }, [])
+
+  // Re-fetch when filter changes
+  const handleFilterChange = (value) => {
+    setActiveFilter(value)
+    setLoading(true)
+    fetchEventos(searchTerm, value)
+  }
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(true)
+      fetchEventos(searchTerm, activeFilter)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
   const handleEventSubmit = async (formData) => {
     setEventLoading(true)
@@ -205,18 +227,80 @@ function GestionEventos({ user }) {
 
       // Refrescar lista
       setLoading(true)
-      fetchEventos()
+      fetchEventos(searchTerm, activeFilter)
     } catch (err) {
       toast.error(err.message)
-      throw err // Re-lanzar para que el modal muestre su error interno
+      throw err
     } finally {
       setEventLoading(false)
     }
   }
 
+  const handleDeleteEvent = async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    try {
+      await eventService.eliminarEvento(deleteTarget.id)
+      toast.success('Evento eliminado exitosamente')
+      setDeleteTarget(null)
+      setLoading(true)
+      fetchEventos(searchTerm, activeFilter)
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const handleEditOpen = (evento) => {
+    // Spread to create a new object reference so React always detects the change
+    setEditTarget({ ...(evento.raw || evento), _ts: Date.now() })
+  }
+
+  const handleEventUpdate = async (formData) => {
+    if (!editTarget) return
+    const idEvento = editTarget.idEvento
+    try {
+      let bannerBase64 = formData.banner
+      if (formData.banner && formData.banner instanceof File) {
+        bannerBase64 = await fileToBase64(formData.banner)
+      }
+
+      const fechaInicioStr = formData.fechaInicio && formData.fechaInicio.length === 16
+        ? formData.fechaInicio + ':00'
+        : formData.fechaInicio
+
+      const fechaFinStr = formData.fechaFin && formData.fechaFin.length === 16
+        ? formData.fechaFin + ':00'
+        : formData.fechaFin
+
+      const payload = {
+        nombre: formData.nombre?.trim(),
+        ubicacion: formData.ubicacion?.trim(),
+        descripcion: formData.descripcion?.trim(),
+        fechaInicio: fechaInicioStr,
+        fechaFin: fechaFinStr,
+        idCategoria: formData.idCategoria ? parseInt(formData.idCategoria) : undefined,
+        capacidadMaxima: formData.capacidadMaxima ? parseInt(formData.capacidadMaxima) : undefined,
+        tiempoCancelacionHoras: formData.tiempoCancelacionHoras ? parseInt(formData.tiempoCancelacionHoras) : undefined,
+        tiempoToleranciaMinutos: formData.tiempoToleranciaMinutos != null ? parseInt(formData.tiempoToleranciaMinutos) : undefined,
+        banner: bannerBase64,
+      }
+
+      await eventService.actualizarEvento(idEvento, payload)
+      toast.success('Evento actualizado exitosamente')
+      setLoading(true)
+      fetchEventos(searchTerm, activeFilter)
+    } catch (err) {
+      toast.error(err.message)
+      throw err
+    }
+  }
+
   return (
-    <div>
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+    <>
+      <div className="fade-in">
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
         <div>
           <h2 className="fw-bold mb-1">Eventos</h2>
           <p className="text-secondary small mb-0">
@@ -241,14 +325,21 @@ function GestionEventos({ user }) {
           type="text"
           className="form-control border-start-0 border-0 shadow-none"
           placeholder="Buscar eventos por nombre..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
       <div className="d-flex gap-2 mb-4 flex-wrap">
-        <button className="btn btn-primary btn-sm rounded-pill px-3 fw-semibold">Todos</button>
-        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">Activo</button>
-        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">Terminado</button>
-        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">Cancelado</button>
+        {STATUS_FILTERS.map(f => (
+          <button
+            key={f.value}
+            className={`btn btn-sm rounded-pill px-3 fw-semibold ${activeFilter === f.value ? 'btn-primary' : 'btn-outline-secondary'}`}
+            onClick={() => handleFilterChange(f.value)}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       <div className="row g-3">
@@ -271,9 +362,21 @@ function GestionEventos({ user }) {
               capacityMax={evento.capacityMax}
               isFull={evento.isFull}
               isFinished={evento.isFinished}
+              onEdit={() => handleEditOpen(evento)}
+              onDelete={() => setDeleteTarget(evento)}
             />
           </div>
-        )) : null}
+        )) : (
+          <div className="col-12 text-center py-5">
+            <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
+              <i className="bi bi-calendar-x text-primary fs-4"></i>
+            </div>
+            <h6 className="fw-bold mb-1">No se encontraron eventos</h6>
+            <p className="text-secondary small mb-0">
+              {searchTerm || activeFilter ? 'Intenta con otros filtros de búsqueda.' : 'Crea tu primer evento para comenzar.'}
+            </p>
+          </div>
+        )}
         <div className="col-12 col-md-6 col-lg-4">
           <div
             className="card h-100 rounded-4 d-flex align-items-center justify-content-center text-center p-4 card-dashed"
@@ -293,17 +396,52 @@ function GestionEventos({ user }) {
           </div>
         </div>
       </div>
+      </div>
 
       <CrearEventoModal
         categorias={categorias}
         isLoading={eventLoading}
         onSubmit={handleEventSubmit}
       />
-      <EditarEventoModal />
-      <QRCodeModal />
-      <IngresoManualModal />
-      <AsistenciaExitosaModal />
-    </div>
+      <EditarEventoModal
+        evento={editTarget}
+        categorias={categorias}
+        onSubmit={handleEventUpdate}
+      />
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }}>
+          <div className="modal-dialog modal-dialog-centered modal-sm">
+            <div className="modal-content border-0 rounded-4 shadow text-center p-4">
+              <div className="mb-3">
+                <i className="bi bi-exclamation-triangle-fill text-danger" style={{ fontSize: '3rem' }}></i>
+              </div>
+              <h6 className="fw-bold mb-2">Eliminar Evento</h6>
+              <p className="text-secondary small mb-3">
+                ¿Estás seguro de eliminar el evento <strong>"{deleteTarget.title}"</strong>? Esta acción no se puede deshacer.
+              </p>
+              <div className="d-flex justify-content-center gap-2">
+                <button
+                  className="btn btn-link text-secondary text-decoration-none"
+                  onClick={() => setDeleteTarget(null)}
+                  disabled={deleteLoading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="btn btn-danger rounded-pill px-4"
+                  onClick={handleDeleteEvent}
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? 'Eliminando...' : 'Eliminar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

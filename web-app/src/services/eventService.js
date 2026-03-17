@@ -7,11 +7,12 @@ export const eventService = {
    * Obtener todos los eventos disponibles.
    * Soporta filtros opcionales: nombre, mes, categoriaId
    */
-  getEventos: async (nombre, mes, categoriaId) => {
+  getEventos: async (nombre, mes, categoriaId, estado) => {
     const params = new URLSearchParams();
     if (nombre) params.append('nombre', nombre);
     if (mes) params.append('mes', mes);
     if (categoriaId) params.append('categoriaId', categoriaId);
+    if (estado) params.append('estado', estado);
 
     const queryString = params.toString();
     const url = `${API_URL}/eventos${queryString ? `?${queryString}` : ''}`;
@@ -83,6 +84,40 @@ export const eventService = {
   },
 
   /**
+   * Actualizar un organizador existente
+   */
+  actualizarOrganizador: async (id, datos) => {
+    const response = await fetch(`${API_URL}/eventos/organizadores/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
+      body: JSON.stringify(datos),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al actualizar organizador');
+    }
+    return response.json();
+  },
+
+  /**
+   * Eliminar un organizador
+   */
+  eliminarOrganizador: async (id) => {
+    const response = await fetch(`${API_URL}/eventos/organizadores/${id}`, {
+      method: 'DELETE',
+      headers: authService.getAuthHeader(),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al eliminar organizador');
+    }
+    return response.json();
+  },
+
+  /**
    * Crear un nuevo evento
    */
   crearEvento: async (eventoData) => {
@@ -141,6 +176,21 @@ export const eventService = {
       throw new Error(errorData.mensaje || 'Error al cancelar evento');
     }
 
+    return response.json();
+  },
+
+  /**
+   * Eliminar un evento
+   */
+  eliminarEvento: async (idEvento) => {
+    const response = await fetch(`${API_URL}/eventos/${idEvento}`, {
+      method: 'DELETE',
+      headers: authService.getAuthHeader(),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al eliminar evento');
+    }
     return response.json();
   },
 

@@ -50,7 +50,21 @@ public class AuthService {
             throw new DisabledException("Cuenta inactiva, contacte al administrador");
         }
 
-        if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
+        boolean passwordValid = false;
+        boolean needsRehash = false;
+
+        // Check if stored password is a BCrypt hash (starts with $2)
+        if (usuario.getPassword() != null && usuario.getPassword().startsWith("$2")) {
+            passwordValid = passwordEncoder.matches(request.getPassword(), usuario.getPassword());
+        } else {
+            // Legacy: plain text password comparison (from seed data)
+            passwordValid = request.getPassword().equals(usuario.getPassword());
+            if (passwordValid) {
+                needsRehash = true;
+            }
+        }
+
+        if (!passwordValid) {
             int intentos = usuario.getIntentosFallidos() == null ? 0 : usuario.getIntentosFallidos();
             intentos++;
             usuario.setIntentosFallidos(intentos);
@@ -61,6 +75,11 @@ public class AuthService {
 
             usuarioRepository.save(usuario);
             throw new BadCredentialsException("Credenciales incorrectas");
+        }
+
+        // Migrate plain text password to BCrypt hash
+        if (needsRehash) {
+            usuario.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
         // Generar token JWT

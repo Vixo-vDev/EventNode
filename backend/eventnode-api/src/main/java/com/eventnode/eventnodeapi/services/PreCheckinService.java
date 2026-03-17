@@ -53,15 +53,29 @@ public class PreCheckinService {
             throw new IllegalStateException("El evento no está activo");
         }
 
+        // Check if event has already started
+        if (LocalDateTime.now().isAfter(evento.getFechaInicio())) {
+            throw new IllegalStateException("El pre-check-in ya no está disponible, el evento ya ha iniciado");
+        }
+
         // Check if event is full
         long countInscritos = preCheckinRepository.countByIdEventoAndEstado(idEvento, "ACTIVO");
         if (countInscritos >= evento.getCapacidadMaxima()) {
             throw new IllegalStateException("El evento está lleno");
         }
 
-        // Check if already enrolled
-        if (preCheckinRepository.findByIdUsuarioAndIdEvento(idUsuario, idEvento).isPresent()) {
-            throw new IllegalStateException("El usuario ya está inscrito en este evento");
+        // Check if already enrolled (allow re-enrollment if previously CANCELADO)
+        var existingOpt = preCheckinRepository.findByIdUsuarioAndIdEvento(idUsuario, idEvento);
+        if (existingOpt.isPresent()) {
+            PreCheckin existing = existingOpt.get();
+            if ("ACTIVO".equals(existing.getEstado())) {
+                throw new IllegalStateException("Ya cuentas con un lugar en este evento");
+            }
+            // Re-activate cancelled enrollment
+            existing.setEstado("ACTIVO");
+            existing.setFechaRegistro(LocalDateTime.now());
+            preCheckinRepository.save(existing);
+            return;
         }
 
         // Create PreCheckin

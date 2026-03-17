@@ -144,8 +144,9 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
   }
 
   const handleSave = async () => {
-    if (!formRef.current?.checkValidity()) {
-      formRef.current?.reportValidity()
+    // Custom validation — sin tooltips del navegador
+    const { nombre, ubicacion, descripcion, fechaInicio, fechaFin, idCategoria, capacidadMaxima, tiempoCancelacionHoras, tiempoToleranciaMinutos } = formData
+    if (!nombre.trim() || !ubicacion.trim() || !descripcion.trim() || !fechaInicio || !fechaFin || !idCategoria || !capacidadMaxima || !tiempoCancelacionHoras || !tiempoToleranciaMinutos) {
       setShowError(true)
       setShowSuccess(false)
       return
@@ -166,8 +167,9 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
   }
 
   return (
-    <div className="modal fade" id="crearEventoModal" tabIndex="-1" aria-labelledby="crearEventoModalLabel" aria-hidden="true">
-      <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <>
+      <div className="modal fade" id="crearEventoModal" tabIndex="-1" aria-labelledby="crearEventoModalLabel" aria-hidden="true">
+        <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <form ref={formRef} noValidate className="modal-content border-0 rounded-4 shadow">
           <div className="modal-header border-0 px-4 pt-4 pb-0">
             <h5 className="fw-bold">Crear Nuevo Evento</h5>
@@ -208,7 +210,6 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   placeholder="Ej: Workshop de IA Generativa"
                   value={formData.nombre}
                   onChange={handleChange}
-                  required
                 />
               </div>
               <div className="col-12 col-md-6">
@@ -220,7 +221,6 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   placeholder="Ej: Auditorio Central, Aula 101 o Link de Zoom"
                   value={formData.ubicacion}
                   onChange={handleChange}
-                  required
                 />
               </div>
             </div>
@@ -235,7 +235,6 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 placeholder="Describe de qué trata el evento..."
                 value={formData.descripcion}
                 onChange={handleChange}
-                required
               ></textarea>
             </div>
 
@@ -249,7 +248,6 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   className="form-control"
                   value={formData.fechaInicio}
                   onChange={handleChange}
-                  required
                 />
                 <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>Debe ser una fecha futura.</div>
               </div>
@@ -261,7 +259,6 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   className="form-control"
                   value={formData.fechaFin}
                   onChange={handleChange}
-                  required
                 />
                 <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>Posterior al inicio.</div>
               </div>
@@ -276,7 +273,6 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   className="form-select"
                   value={formData.idCategoria}
                   onChange={handleChange}
-                  required
                 >
                   <option value="">Seleccionar...</option>
                   {categorias.map(cat => (
@@ -309,7 +305,6 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   min="1"
                   value={formData.capacidadMaxima}
                   onChange={handleChange}
-                  required
                 />
               </div>
             </div>
@@ -326,7 +321,6 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   min="1"
                   value={formData.tiempoCancelacionHoras}
                   onChange={handleChange}
-                  required
                 />
                 <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>Horas antes del evento para cancelar inscripción.</div>
               </div>
@@ -340,7 +334,6 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   min="0"
                   value={formData.tiempoToleranciaMinutos}
                   onChange={handleChange}
-                  required
                 />
                 <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>Minutos de tolerancia para el check-in.</div>
               </div>
@@ -444,10 +437,9 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
           </div>
         </form>
       </div>
-
-      {/* Success modal */}
-      {showSuccess && (
-        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
+    </div>
+    {showSuccess && (
+      <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content border-0 rounded-4 shadow text-center p-4">
               <div className="mb-3">
@@ -488,7 +480,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
 

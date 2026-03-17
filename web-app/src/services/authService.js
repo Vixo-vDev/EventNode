@@ -1,5 +1,3 @@
-import { toast } from 'react-toastify'
-
 const API_URL = '/api';
 
 const rolMap = {
@@ -74,7 +72,6 @@ export const authService = {
     localStorage.removeItem('auth_token');
     sessionStorage.removeItem('auth_user');
     sessionStorage.removeItem('auth_token');
-    toast.info('Sesión cerrada exitosamente');
   },
 
   getAuthHeader: () => {

@@ -89,7 +89,8 @@ public class EventoController {
                         e.getDescripcion(),
                         e.getEstado(),
                         e.getCategoria() != null ? e.getCategoria().getIdCategoria() : null,
-                        e.getCategoria() != null ? e.getCategoria().getNombre() : null
+                        e.getCategoria() != null ? e.getCategoria().getNombre() : null,
+                        preCheckinRepository.countByIdEventoAndEstado(e.getIdEvento(), "ACTIVO")
                 ))
                 .collect(Collectors.toList());
 
@@ -148,6 +149,38 @@ public class EventoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
+    @PutMapping("/organizadores/{id}")
+    public ResponseEntity<Map<String, Object>> actualizarOrganizador(@PathVariable Integer id, @RequestBody Map<String, String> body) {
+        Organizador org = organizadorRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Organizador no encontrado"));
+        if (body.containsKey("nombre") && body.get("nombre") != null && !body.get("nombre").isBlank()) {
+            org.setNombre(body.get("nombre").trim());
+        }
+        if (body.containsKey("correo")) {
+            org.setCorreo(body.get("correo"));
+        }
+        if (body.containsKey("descripcion")) {
+            org.setDescripcion(body.get("descripcion"));
+        }
+        Organizador saved = organizadorRepository.save(org);
+        Map<String, Object> result = new HashMap<>();
+        result.put("idOrganizador", saved.getIdOrganizador());
+        result.put("nombre", saved.getNombre());
+        result.put("correo", saved.getCorreo());
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/organizadores/{id}")
+    public ResponseEntity<Map<String, String>> eliminarOrganizador(@PathVariable Integer id) {
+        if (!organizadorRepository.existsById(id)) {
+            throw new IllegalArgumentException("Organizador no encontrado");
+        }
+        organizadorRepository.deleteById(id);
+        Map<String, String> body = new HashMap<>();
+        body.put("mensaje", "Organizador eliminado con exito");
+        return ResponseEntity.ok(body);
+    }
+
     @GetMapping("/{idEvento}")
     public ResponseEntity<?> obtenerEventoDetalle(@PathVariable Integer idEvento) {
         Evento evento = eventoService.consultarEventoPorId(idEvento);
@@ -187,6 +220,14 @@ public class EventoController {
         eventoService.actualizarEvento(idEvento, request);
         Map<String, String> body = new HashMap<>();
         body.put("mensaje", "Evento actualizado con éxito");
+        return ResponseEntity.ok(body);
+    }
+
+    @DeleteMapping("/{idEvento}")
+    public ResponseEntity<Map<String, String>> eliminarEvento(@PathVariable Integer idEvento) {
+        eventoService.eliminarEvento(idEvento);
+        Map<String, String> body = new HashMap<>();
+        body.put("mensaje", "Evento eliminado con éxito");
         return ResponseEntity.ok(body);
     }
 

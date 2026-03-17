@@ -16,15 +16,17 @@ public class EventoResponse {
     private String estado;
     private Integer categoriaId;
     private String categoriaNombre;
+    private Long inscritos;
 
     public EventoResponse() {
     }
 
-    public EventoResponse(Integer idEvento, String banner, String nombre, String ubicacion, 
-                          Integer capacidadMaxima, Integer tiempoCancelacionHoras, 
-                          LocalDateTime fechaInicio, LocalDateTime fechaFin, 
-                          Integer tiempoToleranciaMinutos, String descripcion, 
-                          String estado, Integer categoriaId, String categoriaNombre) {
+    public EventoResponse(Integer idEvento, String banner, String nombre, String ubicacion,
+                          Integer capacidadMaxima, Integer tiempoCancelacionHoras,
+                          LocalDateTime fechaInicio, LocalDateTime fechaFin,
+                          Integer tiempoToleranciaMinutos, String descripcion,
+                          String estado, Integer categoriaId, String categoriaNombre,
+                          Long inscritos) {
         this.idEvento = idEvento;
         this.banner = banner;
         this.nombre = nombre;
@@ -38,6 +40,7 @@ public class EventoResponse {
         this.estado = estado;
         this.categoriaId = categoriaId;
         this.categoriaNombre = categoriaNombre;
+        this.inscritos = inscritos;
     }
 
     // Getters and Setters
@@ -143,5 +146,13 @@ public class EventoResponse {
 
     public void setCategoriaNombre(String categoriaNombre) {
         this.categoriaNombre = categoriaNombre;
+    }
+
+    public Long getInscritos() {
+        return inscritos;
+    }
+
+    public void setInscritos(Long inscritos) {
+        this.inscritos = inscritos;
     }
 }

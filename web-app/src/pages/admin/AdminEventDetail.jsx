@@ -73,7 +73,7 @@ function AdminEventDetail() {
 
   if (loading) {
     return (
-      <div className="text-center py-5">
+      <div className="text-center py-5 fade-in">
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Cargando...</span>
         </div>
@@ -95,7 +95,7 @@ function AdminEventDetail() {
   const isActive = evento.estado === 'ACTIVO'
 
   return (
-    <div>
+    <div className="fade-in">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div className="d-flex align-items-center gap-2">
           <Link to="/admin/eventos" className="text-dark text-decoration-none">

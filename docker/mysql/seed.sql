@@ -15,9 +15,9 @@ INSERT IGNORE INTO categorias (nombre) VALUES
 ('Social');
 
 -- Insertar Administrador Maestro (SuperAdmin)
--- Contraseña: Admin@1234
+-- Contraseña: Admin@1234 (almacenada como hash BCrypt)
 INSERT INTO usuarios (nombre, apellido_paterno, apellido_materno, correo, password, estado, intentos_fallidos, rol_id, fecha_creacion)
-VALUES ('Admin', 'EventNode', 'Principal', 'admin@eventnode.com', 'Admin@1234', 'ACTIVO', 0,
+VALUES ('Admin', 'EventNode', 'Principal', 'admin@eventnode.com', '$2b$12$ifqonBLg.LpMrdrNLDi/neai.oVibgSXnTaIFeTonbNv/ep4ajh32', 'ACTIVO', 0,
   (SELECT id_rol FROM roles WHERE nombre = 'SUPERADMIN'), NOW());
 
 INSERT INTO administradores (id_usuario, es_principal)

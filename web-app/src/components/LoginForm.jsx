@@ -8,6 +8,7 @@ function LoginForm({ onLogin }) {
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [keepSession, setKeepSession] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -71,7 +72,7 @@ function LoginForm({ onLogin }) {
             <i className="bi bi-lock text-secondary"></i>
           </span>
           <input
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             className="form-control border-start-0 border-end-0"
             id="loginPassword"
             placeholder="••••••••"
@@ -79,8 +80,8 @@ function LoginForm({ onLogin }) {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <span className="input-group-text bg-white border-start-0" role="button">
-            <i className="bi bi-eye text-secondary"></i>
+          <span className="input-group-text bg-white border-start-0" role="button" onClick={() => setShowPassword(!showPassword)}>
+            <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'} text-secondary`}></i>
           </span>
         </div>
       </div>

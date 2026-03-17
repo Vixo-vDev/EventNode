@@ -10,36 +10,55 @@ const fallbackImages = [eventAi, eventMarketing, eventUiux]
 
 function StudentEvents() {
   const [eventos, setEventos] = useState([])
+  const [categorias, setCategorias] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [activeCategory, setActiveCategory] = useState('')
+
+  const fetchEventos = async () => {
+    try {
+      const data = await eventService.getEventos(undefined, undefined, undefined, 'ACTIVO')
+      const mapped = data.map((e, index) => ({
+        id: e.idEvento,
+        image: e.banner && e.banner.startsWith('data:image/') ? e.banner : fallbackImages[index % fallbackImages.length],
+        title: e.nombre,
+        date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + new Date(e.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '',
+        location: e.ubicacion,
+        category: e.categoriaNombre || 'GENERAL',
+        categoriaId: e.categoriaId,
+      }))
+      setEventos(mapped)
+    } catch {
+      setEventos([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchEventos = async () => {
+    fetchEventos()
+
+    const fetchCategorias = async () => {
       try {
-        const data = await eventService.getEventos()
-        const mapped = data
-          .filter(e => e.estado === 'ACTIVO')
-          .map((e, index) => ({
-            id: e.idEvento,
-            image: e.banner && e.banner.startsWith('data:image/') ? e.banner : fallbackImages[index % fallbackImages.length],
-            title: e.nombre,
-            date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + new Date(e.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '',
-            location: e.ubicacion,
-            category: e.categoriaNombre || 'GENERAL',
-          }))
-        setEventos(mapped)
+        const data = await eventService.getCategorias()
+        setCategorias(data)
       } catch {
-        setEventos([])
-      } finally {
-        setLoading(false)
+        setCategorias([])
       }
     }
-    fetchEventos()
+    fetchCategorias()
   }, [])
 
-  const filtered = search
-    ? eventos.filter(e => e.title.toLowerCase().includes(search.toLowerCase()) || e.category.toLowerCase().includes(search.toLowerCase()))
-    : eventos
+  // Filter by search text AND active category
+  const filtered = eventos.filter(e => {
+    const matchesSearch = !search || e.title.toLowerCase().includes(search.toLowerCase())
+    const matchesCategory = !activeCategory || e.category === activeCategory
+    return matchesSearch && matchesCategory
+  })
+
+  const handleCategoryChange = (catName) => {
+    setActiveCategory(catName === activeCategory ? '' : catName)
+  }
 
   return (
     <div>
@@ -51,20 +70,20 @@ function StudentEvents() {
           </p>
         </div>
         <div className="input-group shadow-sm rounded-3 overflow-hidden" style={{ maxWidth: '280px' }}>
-          <span className="input-group-text bg-white border-end-0">
+          <span className="input-group-text bg-white border-end-0 border-0">
             <i className="bi bi-search text-secondary"></i>
           </span>
           <input
             type="text"
-            className="form-control border-start-0"
-            placeholder="Buscar por nombre o categoría..."
+            className="form-control border-start-0 border-0 shadow-none"
+            placeholder="Buscar por nombre..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
-      <ul className="nav nav-tabs mb-4">
+      <ul className="nav nav-tabs mb-3">
         <li className="nav-item">
           <Link to="/estudiante/eventos" className="nav-link active fw-semibold small">
             Explorar los Eventos
@@ -76,6 +95,25 @@ function StudentEvents() {
           </Link>
         </li>
       </ul>
+
+      {/* Category filter pills */}
+      <div className="d-flex gap-2 mb-4 flex-wrap">
+        <button
+          className={`btn btn-sm rounded-pill px-3 fw-semibold ${!activeCategory ? 'btn-primary' : 'btn-outline-secondary'}`}
+          onClick={() => setActiveCategory('')}
+        >
+          Todas
+        </button>
+        {categorias.map(cat => (
+          <button
+            key={cat.idCategoria}
+            className={`btn btn-sm rounded-pill px-3 fw-semibold ${activeCategory === cat.nombre ? 'btn-primary' : 'btn-outline-secondary'}`}
+            onClick={() => handleCategoryChange(cat.nombre)}
+          >
+            {cat.nombre}
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <div className="text-center py-5">
@@ -104,9 +142,9 @@ function StudentEvents() {
             <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
               <i className="bi bi-calendar-plus text-primary fs-3"></i>
             </div>
-            <h6 className="fw-bold mb-1">No hay eventos disponibles</h6>
+            <h6 className="fw-bold mb-1">No se encontraron eventos</h6>
             <p className="text-secondary small mb-0">
-              Aún no se han publicado eventos. Vuelve pronto para descubrir nuevas actividades.
+              {search || activeCategory ? 'Intenta con otros filtros de búsqueda.' : 'Aún no se han publicado eventos. Vuelve pronto para descubrir nuevas actividades.'}
             </p>
           </div>
         </div>

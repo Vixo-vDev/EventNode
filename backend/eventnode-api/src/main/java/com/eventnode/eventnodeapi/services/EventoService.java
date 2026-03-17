@@ -156,6 +156,29 @@ public class EventoService {
     }
 
     @Transactional
+    public void eliminarEvento(Integer idEvento) {
+        Evento evento = eventoRepository.findById(idEvento)
+                .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado"));
+
+        // Eliminar asociaciones en tabla junction primero
+        entityManager.createNativeQuery("DELETE FROM evento_organizador WHERE id_evento = :idEvento")
+                .setParameter("idEvento", idEvento)
+                .executeUpdate();
+
+        // Eliminar pre-checkins asociados
+        entityManager.createNativeQuery("DELETE FROM pre_checkin WHERE id_evento = :idEvento")
+                .setParameter("idEvento", idEvento)
+                .executeUpdate();
+
+        // Eliminar asistencias asociadas
+        entityManager.createNativeQuery("DELETE FROM asistencias WHERE id_evento = :idEvento")
+                .setParameter("idEvento", idEvento)
+                .executeUpdate();
+
+        eventoRepository.delete(evento);
+    }
+
+    @Transactional
     public void cancelarEvento(Integer idEvento) {
         Evento evento = eventoRepository.findById(idEvento)
                 .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado"));

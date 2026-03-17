@@ -49,11 +49,13 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/eventos/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/eventos/crear").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/eventos/**").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/eventos/**").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/eventos/*/cancelar").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 
                 // Endpoints de Inscripciones (PreCheckin)
                 .requestMatchers("/api/precheckin/inscribirse").hasRole("ALUMNO")
                 .requestMatchers("/api/precheckin/cancelar").hasRole("ALUMNO")
+                .requestMatchers("/api/precheckin/usuario/**").hasRole("ALUMNO")
                 .requestMatchers("/api/precheckin/evento/**").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 
                 // Endpoints de Usuarios

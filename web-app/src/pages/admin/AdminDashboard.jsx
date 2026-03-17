@@ -13,6 +13,7 @@ import AdminDiplomas from './AdminDiplomas'
 import AdminDiplomaDetail from './AdminDiplomaDetail'
 import AdminEstudiantes from './AdminEstudiantes'
 import AdminPerfil from './AdminPerfil'
+import AdminOrganizadores from './AdminOrganizadores'
 import CerrarSesionModal from '../../components/modals/CerrarSesionModal'
 
 function AdminDashboard({ loggedUser, onLogout }) {
@@ -24,6 +25,7 @@ function AdminDashboard({ loggedUser, onLogout }) {
     { path: '/admin', exact: true, label: 'Inicio', icon: 'bi bi-house' },
     { path: '/admin/eventos', exact: false, label: 'Eventos', icon: 'bi bi-calendar-event' },
     { path: '/admin/diplomas', exact: false, label: 'Diplomas', icon: 'bi bi-award' },
+    { path: '/admin/organizadores', exact: false, label: 'Organizadores', icon: 'bi bi-building' },
     { path: '/admin/estudiantes', exact: false, label: 'Estudiantes', icon: 'bi bi-people' },
     { path: '/admin/perfil', exact: false, label: 'Perfil', icon: 'bi bi-person' }
   ]
@@ -40,6 +42,7 @@ function AdminDashboard({ loggedUser, onLogout }) {
         <Route path="/evento/:id/check-in" element={<AdminCheckIn />} />
         <Route path="/diplomas" element={<AdminDiplomas />} />
         <Route path="/diploma/:id" element={<AdminDiplomaDetail />} />
+        <Route path="/organizadores" element={<AdminOrganizadores />} />
         <Route path="/estudiantes" element={<AdminEstudiantes user={loggedUser} />} />
         <Route path="/perfil" element={<AdminPerfil user={loggedUser} />} />
       </Routes>

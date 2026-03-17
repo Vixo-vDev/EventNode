@@ -40,7 +40,7 @@ public class Usuario {
     @Column(name = "bloqueado_hasta")
     private LocalDateTime bloqueadoHasta;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "rol_id", nullable = false)
     private Rol rol;
 
