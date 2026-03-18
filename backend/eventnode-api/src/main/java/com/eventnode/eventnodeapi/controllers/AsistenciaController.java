@@ -98,6 +98,33 @@ public class AsistenciaController {
         }
     }
 
+    @PatchMapping("/{idAsistencia}/estado")
+    public ResponseEntity<?> actualizarEstado(@PathVariable Integer idAsistencia, @RequestBody Map<String, Object> body) {
+        try {
+            String estado = (String) body.get("estado");
+            if (estado == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("mensaje", "El campo estado es requerido");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            asistenciaService.actualizarEstado(idAsistencia, estado);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("mensaje", "Estado actualizado exitosamente");
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Error interno");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
     @GetMapping("/evento/{idEvento}/count")
     public ResponseEntity<?> contarAsistencias(@PathVariable Integer idEvento) {
         try {

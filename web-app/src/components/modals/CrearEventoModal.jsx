@@ -14,7 +14,6 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
     fechaInicio: '',
     fechaFin: '',
     idCategoria: '',
-    idDiploma: '',
     capacidadMaxima: '',
     tiempoCancelacionHoras: '',
     tiempoToleranciaMinutos: '',
@@ -134,7 +133,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
   const resetForm = () => {
     setFormData({
       nombre: '', ubicacion: '', descripcion: '', fechaInicio: '', fechaFin: '',
-      idCategoria: '', idDiploma: '', capacidadMaxima: '', tiempoCancelacionHoras: '',
+      idCategoria: '', capacidadMaxima: '', tiempoCancelacionHoras: '',
       tiempoToleranciaMinutos: '', banner: null,
     })
     setBannerPreview(null)
@@ -264,9 +263,9 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
               </div>
             </div>
 
-            {/* Categoría + Diploma + Capacidad */}
+            {/* Categoría + Capacidad */}
             <div className="row g-3 mb-3">
-              <div className="col-12 col-md-4">
+              <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">Categoría *</label>
                 <select
                   name="idCategoria"
@@ -282,20 +281,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   ))}
                 </select>
               </div>
-              <div className="col-12 col-md-4">
-                <label className="form-label fw-semibold small">Diseño de Diploma</label>
-                <select
-                  name="idDiploma"
-                  className="form-select"
-                  value={formData.idDiploma}
-                  onChange={handleChange}
-                >
-                  <option value="1">Jasper Classic</option>
-                  <option value="2">Modern Blue</option>
-                  <option value="3">Elegant Gold</option>
-                </select>
-              </div>
-              <div className="col-12 col-md-4">
+              <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">Capacidad Máxima *</label>
                 <input
                   type="number"

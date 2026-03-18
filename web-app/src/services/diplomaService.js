@@ -6,7 +6,7 @@ export const diplomaService = {
   crearDiploma: async (datos) => {
     const response = await fetch(`${API_URL}/diplomas/crear`, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         ...authService.getAuthHeader()
       },
@@ -51,6 +51,16 @@ export const diplomaService = {
       throw new Error(errorData.mensaje || 'Error al emitir diplomas');
     }
     return response.json();
+  },
+
+  descargarDiploma: async (idDiploma, idUsuario) => {
+    const response = await fetch(`${API_URL}/diplomas/${idDiploma}/descargar/${idUsuario}`, {
+      headers: { ...authService.getAuthHeader() }
+    });
+    if (!response.ok) {
+      throw new Error('Error al descargar diploma');
+    }
+    return response.blob();
   },
 
   listarDiplomasEstudiante: async (idUsuario) => {

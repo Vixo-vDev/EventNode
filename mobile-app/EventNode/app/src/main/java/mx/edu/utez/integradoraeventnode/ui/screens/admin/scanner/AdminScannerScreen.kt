@@ -1,7 +1,9 @@
 package mx.edu.utez.integradoraeventnode.ui.screens.admin.scanner
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -15,16 +17,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
+import mx.edu.utez.integradoraeventnode.data.network.ApiClient
+import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.admin.common.AdminBottomNav
 
 enum class ScannerState {
+    EVENT_SELECT,
     INITIAL,
     SCANNING,
     SUCCESS,
@@ -41,8 +48,11 @@ fun AdminScannerScreen(
     onAnalitica: () -> Unit = {},
     onProfile: () -> Unit = {}
 ) {
-    var scannerState by remember { mutableStateOf(ScannerState.INITIAL) }
+    var scannerState by remember { mutableStateOf(ScannerState.EVENT_SELECT) }
     var manualId by remember { mutableStateOf("") }
+    var selectedEvent by remember { mutableStateOf<EventoResponse?>(null) }
+    var successStudentName by remember { mutableStateOf("") }
+    var failureMessage by remember { mutableStateOf("") }
 
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -52,16 +62,70 @@ fun AdminScannerScreen(
                     .padding(bottom = 90.dp)
             ) {
                 when (scannerState) {
-                    ScannerState.INITIAL -> InitialScannerView(onScan = { scannerState = ScannerState.SCANNING }, onManual = { scannerState = ScannerState.MANUAL })
-                    ScannerState.SCANNING -> ScanningView(onBack = { scannerState = ScannerState.INITIAL }, onScanSuccess = { scannerState = ScannerState.SUCCESS }, onScanFailure = { scannerState = ScannerState.FAILURE })
-                    ScannerState.SUCCESS -> SuccessView(onConfirm = { scannerState = ScannerState.INITIAL })
-                    ScannerState.FAILURE -> FailureView(onRetry = { scannerState = ScannerState.SCANNING }, onManual = { scannerState = ScannerState.MANUAL })
-                    ScannerState.MANUAL -> ManualRegistrationView(
-                        manualId = manualId,
-                        onIdChange = { manualId = it },
-                        onBack = { scannerState = ScannerState.INITIAL },
-                        onRegisterSuccess = { scannerState = ScannerState.SUCCESS }
+                    ScannerState.EVENT_SELECT -> EventSelectionView(
+                        onEventSelected = { event ->
+                            selectedEvent = event
+                            scannerState = ScannerState.INITIAL
+                        }
                     )
+                    ScannerState.INITIAL -> {
+                        if (selectedEvent != null) {
+                            InitialScannerView(
+                                event = selectedEvent!!,
+                                onScan = { scannerState = ScannerState.SCANNING },
+                                onManual = { scannerState = ScannerState.MANUAL },
+                                onChangeEvent = { scannerState = ScannerState.EVENT_SELECT }
+                            )
+                        }
+                    }
+                    ScannerState.SCANNING -> {
+                        if (selectedEvent != null) {
+                            ScanningView(
+                                event = selectedEvent!!,
+                                onBack = { scannerState = ScannerState.INITIAL },
+                                onScanSuccess = { studentInfo ->
+                                    successStudentName = studentInfo
+                                    scannerState = ScannerState.SUCCESS
+                                },
+                                onScanFailure = { error ->
+                                    failureMessage = error
+                                    scannerState = ScannerState.FAILURE
+                                }
+                            )
+                        }
+                    }
+                    ScannerState.SUCCESS -> SuccessView(
+                        studentName = successStudentName,
+                        onConfirm = {
+                            manualId = ""
+                            successStudentName = ""
+                            scannerState = ScannerState.INITIAL
+                        }
+                    )
+                    ScannerState.FAILURE -> FailureView(
+                        errorMessage = failureMessage,
+                        onRetry = { scannerState = ScannerState.SCANNING },
+                        onManual = { scannerState = ScannerState.MANUAL }
+                    )
+                    ScannerState.MANUAL -> {
+                        if (selectedEvent != null) {
+                            ManualRegistrationView(
+                                event = selectedEvent!!,
+                                manualId = manualId,
+                                onIdChange = { manualId = it },
+                                onBack = { scannerState = ScannerState.INITIAL },
+                                onRegisterSuccess = { studentName ->
+                                    successStudentName = studentName
+                                    manualId = ""
+                                    scannerState = ScannerState.SUCCESS
+                                },
+                                onError = { error ->
+                                    failureMessage = error
+                                    scannerState = ScannerState.FAILURE
+                                }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -87,7 +151,122 @@ fun AdminScannerScreen(
 }
 
 @Composable
-private fun InitialScannerView(onScan: () -> Unit, onManual: () -> Unit) {
+private fun EventSelectionView(onEventSelected: (EventoResponse) -> Unit) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var events by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            try {
+                val prefs = context.getSharedPreferences("EventNodePrefs", Context.MODE_PRIVATE)
+                val token = prefs.getString("token", "") ?: ""
+
+                if (token.isEmpty()) {
+                    error = "Token no disponible"
+                    isLoading = false
+                    return@launch
+                }
+
+                val response = ApiClient.apiService.getEventosFiltrados("Bearer $token", estado = "ACTIVO")
+                if (response.isSuccessful && response.body() != null) {
+                    events = response.body() ?: emptyList()
+                } else {
+                    error = "Error al cargar eventos: ${response.code()}"
+                }
+                isLoading = false
+            } catch (e: Exception) {
+                error = "Error: ${e.message}"
+                isLoading = false
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Seleccionar Evento",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
+        when {
+            isLoading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(50.dp),
+                    color = Color(0xFF2F6FED)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Cargando eventos activos...", color = Color.Gray)
+            }
+            error.isNotEmpty() -> {
+                Text(
+                    text = error,
+                    color = Color(0xFFD32F2F),
+                    textAlign = TextAlign.Center
+                )
+            }
+            events.isEmpty() -> {
+                Text(
+                    text = "No hay eventos activos disponibles",
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+            }
+            else -> {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    events.forEach { event ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp)
+                                .clickable { onEventSelected(event) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = event.nombre,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = event.ubicacion,
+                                    fontSize = 14.sp,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Inicia: ${event.fechaInicio}",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InitialScannerView(
+    event: EventoResponse,
+    onScan: () -> Unit,
+    onManual: () -> Unit,
+    onChangeEvent: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -110,6 +289,13 @@ private fun InitialScannerView(onScan: () -> Unit, onManual: () -> Unit) {
                     text = "Escáner QR para\nAdministrador",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = event.nombre,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFF2F6FED),
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(32.dp))
@@ -135,7 +321,7 @@ private fun InitialScannerView(onScan: () -> Unit, onManual: () -> Unit) {
                 )
             }
         }
-        
+
         Button(
             onClick = onManual,
             modifier = Modifier
@@ -146,16 +332,74 @@ private fun InitialScannerView(onScan: () -> Unit, onManual: () -> Unit) {
         ) {
             Text("Entrada manual", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
-        
-        // Button to simulate scan for testing
-        TextButton(onClick = onScan, modifier = Modifier.padding(top = 16.dp)) {
+
+        TextButton(onClick = onScan, modifier = Modifier.padding(top = 8.dp)) {
             Text("Simular Escaneo", color = Color.Gray)
+        }
+
+        TextButton(onClick = onChangeEvent, modifier = Modifier.padding(top = 4.dp)) {
+            Text("Cambiar evento", color = Color.Gray, fontSize = 12.sp)
         }
     }
 }
 
 @Composable
-private fun ScanningView(onBack: () -> Unit, onScanSuccess: () -> Unit, onScanFailure: () -> Unit) {
+private fun ScanningView(
+    event: EventoResponse,
+    onBack: () -> Unit,
+    onScanSuccess: (String) -> Unit,
+    onScanFailure: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var isProcessing by remember { mutableStateOf(false) }
+    var simulatedQrInput by remember { mutableStateOf("") }
+
+    fun processQrCode(qrData: String) {
+        if (isProcessing) return
+        isProcessing = true
+
+        // Parse QR data - expects format EVENTNODE_CHECKIN:{eventId}
+        // The admin scans the student's QR which contains their userId
+        // Or if the QR is the event QR, the student scans it and the app registers via userId
+        coroutineScope.launch {
+            try {
+                val prefs = context.getSharedPreferences("EventNodePrefs", Context.MODE_PRIVATE)
+                val token = prefs.getString("token", "") ?: ""
+
+                if (token.isEmpty()) {
+                    onScanFailure("Token no disponible")
+                    return@launch
+                }
+
+                // Try to parse as matrícula (manual/QR scan of student ID)
+                val response = ApiClient.apiService.registrarAsistenciaManual(
+                    "Bearer $token",
+                    mapOf(
+                        "matricula" to qrData.trim(),
+                        "idEvento" to event.idEvento
+                    )
+                )
+
+                if (response.isSuccessful) {
+                    onScanSuccess(qrData.trim())
+                } else {
+                    val errorBody = response.errorBody()?.string() ?: ""
+                    val errorMsg = if (errorBody.contains("mensaje")) {
+                        errorBody.substringAfter("\"mensaje\":\"").substringBefore("\"")
+                    } else {
+                        "Error al registrar asistencia"
+                    }
+                    onScanFailure(errorMsg)
+                }
+            } catch (e: Exception) {
+                onScanFailure("Error: ${e.message}")
+            } finally {
+                isProcessing = false
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -174,22 +418,26 @@ private fun ScanningView(onBack: () -> Unit, onScanSuccess: () -> Unit, onScanFa
             color = Color.Gray,
             modifier = Modifier.padding(top = 8.dp)
         )
-        
-        Spacer(modifier = Modifier.height(48.dp))
-        
+        Text(
+            text = event.nombre,
+            style = MaterialTheme.typography.labelMedium,
+            color = Color(0xFF2F6FED),
+            modifier = Modifier.padding(top = 4.dp)
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
         Box(
             modifier = Modifier
                 .size(280.dp)
                 .clip(RoundedCornerShape(32.dp))
         ) {
-            // Camera placeholder
             Image(
-                bitmap = assetImageBitmap("Gemini_Generated_Image_j7p5usj7p5usj7p5.png"), // Placeholder for camera view
+                bitmap = assetImageBitmap("Gemini_Generated_Image_j7p5usj7p5usj7p5.png"),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
-            // Scanner frame overlay
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -198,35 +446,66 @@ private fun ScanningView(onBack: () -> Unit, onScanSuccess: () -> Unit, onScanFa
                     .background(Color.Black.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
-                Image(
-                    bitmap = assetImageBitmap("qr-scan.png"),
-                    contentDescription = null,
-                    modifier = Modifier.size(120.dp)
-                )
+                if (isProcessing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = Color.White
+                    )
+                } else {
+                    Image(
+                        bitmap = assetImageBitmap("qr-scan.png"),
+                        contentDescription = null,
+                        modifier = Modifier.size(120.dp)
+                    )
+                }
             }
         }
-        
-        Spacer(modifier = Modifier.height(48.dp))
-        
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Simulated QR input for testing
+        OutlinedTextField(
+            value = simulatedQrInput,
+            onValueChange = { simulatedQrInput = it },
+            placeholder = { Text("Matrícula del alumno (simular QR)") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Button(
-            onClick = onScanSuccess, // Simulate success
+            onClick = {
+                if (simulatedQrInput.isNotEmpty()) {
+                    processQrCode(simulatedQrInput)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED)),
+            enabled = !isProcessing && simulatedQrInput.isNotEmpty()
         ) {
-            Text("Escanear", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(
+                if (isProcessing) "Procesando..." else "Registrar Asistencia",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
-        
-        TextButton(onClick = onScanFailure, modifier = Modifier.padding(top = 8.dp)) {
-            Text("Simular Fallo", color = Color.Gray)
+
+        TextButton(onClick = onBack, modifier = Modifier.padding(top = 8.dp)) {
+            Text("Atrás", color = Color.Gray)
         }
     }
 }
 
 @Composable
-private fun SuccessView(onConfirm: () -> Unit) {
+private fun SuccessView(studentName: String, onConfirm: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -252,19 +531,18 @@ private fun SuccessView(onConfirm: () -> Unit) {
                 ) {
                     Text("✓", fontSize = 32.sp, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 Text(
-                    text = "¡Escaneo Exitoso!",
+                    text = "¡Asistencia Registrada!",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF4CAF50)
                 )
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
-                // Student Card
+
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -277,29 +555,21 @@ private fun SuccessView(onConfirm: () -> Unit) {
                         Image(
                             bitmap = assetImageBitmap("user.png"),
                             contentDescription = null,
-                            modifier = Modifier.size(48.dp).clip(CircleShape),
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape),
                             contentScale = ContentScale.Crop
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text(text = "Juan Pérez", fontWeight = FontWeight.Bold)
-                            Text(text = "Estudiante Activo", fontSize = 12.sp, color = Color.Gray)
+                            Text(text = studentName, fontWeight = FontWeight.Bold)
+                            Text(text = "Asistencia registrada", fontSize = 12.sp, color = Color.Gray)
                         }
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(text = "ID DEL ESTUDIANTE", fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
-                    Text(text = "2023001", fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = "CARRERA", fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
-                    Text(text = "Ingeniería", fontWeight = FontWeight.Bold)
-                }
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 Button(
                     onClick = onConfirm,
                     modifier = Modifier
@@ -308,7 +578,7 @@ private fun SuccessView(onConfirm: () -> Unit) {
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
                 ) {
-                    Text("Confirmar Asistencia", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("Continuar", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -316,7 +586,7 @@ private fun SuccessView(onConfirm: () -> Unit) {
 }
 
 @Composable
-private fun FailureView(onRetry: () -> Unit, onManual: () -> Unit) {
+private fun FailureView(errorMessage: String, onRetry: () -> Unit, onManual: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -342,26 +612,26 @@ private fun FailureView(onRetry: () -> Unit, onManual: () -> Unit) {
                 ) {
                     Text("!", fontSize = 32.sp, color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 Text(
                     text = "Registro fallido",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
-                    text = "El código QR es inválido o ha expirado. Por favor, inténtalo de nuevo o busca manualmente.",
+                    text = errorMessage.ifEmpty { "El código QR es inválido o ha expirado. Por favor, inténtalo de nuevo o busca manualmente." },
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 Button(
                     onClick = onRetry,
                     modifier = Modifier
@@ -372,9 +642,9 @@ private fun FailureView(onRetry: () -> Unit, onManual: () -> Unit) {
                 ) {
                     Text("Intentar de nuevo", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 OutlinedButton(
                     onClick = onManual,
                     modifier = Modifier
@@ -393,12 +663,18 @@ private fun FailureView(onRetry: () -> Unit, onManual: () -> Unit) {
 
 @Composable
 private fun ManualRegistrationView(
-    manualId: String, 
-    onIdChange: (String) -> Unit, 
+    event: EventoResponse,
+    manualId: String,
+    onIdChange: (String) -> Unit,
     onBack: () -> Unit,
-    onRegisterSuccess: () -> Unit
+    onRegisterSuccess: (String) -> Unit,
+    onError: (String) -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var searchPerformed by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var searchResult by remember { mutableStateOf<Map<String, Any>?>(null) }
 
     Column(
         modifier = Modifier
@@ -413,7 +689,7 @@ private fun ManualRegistrationView(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(top = 16.dp, bottom = 32.dp)
         )
-        
+
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(text = "Matrícula del Alumno", fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
@@ -428,11 +704,51 @@ private fun ManualRegistrationView(
                     unfocusedContainerColor = Color.White
                 )
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Button(
-                onClick = { searchPerformed = true },
+                onClick = {
+                    if (manualId.isNotEmpty()) {
+                        searchPerformed = true
+                        isLoading = true
+                        searchResult = null
+                        coroutineScope.launch {
+                            try {
+                                val prefs = context.getSharedPreferences("EventNodePrefs", Context.MODE_PRIVATE)
+                                val token = prefs.getString("token", "") ?: ""
+
+                                if (token.isEmpty()) {
+                                    onError("Token no disponible")
+                                    isLoading = false
+                                    return@launch
+                                }
+
+                                val response = ApiClient.apiService.registrarAsistenciaManual(
+                                    "Bearer $token",
+                                    mapOf(
+                                        "matricula" to manualId,
+                                        "idEvento" to event.idEvento
+                                    )
+                                )
+
+                                if (response.isSuccessful && response.body() != null) {
+                                    val resultBody = response.body() ?: emptyMap()
+                                    searchResult = resultBody
+                                    isLoading = false
+                                } else {
+                                    val errorMsg = response.body()?.get("message")?.toString()
+                                        ?: "Error al registrar asistencia"
+                                    onError(errorMsg)
+                                    searchPerformed = false
+                                }
+                            } catch (e: Exception) {
+                                onError("Error: ${e.message}")
+                                searchPerformed = false
+                            }
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -441,89 +757,121 @@ private fun ManualRegistrationView(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
-                    bitmap = assetImageBitmap("home.png"), // Lupa placeholder
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
+                        bitmap = assetImageBitmap("home.png"),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Buscar Alumno", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
-        
+
         if (searchPerformed) {
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             Column(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "RESULTADOS DE BÚSQUEDA", fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "RESULTADOS DE BÚSQUEDA",
+                    fontSize = 10.sp,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(modifier = Modifier.height(12.dp))
-                
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Image(
-                                bitmap = assetImageBitmap("user.png"),
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp).clip(CircleShape),
-                                contentScale = ContentScale.Crop
+
+                when {
+                    isLoading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(40.dp),
+                                color = Color(0xFF2F6FED)
                             )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column {
-                                Text(text = "Carlos Ramirez", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    searchResult != null -> {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                        ) {
+                            Column(modifier = Modifier.padding(20.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Image(
-                                        bitmap = assetImageBitmap("user.png"), // Icono carrera placeholder
+                                        bitmap = assetImageBitmap("user.png"),
                                         contentDescription = null,
-                                        modifier = Modifier.size(12.dp),
-                                        colorFilter = ColorFilter.tint(Color.Gray)
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
                                     )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(text = "Ingeniería en Sistemas", fontSize = 12.sp, color = Color.Gray)
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
+                                        Text(
+                                            text = manualId,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "Estudiante",
+                                            fontSize = 12.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
                                 }
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(20.dp))
-                        
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Column {
-                                Text(text = "ESTADO", fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
-                                Text(text = "Verificado", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(text = "ID MATRÍCULA", fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
-                                Text(text = "202400129", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(20.dp))
-                        
-                        OutlinedButton(
-                            onClick = onRegisterSuccess,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF2F6FED))
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Image(
-                                    bitmap = assetImageBitmap("user.png"), // Icono registro placeholder
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                    colorFilter = ColorFilter.tint(Color(0xFF2F6FED))
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Registrar Asistencia")
+
+                                Spacer(modifier = Modifier.height(20.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = "EVENTO",
+                                            fontSize = 10.sp,
+                                            color = Color.Gray,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = event.nombre,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(20.dp))
+
+                                OutlinedButton(
+                                    onClick = {
+                                        onRegisterSuccess(manualId)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF2F6FED))
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Image(
+                                            bitmap = assetImageBitmap("user.png"),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            colorFilter = ColorFilter.tint(Color(0xFF2F6FED))
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Confirmar Registro")
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
-        
+
         TextButton(onClick = onBack, modifier = Modifier.padding(top = 16.dp)) {
             Text("Regresar al escáner", color = Color.Gray)
         }

@@ -10,7 +10,14 @@ function AdminDiplomas() {
   const [loading, setLoading] = useState(true)
   const [eventos, setEventos] = useState([])
   const [creating, setCreating] = useState(false)
-  const [formData, setFormData] = useState({ idEvento: '', firma: '', diseno: 'Jasper Classic' })
+  const [emitting, setEmitting] = useState(null)
+  const [formData, setFormData] = useState({
+    idEvento: '',
+    firma: '',
+    diseno: 'Personalizado',
+    plantillaPdf: '',
+    firmaImagen: ''
+  })
 
   const fetchDiplomas = async () => {
     try {
@@ -37,19 +44,29 @@ function AdminDiplomas() {
   }, [])
 
   const handleCreateDiploma = async () => {
-    if (!formData.idEvento || !formData.firma) {
-      toast.error('Completa todos los campos obligatorios')
+    if (!formData.idEvento) {
+      toast.error('Selecciona un evento')
+      return
+    }
+    if (!formData.plantillaPdf) {
+      toast.error('Sube una plantilla PDF')
+      return
+    }
+    if (!formData.firmaImagen) {
+      toast.error('Sube una imagen de firma')
       return
     }
     setCreating(true)
     try {
       await diplomaService.crearDiploma({
         idEvento: parseInt(formData.idEvento),
-        firma: formData.firma,
-        diseno: formData.diseno,
+        firma: formData.firma || 'Administrador',
+        diseno: 'Personalizado',
+        plantillaPdf: formData.plantillaPdf,
+        firmaImagen: formData.firmaImagen
       })
       toast.success('Diploma creado exitosamente')
-      setFormData({ idEvento: '', firma: '', diseno: 'Jasper Classic' })
+      setFormData({ idEvento: '', firma: '', diseno: 'Personalizado', plantillaPdf: '', firmaImagen: '' })
       const modalEl = document.getElementById('crearDiplomaModal')
       if (modalEl && window.bootstrap) {
         const bsModal = window.bootstrap.Modal.getInstance(modalEl)
@@ -61,6 +78,20 @@ function AdminDiplomas() {
       toast.error(err.message)
     } finally {
       setCreating(false)
+    }
+  }
+
+  const handleEmitir = async (idDiploma) => {
+    setEmitting(idDiploma)
+    try {
+      const result = await diplomaService.emitirDiplomas(idDiploma)
+      toast.success(`${result.totalEmitidos} diploma(s) emitido(s) y enviado(s) por correo`)
+      setLoading(true)
+      fetchDiplomas()
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setEmitting(null)
     }
   }
 
@@ -142,19 +173,43 @@ function AdminDiplomas() {
                     <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style={{ width: '44px', height: '44px' }}>
                       <i className="bi bi-award fs-5"></i>
                     </div>
-                    <div>
+                    <div className="flex-grow-1">
                       <h6 className="fw-bold mb-0">{d.nombreEvento}</h6>
-                      <div className="text-secondary" style={{ fontSize: '11px' }}>{d.diseno}</div>
+                      <div className="d-flex gap-2 mt-1">
+                        {d.tienePlantilla && (
+                          <span className="badge bg-success bg-opacity-10 text-success" style={{ fontSize: '10px' }}>
+                            <i className="bi bi-file-pdf me-1"></i>PDF
+                          </span>
+                        )}
+                        {d.tieneFirma && (
+                          <span className="badge bg-primary bg-opacity-10 text-primary" style={{ fontSize: '10px' }}>
+                            <i className="bi bi-pen me-1"></i>Firma
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="d-flex justify-content-between mb-2">
                     <span className="text-secondary small">Emitidos</span>
                     <span className="fw-bold small">{d.totalEmitidos || 0}</span>
                   </div>
-                  <div className="d-flex justify-content-between">
+                  <div className="d-flex justify-content-between mb-3">
                     <span className="text-secondary small">Pendientes</span>
                     <span className="fw-bold small">{d.totalPendientes || 0}</span>
                   </div>
+                  {(d.totalPendientes || 0) > 0 && (
+                    <button
+                      className="btn btn-primary btn-sm w-100 rounded-pill fw-semibold"
+                      onClick={() => handleEmitir(d.idDiploma)}
+                      disabled={emitting === d.idDiploma}
+                    >
+                      {emitting === d.idDiploma ? (
+                        <><span className="spinner-border spinner-border-sm me-1" role="status"></span>Enviando...</>
+                      ) : (
+                        <><i className="bi bi-send me-1"></i>Emitir Diplomas</>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

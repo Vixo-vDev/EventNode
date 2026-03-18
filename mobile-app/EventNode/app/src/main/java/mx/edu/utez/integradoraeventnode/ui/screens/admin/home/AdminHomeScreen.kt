@@ -1,5 +1,6 @@
 package mx.edu.utez.integradoraeventnode.ui.screens.admin.home
 
+import android.content.Context
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,6 +26,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import mx.edu.utez.integradoraeventnode.data.network.ApiClient
+import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.admin.common.AdminBottomNav
@@ -32,7 +39,7 @@ import mx.edu.utez.integradoraeventnode.ui.screens.admin.common.AdminBottomNav
 @Composable
 fun AdminHomeScreen(
     modifier: Modifier = Modifier,
-    onViewEventDetail: () -> Unit = {},
+    onViewEventDetail: (Int) -> Unit = {},
     onAgenda: () -> Unit = {},
     onEscanear: () -> Unit = {},
     onDiplomas: () -> Unit = {},
@@ -40,126 +47,171 @@ fun AdminHomeScreen(
     onProfile: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var searchText by remember { mutableStateOf("") }
-    
+    var isLoading by remember { mutableStateOf(true) }
+    var activeEvents by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
+    var diplomas by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var users by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val prefs = context.getSharedPreferences("EventNodePrefs", Context.MODE_PRIVATE)
+                val token = prefs.getString("token", "") ?: ""
+                val bearerToken = "Bearer $token"
+
+                if (token.isNotEmpty()) {
+                    // Fetch active events
+                    val eventsResponse = ApiClient.apiService.getEventosFiltrados(bearerToken, estado = "ACTIVO")
+                    if (eventsResponse.isSuccessful) {
+                        activeEvents = eventsResponse.body() ?: emptyList()
+                    }
+
+                    // Fetch diplomas
+                    val diplomasResponse = ApiClient.apiService.listarDiplomas(bearerToken)
+                    if (diplomasResponse.isSuccessful) {
+                        diplomas = diplomasResponse.body() ?: emptyList()
+                    }
+
+                    // Fetch users
+                    val usersResponse = ApiClient.apiService.listarUsuarios(bearerToken)
+                    if (usersResponse.isSuccessful) {
+                        users = usersResponse.body() ?: emptyList()
+                    }
+                }
+                isLoading = false
+            } catch (e: Exception) {
+                isLoading = false
+            }
+        }
+    }
+
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 90.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Search Bar
-                TextField(
-                    value = searchText,
-                    onValueChange = { searchText = it },
-                    placeholder = { Text("Buscar eventos o usuarios", color = Color(0xFF999999)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .clip(RoundedCornerShape(16.dp)),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    leadingIcon = {
-                        Image(
-                            bitmap = assetImageBitmap("home.png"), // Lupa placeholder
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp).padding(start = 8.dp)
-                        )
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Stats Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    AdminStatCard(
-                        title = "Certificaciones\nEmitidas",
-                        count = "2",
-                        icon = "diploma.png",
-                        modifier = Modifier.weight(1f)
-                    )
-                    AdminStatCard(
-                        title = "Usuarios Registrados",
-                        count = "10",
-                        icon = "user.png",
-                        modifier = Modifier.weight(1f)
-                    )
+                    CircularProgressIndicator()
                 }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Eventos Próximos
-                SectionHeader(title = "Eventos Próximos", action = "Ver todos")
+            } else {
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .fillMaxSize()
+                        .padding(bottom = 90.dp)
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    AdminEventCard(
-                        day = "15",
-                        month = "OCT",
-                        title = "Conferencia de Innovación",
-                        location = "Auditorio Principal",
-                        status = "ACTIVO",
-                        statusColor = Color(0xFF4CAF50),
-                        onClick = onViewEventDetail
-                    )
-                    AdminEventCard(
-                        day = "02",
-                        month = "NOV",
-                        title = "Taller de Liderazgo",
-                        location = "Sala de Grados",
-                        status = "PENDIENTE",
-                        statusColor = Color(0xFFFFB300),
-                        onClick = onViewEventDetail
-                    )
-                }
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    // Search Bar
+                    TextField(
+                        value = searchText,
+                        onValueChange = { searchText = it },
+                        placeholder = { Text("Buscar eventos o usuarios", color = Color(0xFF999999)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .clip(RoundedCornerShape(16.dp)),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        leadingIcon = {
+                            Image(
+                                bitmap = assetImageBitmap("home.png"),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp).padding(start = 8.dp)
+                            )
+                        }
+                    )
 
-                // Certificaciones Recientes
-                SectionHeader(title = "Certificaciones Recientes", action = "Gestionar")
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        RecentCertItem(
-                            title = "Diplomado en Gestión Pública",
-                            info = "EMITIDO: 20 SEP 2023",
-                            status = "COMPLETADO",
-                            statusColor = Color(0xFF4CAF50),
-                            icon = "diploma.png"
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Stats Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        AdminStatCard(
+                            title = "Certificaciones\nEmitidas",
+                            count = diplomas.size.toString(),
+                            icon = "diploma.png",
+                            modifier = Modifier.weight(1f)
                         )
-                        Divider(color = Color(0xFFF0F0F0))
-                        RecentCertItem(
-                            title = "Seminario de Tecnología",
-                            info = "FECHA: 12 OCT 2023",
-                            status = "PENDIENTE",
-                            statusColor = Color(0xFFFFB300),
-                            icon = "diploma.png"
+                        AdminStatCard(
+                            title = "Usuarios Registrados",
+                            count = users.size.toString(),
+                            icon = "user.png",
+                            modifier = Modifier.weight(1f)
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Eventos Próximos
+                    if (activeEvents.isNotEmpty()) {
+                        SectionHeader(title = "Eventos Próximos", action = "Ver todos")
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            activeEvents.take(3).forEach { event ->
+                                val (day, month) = extractDateParts(event.fechaInicio)
+                                val statusColor = getStatusColor(event.estado)
+                                AdminEventCard(
+                                    day = day,
+                                    month = month,
+                                    title = event.nombre,
+                                    location = event.ubicacion,
+                                    status = event.estado,
+                                    statusColor = statusColor,
+                                    eventId = event.idEvento,
+                                    onClick = onViewEventDetail
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+
+                    // Certificaciones Recientes
+                    if (diplomas.isNotEmpty()) {
+                        SectionHeader(title = "Certificaciones Recientes", action = "Gestionar")
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                diplomas.take(2).forEachIndexed { index, diploma ->
+                                    if (index > 0) {
+                                        Divider(color = Color(0xFFF0F0F0))
+                                    }
+                                    RecentCertItem(
+                                        title = diploma["nombre"]?.toString() ?: "Sin nombre",
+                                        info = "DIPLOMA ID: ${diploma["idDiploma"]?.toString() ?: "N/A"}",
+                                        status = if (diploma["estado"]?.toString() == "EMITIDO") "COMPLETADO" else "PENDIENTE",
+                                        statusColor = if (diploma["estado"]?.toString() == "EMITIDO") Color(0xFF4CAF50) else Color(0xFFFFB300),
+                                        icon = "diploma.png"
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
-                
-                Spacer(modifier = Modifier.height(20.dp))
             }
 
             // Bottom Nav
@@ -180,6 +232,28 @@ fun AdminHomeScreen(
                 )
             }
         }
+    }
+}
+
+private fun extractDateParts(isoDateTime: String): Pair<String, String> {
+    return try {
+        val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        val dateTime = LocalDateTime.parse(isoDateTime, formatter)
+        val day = dateTime.dayOfMonth.toString().padStart(2, '0')
+        val monthFormatter = DateTimeFormatter.ofPattern("MMM", Locale("es", "ES"))
+        val month = dateTime.format(monthFormatter).uppercase()
+        Pair(day, month)
+    } catch (e: Exception) {
+        Pair("--", "---")
+    }
+}
+
+private fun getStatusColor(estado: String): Color {
+    return when (estado.uppercase()) {
+        "ACTIVO" -> Color(0xFF4CAF50)
+        "PENDIENTE" -> Color(0xFFFFB300)
+        "CANCELADO" -> Color(0xFFE53935)
+        else -> Color(0xFF999999)
     }
 }
 
@@ -221,12 +295,13 @@ private fun AdminEventCard(
     location: String,
     status: String,
     statusColor: Color,
-    onClick: () -> Unit
+    eventId: Int = 0,
+    onClick: (Int) -> Unit = {}
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .clickable { onClick(eventId) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -243,9 +318,9 @@ private fun AdminEventCard(
                 Text(text = month, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                 Text(text = day, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
-            
+
             Spacer(modifier = Modifier.width(12.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Box(
                     modifier = Modifier
@@ -263,7 +338,7 @@ private fun AdminEventCard(
                     Text(text = location, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
             }
-            
+
             Text("〉", color = Color.LightGray, modifier = Modifier.padding(horizontal = 8.dp))
         }
     }

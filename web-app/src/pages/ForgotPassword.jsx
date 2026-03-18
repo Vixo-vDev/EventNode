@@ -34,6 +34,10 @@ function ForgotPassword() {
       toast.error('Ingresa tu correo electrónico')
       return
     }
+    if (!correo.trim().endsWith('@utez.edu.mx')) {
+      toast.error('El correo debe terminar en @utez.edu.mx')
+      return
+    }
     setLoading(true)
     try {
       await authService.enviarCodigoRecuperacion(correo.trim())

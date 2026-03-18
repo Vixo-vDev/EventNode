@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -71,11 +72,16 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var keepSession by remember { mutableStateOf(false) }
     var showPassword by remember { mutableStateOf(false) }
-    var showRecoverPassword by remember { mutableStateOf(false) }
-    var showCodeModal by remember { mutableStateOf(false) }
-    var showEmailSent by remember { mutableStateOf(false) }
+    // Recovery flow: "none" -> "email" -> "code" -> "newPassword" -> "success"
+    var recoveryStep by remember { mutableStateOf("none") }
     var recoverEmail by remember { mutableStateOf("") }
-    var recoverCode by remember { mutableStateOf("") }
+    var recoverCode by remember { mutableStateOf(List(6) { "" }) }
+    var recoverLoading by remember { mutableStateOf(false) }
+    var recoverError by remember { mutableStateOf<String?>(null) }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var showNewPassword by remember { mutableStateOf(false) }
+    var showConfirmPassword by remember { mutableStateOf(false) }
     var showSuccessModal by remember { mutableStateOf(false) }
     
     val scope = rememberCoroutineScope()
@@ -203,7 +209,14 @@ fun LoginScreen(
                                 text = "¿Haz olvidado la contraseña?",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Color(0xFF2F6FED),
-                                modifier = Modifier.clickable { showRecoverPassword = true }
+                                modifier = Modifier.clickable {
+                                    recoveryStep = "email"
+                                    recoverEmail = ""
+                                    recoverCode = List(6) { "" }
+                                    recoverError = null
+                                    newPassword = ""
+                                    confirmPassword = ""
+                                }
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
@@ -388,202 +401,308 @@ fun LoginScreen(
                 }
             }
 
-            if (showRecoverPassword) {
+            // ===== RECOVERY FLOW =====
+            if (recoveryStep != "none") {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0x80000000))
-                        .clickable(enabled = false) {},
+                    modifier = Modifier.fillMaxSize().background(Color(0x80000000)).clickable(enabled = false) {},
                     contentAlignment = Alignment.Center
                 ) {
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp)
-                            .widthIn(max = 360.dp),
+                        modifier = Modifier.fillMaxWidth().padding(24.dp).widthIn(max = 380.dp),
                         shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
                         Column(
-                            modifier = Modifier.padding(24.dp),
+                            modifier = Modifier.padding(24.dp).verticalScroll(rememberScrollState()),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(Color(0xFFF0F7FF)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Image(
-                                    bitmap = assetImageBitmap("eye.png"), // Using eye icon as in Image 3
-                                    contentDescription = null,
-                                    modifier = Modifier.size(32.dp),
-                                    colorFilter = ColorFilter.tint(Color(0xFF2F6FED))
-                                )
-                            }
-                            
-                            Spacer(modifier = Modifier.height(24.dp))
-                            
-                            Text(
-                                text = "Recuperar contraseña",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
-                            
-                            Spacer(modifier = Modifier.height(12.dp))
-                            
-                            Text(
-                                text = "Ingresa tu correo institucional para enviarte las instrucciones de recuperación.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFF666666),
-                                textAlign = TextAlign.Center
-                            )
-                            
-                            Spacer(modifier = Modifier.height(24.dp))
-                            
-                            Text(
-                                text = "Correo institucional",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value = recoverEmail,
-                                onValueChange = { recoverEmail = it },
-                                placeholder = { Text("matricula@utez.edu.mx", color = Color(0xFF999999)) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                leadingIcon = {
-                                    Image(
-                                        bitmap = assetImageBitmap("correo.png"),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp),
-                                        colorFilter = ColorFilter.tint(Color(0xFF74777F))
-                                    )
+                            // --- Step 1: Email ---
+                            if (recoveryStep == "email") {
+                                Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFF0F7FF)), contentAlignment = Alignment.Center) {
+                                    Image(bitmap = assetImageBitmap("lock.png"), contentDescription = null, modifier = Modifier.size(32.dp), colorFilter = ColorFilter.tint(Color(0xFF2F6FED)))
                                 }
-                            )
-                            
-                            Spacer(modifier = Modifier.height(24.dp))
-                            
-                            Button(
-                                onClick = {
-                                    showRecoverPassword = false
-                                    showEmailSent = true
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(50.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
-                            ) {
-                                Text("Enviar código", fontWeight = FontWeight.Bold)
-                            }
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            Text(
-                                text = "Volver al inicio de sesión",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = Color(0xFF666666),
-                                modifier = Modifier.clickable { showRecoverPassword = false }
-                            )
-                        }
-                    }
-                }
-            }
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text("Recuperar contraseña", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text("Ingresa tu correo institucional para enviarte un código de verificación.", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF666666), textAlign = TextAlign.Center)
+                                Spacer(modifier = Modifier.height(24.dp))
 
-            if (showEmailSent) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0x80000000))
-                        .clickable(enabled = false) {},
-                    contentAlignment = Alignment.Center
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp)
-                            .widthIn(max = 360.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(Color(0xFFF0F7FF)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Image(
-                                    bitmap = assetImageBitmap("envelope.png"),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(32.dp),
-                                    colorFilter = ColorFilter.tint(Color(0xFF2F6FED))
+                                if (recoverError != null) {
+                                    Text(recoverError!!, color = Color(0xFFEF5350), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 12.dp))
+                                }
+
+                                Text("Correo institucional", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedTextField(
+                                    value = recoverEmail,
+                                    onValueChange = { recoverEmail = it; recoverError = null },
+                                    placeholder = { Text("matricula@utez.edu.mx", color = Color(0xFF999999)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    leadingIcon = {
+                                        Image(bitmap = assetImageBitmap("correo.png"), contentDescription = null, modifier = Modifier.size(20.dp), colorFilter = ColorFilter.tint(Color(0xFF74777F)))
+                                    }
                                 )
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                Button(
+                                    onClick = {
+                                        val trimmed = recoverEmail.trim()
+                                        if (trimmed.isBlank()) { recoverError = "Ingresa tu correo electrónico"; return@Button }
+                                        if (!trimmed.endsWith("@utez.edu.mx")) { recoverError = "El correo debe terminar en @utez.edu.mx"; return@Button }
+                                        recoverLoading = true; recoverError = null
+                                        scope.launch {
+                                            try {
+                                                val resp = ApiClient.apiService.enviarCodigoRecuperacion(mapOf("correo" to trimmed))
+                                                if (resp.isSuccessful) {
+                                                    recoveryStep = "code"
+                                                } else {
+                                                    val err = resp.errorBody()?.string()
+                                                    recoverError = try { JSONObject(err ?: "").optString("mensaje", "Error al enviar código") } catch (_: Exception) { "Error al enviar código" }
+                                                }
+                                            } catch (_: Exception) { recoverError = "Error de conexión" }
+                                            finally { recoverLoading = false }
+                                        }
+                                    },
+                                    enabled = !recoverLoading,
+                                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                                ) {
+                                    Text(if (recoverLoading) "Enviando..." else "Enviar código", fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text("Volver al inicio de sesión", style = MaterialTheme.typography.labelLarge, color = Color(0xFF666666), modifier = Modifier.clickable { recoveryStep = "none" })
                             }
-                            
-                            Spacer(modifier = Modifier.height(24.dp))
-                            
-                            Text(
-                                text = "¡Correo Enviado!",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
-                            
-                            Spacer(modifier = Modifier.height(12.dp))
-                            
-                            Text(
-                                text = "Hemos enviado un enlace de recuperación a tu correo institucional. Por favor, revisa tu bandeja de entrada y spam.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFF666666),
-                                textAlign = TextAlign.Center
-                            )
-                            
-                            Spacer(modifier = Modifier.height(32.dp))
-                            
-                            Button(
-                                onClick = { showEmailSent = false },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(50.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
-                            ) {
-                                Text("Volver al Inicio", fontWeight = FontWeight.Bold)
+
+                            // --- Step 2: Verify Code ---
+                            if (recoveryStep == "code") {
+                                Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFF0F7FF)), contentAlignment = Alignment.Center) {
+                                    Image(bitmap = assetImageBitmap("correo.png"), contentDescription = null, modifier = Modifier.size(32.dp), colorFilter = ColorFilter.tint(Color(0xFF2F6FED)))
+                                }
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text("Verificar Código", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text("Ingresa el código de 6 dígitos que enviamos a ${recoverEmail.trim()}", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF666666), textAlign = TextAlign.Center)
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                if (recoverError != null) {
+                                    Text(recoverError!!, color = Color(0xFFEF5350), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 12.dp))
+                                }
+
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
+                                    for (i in 0..5) {
+                                        OutlinedTextField(
+                                            value = recoverCode[i],
+                                            onValueChange = { v ->
+                                                if (v.length <= 1 && v.all { it.isDigit() }) {
+                                                    recoverCode = recoverCode.toMutableList().also { it[i] = v }
+                                                    recoverError = null
+                                                }
+                                            },
+                                            modifier = Modifier.width(44.dp).height(52.dp),
+                                            textStyle = androidx.compose.ui.text.TextStyle(textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, fontSize = 20.sp),
+                                            shape = RoundedCornerShape(10.dp),
+                                            singleLine = true,
+                                            colors = TextFieldDefaults.colors(
+                                                focusedContainerColor = Color(0xFFF0F7FF),
+                                                unfocusedContainerColor = Color(0xFFF8F9FB),
+                                                focusedIndicatorColor = Color(0xFF2F6FED),
+                                                unfocusedIndicatorColor = Color(0xFFE1E2EC)
+                                            )
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                Button(
+                                    onClick = {
+                                        val codeStr = recoverCode.joinToString("")
+                                        if (codeStr.length != 6) { recoverError = "Ingresa el código completo"; return@Button }
+                                        recoverLoading = true; recoverError = null
+                                        scope.launch {
+                                            try {
+                                                val resp = ApiClient.apiService.verificarCodigo(mapOf("correo" to recoverEmail.trim(), "codigo" to codeStr))
+                                                if (resp.isSuccessful) {
+                                                    recoveryStep = "newPassword"
+                                                } else {
+                                                    val err = resp.errorBody()?.string()
+                                                    recoverError = try { JSONObject(err ?: "").optString("mensaje", "Código incorrecto") } catch (_: Exception) { "Código incorrecto" }
+                                                }
+                                            } catch (_: Exception) { recoverError = "Error de conexión" }
+                                            finally { recoverLoading = false }
+                                        }
+                                    },
+                                    enabled = !recoverLoading,
+                                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                                ) {
+                                    Text(if (recoverLoading) "Verificando..." else "Verificar", fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                                    Text("¿No recibiste el código? ", style = MaterialTheme.typography.bodySmall, color = Color(0xFF666666))
+                                    Text("Reenviar", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF2F6FED),
+                                        modifier = Modifier.clickable {
+                                            recoverLoading = true; recoverError = null
+                                            scope.launch {
+                                                try {
+                                                    ApiClient.apiService.enviarCodigoRecuperacion(mapOf("correo" to recoverEmail.trim()))
+                                                    recoverCode = List(6) { "" }
+                                                } catch (_: Exception) { recoverError = "Error al reenviar" }
+                                                finally { recoverLoading = false }
+                                            }
+                                        })
+                                }
                             }
-                            
-                            Spacer(modifier = Modifier.height(20.dp))
-                            
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("¿No recibiste nada?", style = MaterialTheme.typography.bodySmall, color = Color(0xFF666666))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Reenviar correo",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF2F6FED),
-                                    modifier = Modifier.clickable { }
+
+                            // --- Step 3: New Password ---
+                            if (recoveryStep == "newPassword") {
+                                val hasMin = newPassword.length >= 8
+                                val hasUpper = newPassword.any { it.isUpperCase() }
+                                val hasSpecial = newPassword.any { !it.isLetterOrDigit() }
+                                val match = newPassword == confirmPassword && newPassword.isNotEmpty()
+
+                                Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFF0F7FF)), contentAlignment = Alignment.Center) {
+                                    Image(bitmap = assetImageBitmap("lock.png"), contentDescription = null, modifier = Modifier.size(32.dp), colorFilter = ColorFilter.tint(Color(0xFF2F6FED)))
+                                }
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text("Nueva contraseña", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text("Crea una contraseña segura que no hayas utilizado antes.", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF666666), textAlign = TextAlign.Center)
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                if (recoverError != null) {
+                                    Text(recoverError!!, color = Color(0xFFEF5350), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 12.dp))
+                                }
+
+                                Text("Nueva contraseña", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedTextField(
+                                    value = newPassword,
+                                    onValueChange = { newPassword = it; recoverError = null },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    visualTransformation = if (showNewPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                    leadingIcon = { Image(bitmap = assetImageBitmap("lock.png"), contentDescription = null, modifier = Modifier.size(20.dp), colorFilter = ColorFilter.tint(Color.Gray)) },
+                                    trailingIcon = {
+                                        IconButton(onClick = { showNewPassword = !showNewPassword }) {
+                                            Image(bitmap = assetImageBitmap(if (showNewPassword) "vista.png" else "eye.png"), contentDescription = null, modifier = Modifier.size(20.dp))
+                                        }
+                                    }
                                 )
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Validation indicators
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    Text("REQUISITOS DE SEGURIDAD", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2F6FED), fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    ValidationRow("Mínimo 8 caracteres", hasMin)
+                                    ValidationRow("Al menos una mayúscula", hasUpper)
+                                    ValidationRow("Un carácter especial (#, \$, etc.)", hasSpecial)
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Text("Confirmar contraseña", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedTextField(
+                                    value = confirmPassword,
+                                    onValueChange = { confirmPassword = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    visualTransformation = if (showConfirmPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                    leadingIcon = { Image(bitmap = assetImageBitmap("lock.png"), contentDescription = null, modifier = Modifier.size(20.dp), colorFilter = ColorFilter.tint(Color.Gray)) },
+                                    trailingIcon = {
+                                        IconButton(onClick = { showConfirmPassword = !showConfirmPassword }) {
+                                            Image(bitmap = assetImageBitmap(if (showConfirmPassword) "vista.png" else "eye.png"), contentDescription = null, modifier = Modifier.size(20.dp))
+                                        }
+                                    }
+                                )
+                                if (confirmPassword.isNotEmpty() && !match) {
+                                    Text("Las contraseñas no coinciden", color = Color(0xFFEF5350), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+                                }
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                Button(
+                                    onClick = {
+                                        if (!hasMin || !hasUpper || !hasSpecial) { recoverError = "La contraseña no cumple los requisitos"; return@Button }
+                                        if (!match) { recoverError = "Las contraseñas no coinciden"; return@Button }
+                                        recoverLoading = true; recoverError = null
+                                        scope.launch {
+                                            try {
+                                                val resp = ApiClient.apiService.restablecerPassword(mapOf(
+                                                    "correo" to recoverEmail.trim(),
+                                                    "codigo" to recoverCode.joinToString(""),
+                                                    "nuevaPassword" to newPassword
+                                                ))
+                                                if (resp.isSuccessful) {
+                                                    recoveryStep = "success"
+                                                } else {
+                                                    val err = resp.errorBody()?.string()
+                                                    recoverError = try { JSONObject(err ?: "").optString("mensaje", "Error") } catch (_: Exception) { "Error al restablecer" }
+                                                }
+                                            } catch (_: Exception) { recoverError = "Error de conexión" }
+                                            finally { recoverLoading = false }
+                                        }
+                                    },
+                                    enabled = !recoverLoading && hasMin && hasUpper && hasSpecial && match,
+                                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                                ) {
+                                    Text(if (recoverLoading) "Restableciendo..." else "Restablecer contraseña", fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text("Cancelar", style = MaterialTheme.typography.labelLarge, color = Color(0xFF666666), modifier = Modifier.clickable { recoveryStep = "none" })
+                            }
+
+                            // --- Step 4: Success ---
+                            if (recoveryStep == "success") {
+                                Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFE8F5E9)), contentAlignment = Alignment.Center) {
+                                    Image(bitmap = assetImageBitmap("check-circle.png"), contentDescription = null, modifier = Modifier.size(32.dp), colorFilter = ColorFilter.tint(Color(0xFF4CAF50)))
+                                }
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text("¡Contraseña Actualizada!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text("Tu contraseña ha sido cambiada con éxito. Ahora puedes iniciar sesión con tu nueva clave.", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF666666), textAlign = TextAlign.Center)
+                                Spacer(modifier = Modifier.height(32.dp))
+                                Button(
+                                    onClick = { recoveryStep = "none" },
+                                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                                ) {
+                                    Text("Ir al Inicio de Sesión", fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ValidationRow(text: String, isValid: Boolean) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 2.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(if (isValid) Color(0xFF4CAF50) else Color(0xFFCCCCCC))
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = if (isValid) Color(0xFF4CAF50) else Color(0xFF666666)
+        )
     }
 }
 

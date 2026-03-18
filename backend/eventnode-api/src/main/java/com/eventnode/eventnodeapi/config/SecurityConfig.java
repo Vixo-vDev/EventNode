@@ -52,6 +52,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/eventos/**").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/eventos/*/cancelar").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 
+                // Endpoints de Asistencias
+                .requestMatchers(HttpMethod.PATCH, "/api/asistencias/*/estado").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
+
                 // Endpoints de Inscripciones (PreCheckin)
                 .requestMatchers("/api/precheckin/inscribirse").hasRole("ALUMNO")
                 .requestMatchers("/api/precheckin/cancelar").hasRole("ALUMNO")
@@ -81,7 +84,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174", "http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

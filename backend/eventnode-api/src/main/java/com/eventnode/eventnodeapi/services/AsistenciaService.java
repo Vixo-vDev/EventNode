@@ -73,12 +73,13 @@ public class AsistenciaService {
             throw new IllegalStateException("No estás dentro del tiempo permitido para registrar asistencia");
         }
 
-        // Create Asistencia
+        // Create Asistencia with PENDIENTE status
         Asistencia asistencia = new Asistencia();
         asistencia.setIdUsuario(idUsuario);
         asistencia.setIdEvento(idEvento);
         asistencia.setFechaCheckin(now);
         asistencia.setMetodo(metodo);
+        asistencia.setEstado("PENDIENTE");
 
         asistenciaRepository.save(asistencia);
     }
@@ -116,10 +117,24 @@ public class AsistenciaService {
             }
 
             map.put("metodo", a.getMetodo());
+            map.put("estado", a.getEstado());
             map.put("fechaCheckin", a.getFechaCheckin());
 
             return map;
         }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void actualizarEstado(Integer idAsistencia, String estado) {
+        Asistencia asistencia = asistenciaRepository.findById(idAsistencia)
+                .orElseThrow(() -> new IllegalArgumentException("Asistencia no encontrada"));
+
+        if (!"PENDIENTE".equals(estado) && !"ASISTIDO".equals(estado)) {
+            throw new IllegalArgumentException("Estado inválido. Debe ser PENDIENTE o ASISTIDO");
+        }
+
+        asistencia.setEstado(estado);
+        asistenciaRepository.save(asistencia);
     }
 
     public long contarAsistencias(Integer idEvento) {
