@@ -22,13 +22,13 @@ public class DiplomaController {
     }
 
     @PostMapping("/crear")
-    public ResponseEntity<?> crearDiploma(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> crearDiploma(@RequestBody Map<String, Object> body) {
         try {
-            Integer idEvento = Integer.parseInt(body.get("idEvento"));
-            String firma = body.getOrDefault("firma", "");
-            String diseno = body.getOrDefault("diseno", "Personalizado");
-            String plantillaPdf = body.get("plantillaPdf");
-            String firmaImagen = body.get("firmaImagen");
+            Integer idEvento = body.get("idEvento") != null ? Integer.parseInt(body.get("idEvento").toString()) : null;
+            String firma = body.get("firma") != null ? body.get("firma").toString() : "";
+            String diseno = body.get("diseno") != null ? body.get("diseno").toString() : "Personalizado";
+            String plantillaPdf = body.get("plantillaPdf") != null ? body.get("plantillaPdf").toString() : null;
+            String firmaImagen = body.get("firmaImagen") != null ? body.get("firmaImagen").toString() : null;
 
             if (idEvento == null) {
                 Map<String, String> error = new HashMap<>();
@@ -119,12 +119,12 @@ public class DiplomaController {
     }
 
     @PutMapping("/{idDiploma}")
-    public ResponseEntity<?> actualizarDiploma(@PathVariable Integer idDiploma, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> actualizarDiploma(@PathVariable Integer idDiploma, @RequestBody Map<String, Object> body) {
         try {
-            String firma = body.get("firma");
-            String diseno = body.get("diseno");
-            String plantillaPdf = body.get("plantillaPdf");
-            String firmaImagen = body.get("firmaImagen");
+            String firma = body.get("firma") != null ? body.get("firma").toString() : null;
+            String diseno = body.get("diseno") != null ? body.get("diseno").toString() : null;
+            String plantillaPdf = body.get("plantillaPdf") != null ? body.get("plantillaPdf").toString() : null;
+            String firmaImagen = body.get("firmaImagen") != null ? body.get("firmaImagen").toString() : null;
 
             diplomaService.actualizarDiploma(idDiploma, firma, diseno, plantillaPdf, firmaImagen);
 

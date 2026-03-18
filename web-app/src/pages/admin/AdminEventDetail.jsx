@@ -48,22 +48,24 @@ function AdminEventDetail() {
   const handleEmitirDiplomas = async () => {
     setEmitting(true)
     try {
-      // First create diploma if it doesn't exist
-      try {
-        await diplomaService.crearDiploma({
-          idEvento: parseInt(id),
-          firma: 'Firma Digital EventNode',
-          diseno: 'Jasper Classic',
-        })
-      } catch { /* diploma may already exist */ }
-
-      // Get diploma for event and emit
+      // Check if a diploma exists for this event
       const diplomas = await diplomaService.listarDiplomas()
       const diploma = diplomas.find(d => d.idEvento === parseInt(id))
-      if (diploma) {
-        const result = await diplomaService.emitirDiplomas(diploma.idDiploma)
-        toast.success(`Diplomas emitidos: ${result.emitidos || 0}`)
+
+      if (!diploma) {
+        toast.warning('Este evento no tiene un diploma asociado. Ve a Gestión de Diplomas para crear uno primero.')
+        setEmitting(false)
+        return
       }
+
+      if (!diploma.tienePlantilla) {
+        toast.warning('El diploma no tiene una plantilla PDF configurada. Edítalo en Gestión de Diplomas.')
+        setEmitting(false)
+        return
+      }
+
+      const result = await diplomaService.emitirDiplomas(diploma.idDiploma)
+      toast.success(`${result.totalEmitidos || 0} diploma(s) emitido(s) y enviado(s) por correo`)
     } catch (err) {
       toast.error(err.message)
     } finally {

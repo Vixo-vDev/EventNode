@@ -421,8 +421,15 @@ public class DiplomaService {
     public void eliminarDiploma(Integer idDiploma) {
         Diploma diploma = diplomaRepository.findById(idDiploma)
                 .orElseThrow(() -> new IllegalArgumentException("Diploma no encontrado"));
-        diploma.setEstado("ELIMINADO");
-        diplomaRepository.save(diploma);
+
+        // Delete all related DiplomaEmitido records first
+        List<DiplomaEmitido> emitidos = diplomaEmitidoRepository.findByIdDiploma(idDiploma);
+        if (!emitidos.isEmpty()) {
+            diplomaEmitidoRepository.deleteAll(emitidos);
+        }
+
+        // Hard delete the diploma from the database
+        diplomaRepository.delete(diploma);
     }
 
     public List<Map<String, Object>> listarDiplomasEstudiante(Integer idUsuario) {
