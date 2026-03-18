@@ -63,6 +63,34 @@ export const diplomaService = {
     return response.blob();
   },
 
+  actualizarDiploma: async (idDiploma, datos) => {
+    const response = await fetch(`${API_URL}/diplomas/${idDiploma}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
+      body: JSON.stringify(datos),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al actualizar diploma');
+    }
+    return response.json();
+  },
+
+  eliminarDiploma: async (idDiploma) => {
+    const response = await fetch(`${API_URL}/diplomas/${idDiploma}`, {
+      method: 'DELETE',
+      headers: { ...authService.getAuthHeader() }
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al eliminar diploma');
+    }
+    return response.json();
+  },
+
   listarDiplomasEstudiante: async (idUsuario) => {
     const response = await fetch(`${API_URL}/diplomas/estudiante/${idUsuario}`, {
       headers: { ...authService.getAuthHeader() }

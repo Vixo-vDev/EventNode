@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { diplomaService } from '../../services/diplomaService'
 
 function StudentDiplomas({ user }) {
@@ -19,6 +21,22 @@ function StudentDiplomas({ user }) {
     }
     fetchDiplomas()
   }, [user])
+
+  const handleDownload = async (diploma) => {
+    try {
+      const blob = await diplomaService.descargarDiploma(diploma.idDiploma, user.id)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Diploma_${(diploma.nombreEvento || 'evento').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Error al descargar el diploma')
+    }
+  }
 
   return (
     <div>
@@ -50,9 +68,28 @@ function StudentDiplomas({ user }) {
                   <p className="text-secondary small mb-2">
                     {d.fechaEnvio ? new Date(d.fechaEnvio).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
                   </p>
-                  <span className={`badge rounded-pill px-3 py-1 ${d.estadoEnvio === 'ENVIADO' ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`}>
+                  <span className={`badge rounded-pill px-3 py-1 mb-3 ${d.estadoEnvio === 'ENVIADO' ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`}>
                     {d.estadoEnvio === 'ENVIADO' ? 'Recibido' : 'Error'}
                   </span>
+
+                  <div className="d-flex gap-2 justify-content-center mt-2">
+                    <Link
+                      to={`/estudiante/diplomas/${d.idDiploma}`}
+                      className="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
+                    >
+                      <i className="bi bi-eye"></i>
+                      Ver
+                    </Link>
+                    {d.estadoEnvio === 'ENVIADO' && (
+                      <button
+                        className="btn btn-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
+                        onClick={() => handleDownload(d)}
+                      >
+                        <i className="bi bi-download"></i>
+                        Descargar
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

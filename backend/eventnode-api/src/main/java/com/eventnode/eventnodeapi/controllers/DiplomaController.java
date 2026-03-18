@@ -118,6 +118,51 @@ public class DiplomaController {
         }
     }
 
+    @PutMapping("/{idDiploma}")
+    public ResponseEntity<?> actualizarDiploma(@PathVariable Integer idDiploma, @RequestBody Map<String, String> body) {
+        try {
+            String firma = body.get("firma");
+            String diseno = body.get("diseno");
+            String plantillaPdf = body.get("plantillaPdf");
+            String firmaImagen = body.get("firmaImagen");
+
+            diplomaService.actualizarDiploma(idDiploma, firma, diseno, plantillaPdf, firmaImagen);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Diploma actualizado exitosamente. Se notificó a todos los destinatarios.");
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Error interno: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @DeleteMapping("/{idDiploma}")
+    public ResponseEntity<?> eliminarDiploma(@PathVariable Integer idDiploma) {
+        try {
+            diplomaService.eliminarDiploma(idDiploma);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("mensaje", "Diploma eliminado exitosamente");
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Error interno: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
     @GetMapping("/estudiante/{idUsuario}")
     public ResponseEntity<?> listarDiplomasEstudiante(@PathVariable Integer idUsuario) {
         try {

@@ -4,6 +4,8 @@ import { toast } from 'react-toastify'
 import { diplomaService } from '../../services/diplomaService'
 import { eventService } from '../../services/eventService'
 import CrearDiplomaModal from '../../components/modals/CrearDiplomaModal'
+import EditarDiplomaModal from '../../components/modals/EditarDiplomaModal'
+import ConfirmModal from '../../components/modals/ConfirmModal'
 
 function AdminDiplomas() {
   const [diplomas, setDiplomas] = useState([])
@@ -11,6 +13,10 @@ function AdminDiplomas() {
   const [eventos, setEventos] = useState([])
   const [creating, setCreating] = useState(false)
   const [emitting, setEmitting] = useState(null)
+  const [editing, setEditing] = useState(false)
+  const [deleting, setDeleting] = useState(null)
+  const [selectedDiploma, setSelectedDiploma] = useState(null)
+  const [diplomaToDelete, setDiplomaToDelete] = useState(null)
   const [formData, setFormData] = useState({
     idEvento: '',
     firma: '',
@@ -92,6 +98,47 @@ function AdminDiplomas() {
       toast.error(err.message)
     } finally {
       setEmitting(null)
+    }
+  }
+
+  const handleUpdateDiploma = async (idDiploma, datos) => {
+    setEditing(true)
+    try {
+      const result = await diplomaService.actualizarDiploma(idDiploma, datos)
+      toast.success(result.mensaje || 'Diploma actualizado exitosamente')
+      const modalEl = document.getElementById('editarDiplomaModal')
+      if (modalEl && window.bootstrap) {
+        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
+        if (bsModal) bsModal.hide()
+      }
+      setSelectedDiploma(null)
+      setLoading(true)
+      fetchDiplomas()
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setEditing(false)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!diplomaToDelete) return
+    setDeleting(diplomaToDelete.idDiploma)
+    try {
+      await diplomaService.eliminarDiploma(diplomaToDelete.idDiploma)
+      const modalEl = document.getElementById('confirmarEliminarDiplomaModal')
+      if (modalEl && window.bootstrap) {
+        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
+        if (bsModal) bsModal.hide()
+      }
+      toast.success('Diploma eliminado exitosamente')
+      setDiplomaToDelete(null)
+      setLoading(true)
+      fetchDiplomas()
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setDeleting(null)
     }
   }
 
@@ -199,7 +246,7 @@ function AdminDiplomas() {
                   </div>
                   {(d.totalPendientes || 0) > 0 && (
                     <button
-                      className="btn btn-primary btn-sm w-100 rounded-pill fw-semibold"
+                      className="btn btn-primary btn-sm w-100 rounded-pill fw-semibold mb-2"
                       onClick={() => handleEmitir(d.idDiploma)}
                       disabled={emitting === d.idDiploma}
                     >
@@ -210,6 +257,29 @@ function AdminDiplomas() {
                       )}
                     </button>
                   )}
+                  <div className="d-flex gap-2">
+                    <button
+                      className="btn btn-outline-primary btn-sm flex-grow-1 rounded-pill fw-semibold"
+                      data-bs-toggle="modal"
+                      data-bs-target="#editarDiplomaModal"
+                      onClick={() => setSelectedDiploma(d)}
+                    >
+                      <i className="bi bi-pencil me-1"></i>Editar
+                    </button>
+                    <button
+                      className="btn btn-outline-danger btn-sm flex-grow-1 rounded-pill fw-semibold"
+                      data-bs-toggle="modal"
+                      data-bs-target="#confirmarEliminarDiplomaModal"
+                      onClick={() => setDiplomaToDelete(d)}
+                      disabled={deleting === d.idDiploma}
+                    >
+                      {deleting === d.idDiploma ? (
+                        <><span className="spinner-border spinner-border-sm me-1" role="status"></span>...</>
+                      ) : (
+                        <><i className="bi bi-trash me-1"></i>Eliminar</>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -238,6 +308,23 @@ function AdminDiplomas() {
         onChange={(e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
         onSubmit={handleCreateDiploma}
         isLoading={creating}
+      />
+
+      <EditarDiplomaModal
+        diploma={selectedDiploma}
+        onSubmit={handleUpdateDiploma}
+        isLoading={editing}
+      />
+
+      <ConfirmModal
+        id="confirmarEliminarDiplomaModal"
+        title="Eliminar Diploma"
+        message={diplomaToDelete ? `¿Estás seguro de eliminar el diploma del evento "${diplomaToDelete.nombreEvento}"? Esta acción no se puede deshacer.` : ''}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmDelete}
+        isLoading={!!deleting}
+        variant="danger"
       />
     </div>
   )

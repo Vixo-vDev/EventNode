@@ -1,6 +1,9 @@
 package mx.edu.utez.integradoraeventnode.ui.screens.student.diplomas
 
-import android.graphics.BitmapFactory
+import android.content.ContentValues
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -47,7 +50,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
@@ -58,6 +63,7 @@ import java.util.Locale
 
 data class StudentDiplomaData(
     val idEmitido: Int,
+    val idDiploma: Int,
     val nombreEvento: String,
     val firma: String?,
     val fechaEnvio: String?,
@@ -92,6 +98,7 @@ fun DiplomasScreen(
                     diplomas = response.body()!!.map { map ->
                         StudentDiplomaData(
                             idEmitido = (map["idEmitido"] as? Number)?.toInt() ?: 0,
+                            idDiploma = (map["idDiploma"] as? Number)?.toInt() ?: 0,
                             nombreEvento = map["nombreEvento"] as? String ?: "Sin nombre",
                             firma = map["firma"] as? String,
                             fechaEnvio = map["fechaEnvio"] as? String,
@@ -158,7 +165,9 @@ fun DiplomasScreen(
                             diplomas.forEachIndexed { index, diploma ->
                                 StudentDiplomaCard(
                                     diploma = diploma,
-                                    colorIndex = index
+                                    colorIndex = index,
+                                    token = token,
+                                    userId = userId
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
@@ -275,8 +284,10 @@ private fun EmptyDiplomasState(onExplore: () -> Unit) {
 }
 
 @Composable
-private fun StudentDiplomaCard(diploma: StudentDiplomaData, colorIndex: Int) {
+private fun StudentDiplomaCard(diploma: StudentDiplomaData, colorIndex: Int, token: String, userId: Int) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var isDownloading by remember { mutableStateOf(false) }
 
     val cardColors = listOf(
         Color(0xFF6F9EA6),
@@ -390,25 +401,81 @@ private fun StudentDiplomaCard(diploma: StudentDiplomaData, colorIndex: Int) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
                     onClick = {
-                        Toast.makeText(
-                            context,
-                            "Descarga disponible en la web",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        if (!isDownloading && diploma.idDiploma > 0) {
+                            isDownloading = true
+                            scope.launch {
+                                try {
+                                    val response = withContext(Dispatchers.IO) {
+                                        ApiClient.apiService.descargarDiploma(
+                                            "Bearer $token",
+                                            diploma.idDiploma,
+                                            userId
+                                        )
+                                    }
+                                    if (response.isSuccessful && response.body() != null) {
+                                        val bytes = withContext(Dispatchers.IO) {
+                                            response.body()!!.bytes()
+                                        }
+                                        val fileName = "Diploma_${diploma.nombreEvento.replace(Regex("[^a-zA-Z0-9]"), "_")}.pdf"
+
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                            val contentValues = ContentValues().apply {
+                                                put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+                                                put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
+                                                put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                                            }
+                                            val uri = context.contentResolver.insert(
+                                                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                                                contentValues
+                                            )
+                                            uri?.let {
+                                                context.contentResolver.openOutputStream(it)?.use { os ->
+                                                    os.write(bytes)
+                                                }
+                                            }
+                                        } else {
+                                            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                                            val file = java.io.File(downloadsDir, fileName)
+                                            file.writeBytes(bytes)
+                                        }
+
+                                        Toast.makeText(context, "Diploma descargado en Descargas", Toast.LENGTH_LONG).show()
+                                    } else {
+                                        Toast.makeText(context, "Error al descargar diploma", Toast.LENGTH_SHORT).show()
+                                    }
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                } finally {
+                                    isDownloading = false
+                                }
+                            }
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(44.dp),
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED)),
+                    enabled = !isDownloading
                 ) {
-                    Image(
-                        bitmap = assetImageBitmap("qr-scan.png"),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    if (isDownloading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Image(
+                            bitmap = assetImageBitmap("qr-scan.png"),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Descargar PDF", style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        if (isDownloading) "Descargando..." else "Descargar PDF",
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
         }

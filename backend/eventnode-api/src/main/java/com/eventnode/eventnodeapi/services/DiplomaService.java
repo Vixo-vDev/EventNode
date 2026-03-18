@@ -179,21 +179,51 @@ public class DiplomaService {
             PDPageContentStream contentStream = new PDPageContentStream(
                     document, page, PDPageContentStream.AppendMode.APPEND, true);
 
-            // Draw student name centered
+            // Sanitize text for font compatibility
+            String safeName = sanitizeForFont(studentName);
+            String safeEventName = sanitizeForFont(diploma.getNombreEvento());
+            String safeFirma = sanitizeForFont(diploma.getFirma());
+
+            // ── Draw student name centered at ~50% height ──
             PDType1Font nameFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
             float nameFontSize = 28f;
-            float nameWidth = nameFont.getStringWidth(studentName) / 1000 * nameFontSize;
+            // Adjust font size if name is too long
+            float nameWidth = nameFont.getStringWidth(safeName) / 1000 * nameFontSize;
+            while (nameWidth > pageWidth * 0.85f && nameFontSize > 14f) {
+                nameFontSize -= 2f;
+                nameWidth = nameFont.getStringWidth(safeName) / 1000 * nameFontSize;
+            }
             float nameX = (pageWidth - nameWidth) / 2;
-            float nameY = pageHeight * 0.50f;
+            float nameY = pageHeight * 0.48f;
 
             contentStream.beginText();
             contentStream.setFont(nameFont, nameFontSize);
             contentStream.setNonStrokingColor(0.1f, 0.1f, 0.1f);
             contentStream.newLineAtOffset(nameX, nameY);
-            contentStream.showText(studentName);
+            contentStream.showText(safeName);
             contentStream.endText();
 
-            // Draw signature image if available
+            // ── Draw event name centered below student name at ~40% height ──
+            if (safeEventName != null && !safeEventName.isBlank()) {
+                PDType1Font eventFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+                float eventFontSize = 16f;
+                float eventWidth = eventFont.getStringWidth(safeEventName) / 1000 * eventFontSize;
+                while (eventWidth > pageWidth * 0.85f && eventFontSize > 10f) {
+                    eventFontSize -= 1f;
+                    eventWidth = eventFont.getStringWidth(safeEventName) / 1000 * eventFontSize;
+                }
+                float eventX = (pageWidth - eventWidth) / 2;
+                float eventY = pageHeight * 0.38f;
+
+                contentStream.beginText();
+                contentStream.setFont(eventFont, eventFontSize);
+                contentStream.setNonStrokingColor(0.2f, 0.2f, 0.4f);
+                contentStream.newLineAtOffset(eventX, eventY);
+                contentStream.showText(safeEventName);
+                contentStream.endText();
+            }
+
+            // ── Draw signature image if available ──
             if (diploma.getFirmaImagen() != null && !diploma.getFirmaImagen().isBlank()) {
                 try {
                     String sigBase64 = diploma.getFirmaImagen();
@@ -211,15 +241,15 @@ public class DiplomaService {
 
                     contentStream.drawImage(sigImage, sigX, sigY, sigWidth, sigHeight);
                 } catch (Exception e) {
-                    // If signature fails, continue without it
+                    // If signature image fails, continue without it
                 }
             }
 
-            // Draw signer name below signature
-            if (diploma.getFirma() != null && !diploma.getFirma().isBlank()) {
+            // ── Draw signer name below signature at ~14% height ──
+            if (safeFirma != null && !safeFirma.isBlank()) {
                 PDType1Font signerFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
                 float signerFontSize = 12f;
-                float signerWidth = signerFont.getStringWidth(diploma.getFirma()) / 1000 * signerFontSize;
+                float signerWidth = signerFont.getStringWidth(safeFirma) / 1000 * signerFontSize;
                 float signerX = (pageWidth - signerWidth) / 2;
                 float signerY = pageHeight * 0.14f;
 
@@ -227,7 +257,7 @@ public class DiplomaService {
                 contentStream.setFont(signerFont, signerFontSize);
                 contentStream.setNonStrokingColor(0.3f, 0.3f, 0.3f);
                 contentStream.newLineAtOffset(signerX, signerY);
-                contentStream.showText(diploma.getFirma());
+                contentStream.showText(safeFirma);
                 contentStream.endText();
             }
 
@@ -242,6 +272,26 @@ public class DiplomaService {
         } catch (Exception e) {
             throw new RuntimeException("Error al generar el PDF del diploma: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Sanitize text to ensure compatibility with PDType1Font (WinAnsiEncoding).
+     * Replaces characters not supported by the encoding.
+     */
+    private String sanitizeForFont(String text) {
+        if (text == null) return "";
+        // WinAnsiEncoding supports basic Latin + accented chars (á,é,í,ó,ú,ñ,ü,Á,É,Í,Ó,Ú,Ñ,Ü)
+        // Replace any problematic characters that might cause encoding issues
+        StringBuilder sb = new StringBuilder();
+        for (char c : text.toCharArray()) {
+            if (c < 256) {
+                sb.append(c);
+            } else {
+                // Replace unsupported Unicode chars with closest ASCII equivalent
+                sb.append('?');
+            }
+        }
+        return sb.toString();
     }
 
     private void enviarCorreoDiploma(String correo, String nombre, String nombreEvento, byte[] pdfBytes) {
@@ -260,6 +310,50 @@ public class DiplomaService {
         } catch (Exception e) {
             throw new RuntimeException("Error al enviar correo: " + e.getMessage(), e);
         }
+    }
+
+    private void enviarCorreoDiplomaActualizado(String correo, String nombre, String nombreEvento, byte[] pdfBytes) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom("caszn06@gmail.com");
+            helper.setTo(correo);
+            helper.setSubject("Tu diploma ha sido actualizado - " + nombreEvento);
+            helper.setText(buildDiplomaUpdatedEmailHtml(nombre, nombreEvento), true);
+            helper.addAttachment("Diploma_" + nombreEvento.replaceAll("[^a-zA-Z0-9]", "_") + ".pdf",
+                    new ByteArrayResource(pdfBytes), "application/pdf");
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al enviar correo de actualización: " + e.getMessage(), e);
+        }
+    }
+
+    private String buildDiplomaUpdatedEmailHtml(String nombre, String nombreEvento) {
+        return "<!DOCTYPE html>" +
+                "<html><head><meta charset='UTF-8'></head><body style='margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f5f6fa;'>" +
+                "<table width='100%' cellpadding='0' cellspacing='0' style='background-color:#f5f6fa;padding:40px 20px;'>" +
+                "<tr><td align='center'>" +
+                "<table width='600' cellpadding='0' cellspacing='0' style='background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);'>" +
+                "<tr><td style='background:linear-gradient(135deg,#F59E0B 0%,#D97706 100%);padding:40px 30px;text-align:center;'>" +
+                "<h1 style='color:#ffffff;margin:0 0 8px 0;font-size:28px;'>&#128221; Diploma Actualizado</h1>" +
+                "<p style='color:rgba(255,255,255,0.9);margin:0;font-size:16px;'>Tu diploma ha sido modificado</p>" +
+                "</td></tr>" +
+                "<tr><td style='padding:40px 30px;'>" +
+                "<p style='font-size:16px;color:#333;margin:0 0 20px 0;'>Hola <strong>" + nombre + "</strong>,</p>" +
+                "<p style='font-size:15px;color:#555;line-height:1.6;margin:0 0 24px 0;'>" +
+                "Te informamos que el diploma del siguiente evento ha sido actualizado:</p>" +
+                "<div style='background-color:#FFF7ED;border-left:4px solid #F59E0B;border-radius:8px;padding:16px 20px;margin:0 0 24px 0;'>" +
+                "<p style='margin:0;font-size:18px;font-weight:bold;color:#D97706;'>" + nombreEvento + "</p>" +
+                "</div>" +
+                "<p style='font-size:15px;color:#555;line-height:1.6;margin:0 0 8px 0;'>" +
+                "Te adjuntamos la nueva versión de tu diploma en formato PDF. También puedes descargarlo desde la aplicación de EventNode.</p>" +
+                "</td></tr>" +
+                "<tr><td style='background-color:#f8f9fb;padding:24px 30px;text-align:center;border-top:1px solid #eee;'>" +
+                "<p style='margin:0;font-size:13px;color:#999;'>EventNode — Sistema de Gestión de Eventos</p>" +
+                "</td></tr>" +
+                "</table></td></tr></table></body></html>";
     }
 
     private String buildDiplomaEmailHtml(String nombre, String nombreEvento) {
@@ -289,6 +383,46 @@ public class DiplomaService {
                 "<p style='margin:0;font-size:13px;color:#999;'>EventNode — Sistema de Gestión de Eventos</p>" +
                 "</td></tr>" +
                 "</table></td></tr></table></body></html>";
+    }
+
+    @Transactional
+    public void actualizarDiploma(Integer idDiploma, String firma, String diseno,
+                                   String plantillaPdf, String firmaImagen) {
+        Diploma diploma = diplomaRepository.findById(idDiploma)
+                .orElseThrow(() -> new IllegalArgumentException("Diploma no encontrado"));
+
+        if (firma != null && !firma.isBlank()) diploma.setFirma(firma);
+        if (diseno != null && !diseno.isBlank()) diploma.setDiseno(diseno);
+        if (plantillaPdf != null && !plantillaPdf.isBlank()) diploma.setPlantillaPdf(plantillaPdf);
+        if (firmaImagen != null && !firmaImagen.isBlank()) diploma.setFirmaImagen(firmaImagen);
+
+        diplomaRepository.save(diploma);
+
+        // Re-generate and re-send PDFs to all recipients who already received the diploma
+        List<DiplomaEmitido> emitidos = diplomaEmitidoRepository.findByIdDiploma(idDiploma);
+        for (DiplomaEmitido de : emitidos) {
+            Usuario usuario = usuarioRepository.findById(de.getIdUsuario()).orElse(null);
+            if (usuario == null) continue;
+
+            String fullName = buildFullName(usuario);
+            try {
+                byte[] pdfBytes = generarDiplomaPdf(diploma, fullName);
+                enviarCorreoDiplomaActualizado(usuario.getCorreo(), fullName, diploma.getNombreEvento(), pdfBytes);
+                de.setEstadoEnvio("ENVIADO");
+                de.setFechaEnvio(LocalDateTime.now());
+            } catch (Exception e) {
+                de.setEstadoEnvio("ERROR");
+            }
+            diplomaEmitidoRepository.save(de);
+        }
+    }
+
+    @Transactional
+    public void eliminarDiploma(Integer idDiploma) {
+        Diploma diploma = diplomaRepository.findById(idDiploma)
+                .orElseThrow(() -> new IllegalArgumentException("Diploma no encontrado"));
+        diploma.setEstado("ELIMINADO");
+        diplomaRepository.save(diploma);
     }
 
     public List<Map<String, Object>> listarDiplomasEstudiante(Integer idUsuario) {

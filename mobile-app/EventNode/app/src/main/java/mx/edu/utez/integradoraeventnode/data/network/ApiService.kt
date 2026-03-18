@@ -6,6 +6,7 @@ import mx.edu.utez.integradoraeventnode.data.network.models.LoginRequest
 import mx.edu.utez.integradoraeventnode.data.network.models.LoginResponse
 import retrofit2.Response
 import retrofit2.http.*
+import retrofit2.http.Streaming
 
 interface ApiService {
     // ── Auth ──
@@ -196,6 +197,27 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("idUsuario") idUsuario: Int
     ): Response<List<Map<String, @JvmSuppressWildcards Any>>>
+
+    @PUT("/api/diplomas/{idDiploma}")
+    suspend fun actualizarDiploma(
+        @Header("Authorization") token: String,
+        @Path("idDiploma") idDiploma: Int,
+        @Body request: Map<String, @JvmSuppressWildcards Any?>
+    ): Response<Map<String, @JvmSuppressWildcards Any>>
+
+    @DELETE("/api/diplomas/{idDiploma}")
+    suspend fun eliminarDiploma(
+        @Header("Authorization") token: String,
+        @Path("idDiploma") idDiploma: Int
+    ): Response<Map<String, String>>
+
+    @GET("/api/diplomas/{idDiploma}/descargar/{idUsuario}")
+    @Streaming
+    suspend fun descargarDiploma(
+        @Header("Authorization") token: String,
+        @Path("idDiploma") idDiploma: Int,
+        @Path("idUsuario") idUsuario: Int
+    ): Response<okhttp3.ResponseBody>
 
     // ── Usuarios ──
     @GET("/api/usuarios")

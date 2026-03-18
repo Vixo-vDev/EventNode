@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { toast } from 'react-toastify'
 
 function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, isLoading }) {
   const [pdfFile, setPdfFile] = useState(null)
@@ -12,11 +13,11 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
     const file = e.target.files[0]
     if (!file) return
     if (file.type !== 'application/pdf') {
-      alert('Solo se permiten archivos PDF')
+      toast.warning('Solo se permiten archivos PDF')
       return
     }
     if (file.size > 15 * 1024 * 1024) {
-      alert('El archivo no debe superar 15MB')
+      toast.warning('El archivo no debe superar 15MB')
       return
     }
     setPdfFile(file)
@@ -33,11 +34,11 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
     const file = e.target.files[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      alert('Solo se permiten imágenes (PNG, JPG)')
+      toast.warning('Solo se permiten imágenes (PNG, JPG)')
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no debe superar 5MB')
+      toast.warning('La imagen no debe superar 5MB')
       return
     }
     setFirmaFile(file)
