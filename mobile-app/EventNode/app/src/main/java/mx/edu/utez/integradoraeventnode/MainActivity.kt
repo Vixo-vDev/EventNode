@@ -37,15 +37,16 @@ class MainActivity : ComponentActivity() {
                 val mantenerSesion = prefs.getBoolean("mantenerSesion", false)
                 val rol = prefs.getString("rol", "") ?: ""
                 val token = prefs.getString("token", "") ?: ""
-                
+
                 val startScreen = if (mantenerSesion && token.isNotEmpty()) {
                     if (rol.contains("ADMIN", ignoreCase = true)) AppScreen.AdminHome else AppScreen.Home
                 } else {
                     AppScreen.Login
                 }
-                
+
                 var currentScreen by remember { mutableStateOf(startScreen) }
                 var selectedEventId by remember { mutableStateOf<Int?>(null) }
+                var adminSelectedEventId by remember { mutableStateOf<Int?>(null) }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
@@ -64,7 +65,7 @@ class MainActivity : ComponentActivity() {
                             modifier  = Modifier.padding(innerPadding),
                             onViewDetails = { eventId ->
                                 selectedEventId = eventId
-                                currentScreen = AppScreen.StudentEventDetail 
+                                currentScreen = AppScreen.StudentEventDetail
                             },
                             onAgenda = { currentScreen = AppScreen.Agenda },
                             onDiplomas = { currentScreen = AppScreen.Diplomas },
@@ -72,15 +73,18 @@ class MainActivity : ComponentActivity() {
                         )
                         AppScreen.AdminHome -> AdminHomeScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onViewEventDetail = { currentScreen = AppScreen.AdminEventDetail },
+                            onViewEventDetail = { eventId ->
+                                adminSelectedEventId = eventId
+                                currentScreen = AppScreen.AdminEventDetail
+                            },
                             onAgenda = { currentScreen = AppScreen.AdminAgenda },
                             onEscanear = { currentScreen = AppScreen.AdminScanner },
                             onDiplomas = { currentScreen = AppScreen.AdminDiplomas },
                             onAnalitica = { currentScreen = AppScreen.AdminAnalytics },
                             onProfile = { currentScreen = AppScreen.AdminProfile },
-                            onLogout = { 
+                            onLogout = {
                                 prefs.edit().putBoolean("mantenerSesion", false).apply()
-                                currentScreen = AppScreen.Login 
+                                currentScreen = AppScreen.Login
                             }
                         )
                         AppScreen.AdminAgenda -> AdminAgendaScreen(
@@ -90,7 +94,10 @@ class MainActivity : ComponentActivity() {
                             onDiplomas = { currentScreen = AppScreen.AdminDiplomas },
                             onAnalitica = { currentScreen = AppScreen.AdminAnalytics },
                             onProfile = { currentScreen = AppScreen.AdminProfile },
-                            onViewDetail = { currentScreen = AppScreen.AdminEventDetail }
+                            onViewDetail = { eventId ->
+                                adminSelectedEventId = eventId
+                                currentScreen = AppScreen.AdminEventDetail
+                            }
                         )
                         AppScreen.AdminScanner -> AdminScannerScreen(
                             modifier = Modifier.padding(innerPadding),
@@ -124,7 +131,10 @@ class MainActivity : ComponentActivity() {
                             onDiplomas = { currentScreen = AppScreen.AdminDiplomas },
                             onAnalitica = { currentScreen = AppScreen.AdminAnalytics },
                             onEditProfile = { currentScreen = AppScreen.AdminEditProfile },
-                            onLogout = { currentScreen = AppScreen.Login }
+                            onLogout = {
+                                prefs.edit().putBoolean("mantenerSesion", false).apply()
+                                currentScreen = AppScreen.Login
+                            }
                         )
                         AppScreen.AdminEditProfile -> AdminEditProfileScreen(
                             modifier = Modifier.padding(innerPadding),
@@ -137,6 +147,7 @@ class MainActivity : ComponentActivity() {
                             onProfile = { currentScreen = AppScreen.AdminProfile }
                         )
                         AppScreen.AdminEventDetail -> AdminEventDetailScreen(
+                            eventId = adminSelectedEventId ?: -1,
                             modifier = Modifier.padding(innerPadding),
                             onBack = { currentScreen = AppScreen.AdminAgenda },
                             onHome = { currentScreen = AppScreen.AdminHome },
@@ -148,6 +159,7 @@ class MainActivity : ComponentActivity() {
                             onEditEvent = { currentScreen = AppScreen.AdminEditEvent }
                         )
                         AppScreen.AdminEditEvent -> AdminEditEventScreen(
+                            eventId = adminSelectedEventId ?: -1,
                             modifier = Modifier.padding(innerPadding),
                             onBack = { currentScreen = AppScreen.AdminEventDetail },
                             onSave = { currentScreen = AppScreen.AdminEventDetail }
@@ -156,9 +168,9 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(innerPadding),
                             onHome = { currentScreen = AppScreen.Home },
                             onViewQr = { currentScreen = AppScreen.CheckinQr },
-                            onViewDetail = { eventId -> 
+                            onViewDetail = { eventId ->
                                 selectedEventId = eventId
-                                currentScreen = AppScreen.StudentEventDetail 
+                                currentScreen = AppScreen.StudentEventDetail
                             },
                             onDiplomas = { currentScreen = AppScreen.Diplomas },
                             onProfile = { currentScreen = AppScreen.Profile }
@@ -198,9 +210,9 @@ class MainActivity : ComponentActivity() {
                             onAgenda = { currentScreen = AppScreen.Agenda },
                             onDiplomas = { currentScreen = AppScreen.Diplomas },
                             onEditProfile = { currentScreen = AppScreen.EditProfile },
-                            onLogout = { 
+                            onLogout = {
                                 prefs.edit().putBoolean("mantenerSesion", false).apply()
-                                currentScreen = AppScreen.Login 
+                                currentScreen = AppScreen.Login
                             }
                         )
                         AppScreen.EditProfile -> EditProfileScreen(

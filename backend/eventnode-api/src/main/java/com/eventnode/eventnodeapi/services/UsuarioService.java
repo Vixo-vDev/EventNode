@@ -133,4 +133,18 @@ public class UsuarioService {
         // 7. Devolver perfil completo
         return obtenerPerfil(savedUsuario.getIdUsuario());
     }
+
+    @Transactional
+    public void cambiarEstado(Integer idUsuario) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        
+        if ("ACTIVO".equals(usuario.getEstado())) {
+            usuario.setEstado("INACTIVO");
+        } else {
+            usuario.setEstado("ACTIVO");
+        }
+        
+        usuarioRepository.save(usuario);
+    }
 }

@@ -25,6 +25,9 @@ public class Asistencia {
     @Column(name = "metodo", nullable = false, columnDefinition = "ENUM('QR','MANUAL')")
     private String metodo;
 
+    @Column(name = "estado", nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'PENDIENTE'")
+    private String estado = "PENDIENTE";
+
     public Asistencia() {
     }
 
@@ -66,5 +69,13 @@ public class Asistencia {
 
     public void setMetodo(String metodo) {
         this.metodo = metodo;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 }

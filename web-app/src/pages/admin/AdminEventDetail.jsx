@@ -48,22 +48,24 @@ function AdminEventDetail() {
   const handleEmitirDiplomas = async () => {
     setEmitting(true)
     try {
-      // First create diploma if it doesn't exist
-      try {
-        await diplomaService.crearDiploma({
-          idEvento: parseInt(id),
-          firma: 'Firma Digital EventNode',
-          diseno: 'Jasper Classic',
-        })
-      } catch { /* diploma may already exist */ }
-
-      // Get diploma for event and emit
+      // Check if a diploma exists for this event
       const diplomas = await diplomaService.listarDiplomas()
       const diploma = diplomas.find(d => d.idEvento === parseInt(id))
-      if (diploma) {
-        const result = await diplomaService.emitirDiplomas(diploma.idDiploma)
-        toast.success(`Diplomas emitidos: ${result.emitidos || 0}`)
+
+      if (!diploma) {
+        toast.warning('Este evento no tiene un diploma asociado. Ve a Gestión de Diplomas para crear uno primero.')
+        setEmitting(false)
+        return
       }
+
+      if (!diploma.tienePlantilla) {
+        toast.warning('El diploma no tiene una plantilla PDF configurada. Edítalo en Gestión de Diplomas.')
+        setEmitting(false)
+        return
+      }
+
+      const result = await diplomaService.emitirDiplomas(diploma.idDiploma)
+      toast.success(`${result.totalEmitidos || 0} diploma(s) emitido(s) y enviado(s) por correo`)
     } catch (err) {
       toast.error(err.message)
     } finally {
@@ -174,13 +176,17 @@ function AdminEventDetail() {
         </div>
       </div>
 
-      <div className="row g-3">
-        <div className="col-12 col-md-8">
-          <div className="card border-0 shadow-sm rounded-3">
-            <div className="card-body p-4">
-              <h6 className="fw-bold mb-1">Lista de Estudiantes</h6>
+      {/* QR Code for Attendance */}
+      <div className="card border-0 shadow-sm rounded-4 mb-4">
+        <div className="card-body p-4">
+          <div className="row align-items-center">
+            <div className="col-12 col-md-8">
+              <h6 className="fw-bold mb-1">
+                <i className="bi bi-qr-code me-2 text-primary"></i>
+                Código QR de Asistencia
+              </h6>
               <p className="text-secondary small mb-3">
-                Gestionar el estado de los estudiantes y realizar un seguimiento de la asistencia.
+                Los estudiantes pueden escanear este código QR para registrar su asistencia al evento. Al escanearlo, quedarán en estado <strong>Pendiente</strong> hasta que el administrador confirme su asistencia.
               </p>
               <div className="d-flex gap-3">
                 <Link to={`/admin/evento/${id}/pre-check-in`} className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none">
@@ -193,15 +199,27 @@ function AdminEventDetail() {
                 </Link>
               </div>
             </div>
+            <div className="col-12 col-md-4 text-center mt-3 mt-md-0">
+              <div className="d-inline-block bg-white p-3 rounded-4 shadow-sm border">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`EVENTNODE_CHECKIN:${id}`)}`}
+                  alt="QR Code de Asistencia"
+                  style={{ width: '180px', height: '180px' }}
+                />
+                <div className="text-secondary small mt-2 fw-semibold">Evento #{id}</div>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="col-12 col-md-4">
+      <div className="row g-3">
+        <div className="col-12 col-md-8">
           <div className="card border-0 rounded-3 h-100 text-white" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)' }}>
             <div className="card-body p-3">
               <div className="text-uppercase small fw-bold mb-1">Enviar Diplomas</div>
               <p className="small opacity-75 mb-2" style={{ fontSize: '11px' }}>
-                Se mandarán automáticamente los diplomas a los estudiantes con Check-In.
+                Se mandarán automáticamente los diplomas a los estudiantes con Check-In marcados como Asistido.
               </p>
               <button className="btn btn-light rounded-pill w-100 btn-sm fw-semibold text-primary" onClick={handleEmitirDiplomas} disabled={emitting}>
                 {emitting ? 'Emitiendo...' : 'Enviar Diplomas'}

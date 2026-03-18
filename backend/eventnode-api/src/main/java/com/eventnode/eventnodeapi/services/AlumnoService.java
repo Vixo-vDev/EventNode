@@ -88,5 +88,41 @@ public class AlumnoService {
 
         alumnoRepository.save(alumno);
     }
+
+    @Transactional
+    public void actualizarAlumno(Integer idUsuario, com.eventnode.eventnodeapi.dtos.AlumnoActualizarRequest request) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                
+        Alumno alumno = alumnoRepository.findById(idUsuario)
+                .orElseThrow(() -> new IllegalArgumentException("Alumno no encontrado"));
+
+        if (!usuario.getCorreo().equals(request.getCorreo()) && 
+            usuarioRepository.findByCorreo(request.getCorreo()).isPresent()) {
+            throw new IllegalStateException("El correo ya está en uso");
+        }
+
+        Integer cuatrimestre = request.getCuatrimestre();
+        if (cuatrimestre == null || cuatrimestre < 1 || cuatrimestre > 10 || cuatrimestre == 5 || cuatrimestre == 10) {
+            throw new IllegalArgumentException("Cuatrimestre fuera de rango");
+        }
+        
+        Integer edad = request.getEdad();
+        if (edad == null || edad < 17 || edad > 99) {
+            throw new IllegalArgumentException("Edad fuera de rango");
+        }
+
+        usuario.setNombre(request.getNombre());
+        usuario.setApellidoPaterno(request.getApellidoPaterno());
+        usuario.setApellidoMaterno(request.getApellidoMaterno());
+        usuario.setCorreo(request.getCorreo());
+        
+        alumno.setSexo(request.getSexo());
+        alumno.setCuatrimestre(cuatrimestre);
+        alumno.setEdad(edad);
+        
+        usuarioRepository.save(usuario);
+        alumnoRepository.save(alumno);
+    }
 }
 

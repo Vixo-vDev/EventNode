@@ -16,7 +16,6 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
     fechaInicio: '',
     fechaFin: '',
     idCategoria: '',
-    idDiploma: '1',
     capacidadMaxima: '',
     tiempoCancelacionHoras: '',
     tiempoToleranciaMinutos: '',
@@ -48,7 +47,6 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
         fechaInicio: fmtDate(evento.fechaInicio),
         fechaFin: fmtDate(evento.fechaFin),
         idCategoria: evento.idCategoria ? String(evento.idCategoria) : '',
-        idDiploma: '1',
         capacidadMaxima: evento.capacidadMaxima ? String(evento.capacidadMaxima) : '',
         tiempoCancelacionHoras: evento.tiempoCancelacionHoras ? String(evento.tiempoCancelacionHoras) : '',
         tiempoToleranciaMinutos: evento.tiempoToleranciaMinutos != null ? String(evento.tiempoToleranciaMinutos) : '',
@@ -295,9 +293,9 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
               </div>
             </div>
 
-            {/* Categoría + Diploma + Capacidad */}
+            {/* Categoría + Capacidad */}
             <div className="row g-3 mb-3">
-              <div className="col-12 col-md-4">
+              <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">Categoría *</label>
                 <select
                   name="idCategoria"
@@ -313,20 +311,7 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
                   ))}
                 </select>
               </div>
-              <div className="col-12 col-md-4">
-                <label className="form-label fw-semibold small">Diseño de Diploma</label>
-                <select
-                  name="idDiploma"
-                  className="form-select"
-                  value={formData.idDiploma}
-                  onChange={handleChange}
-                >
-                  <option value="1">Jasper Classic</option>
-                  <option value="2">Modern Blue</option>
-                  <option value="3">Elegant Gold</option>
-                </select>
-              </div>
-              <div className="col-12 col-md-4">
+              <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">Capacidad Máxima *</label>
                 <input
                   type="number"
@@ -469,9 +454,8 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
       </div>
     </div>
     {showSuccess && (
-      <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content border-0 rounded-4 shadow text-center p-4">
+      <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
+          <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '400px', width: '90%' }}>
               <div className="mb-3">
                 <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '3rem' }}></i>
               </div>
@@ -487,22 +471,19 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
               }}>
                 Aceptar
               </button>
-            </div>
           </div>
         </div>
       )}
 
       {showError && (
-        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
-          <div className="modal-dialog modal-dialog-centered modal-sm">
-            <div className="modal-content border-0 rounded-4 shadow text-center p-4">
+        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
+          <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '350px', width: '90%' }}>
               <div className="mb-3">
                 <i className="bi bi-x-circle-fill text-danger" style={{ fontSize: '3rem' }}></i>
               </div>
               <h5>Revisa los datos</h5>
               <p className="text-secondary small">Por favor, asegúrate de completar todos los campos obligatorios (*) antes de continuar.</p>
               <button className="btn btn-danger rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowError(false)}>Entendido</button>
-            </div>
           </div>
         </div>
       )}

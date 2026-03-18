@@ -1,7 +1,9 @@
 package com.eventnode.eventnodeapi.controllers;
 
 import com.eventnode.eventnodeapi.services.DiplomaService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,19 +22,33 @@ public class DiplomaController {
     }
 
     @PostMapping("/crear")
-    public ResponseEntity<?> crearDiploma(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> crearDiploma(@RequestBody Map<String, Object> body) {
         try {
-            Integer idEvento = Integer.parseInt(body.get("idEvento"));
-            String firma = body.get("firma");
-            String diseno = body.get("diseno");
+            Integer idEvento = body.get("idEvento") != null ? Integer.parseInt(body.get("idEvento").toString()) : null;
+            String firma = body.get("firma") != null ? body.get("firma").toString() : "";
+            String diseno = body.get("diseno") != null ? body.get("diseno").toString() : "Personalizado";
+            String plantillaPdf = body.get("plantillaPdf") != null ? body.get("plantillaPdf").toString() : null;
+            String firmaImagen = body.get("firmaImagen") != null ? body.get("firmaImagen").toString() : null;
 
-            if (idEvento == null || firma == null || diseno == null) {
+            if (idEvento == null) {
                 Map<String, String> error = new HashMap<>();
-                error.put("mensaje", "idEvento, firma y diseno son requeridos");
+                error.put("mensaje", "idEvento es requerido");
                 return ResponseEntity.badRequest().body(error);
             }
 
-            diplomaService.crearDiploma(idEvento, firma, diseno);
+            if (plantillaPdf == null || plantillaPdf.isBlank()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("mensaje", "La plantilla PDF es requerida");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            if (firmaImagen == null || firmaImagen.isBlank()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("mensaje", "La firma es requerida");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            diplomaService.crearDiploma(idEvento, firma, diseno, plantillaPdf, firmaImagen);
 
             Map<String, String> response = new HashMap<>();
             response.put("mensaje", "Diploma creado exitosamente");
@@ -48,7 +64,7 @@ public class DiplomaController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
         } catch (Exception ex) {
             Map<String, String> error = new HashMap<>();
-            error.put("mensaje", "Error interno");
+            error.put("mensaje", "Error interno: " + ex.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -97,7 +113,52 @@ public class DiplomaController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         } catch (Exception ex) {
             Map<String, String> error = new HashMap<>();
-            error.put("mensaje", "Error interno");
+            error.put("mensaje", "Error interno: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @PutMapping("/{idDiploma}")
+    public ResponseEntity<?> actualizarDiploma(@PathVariable Integer idDiploma, @RequestBody Map<String, Object> body) {
+        try {
+            String firma = body.get("firma") != null ? body.get("firma").toString() : null;
+            String diseno = body.get("diseno") != null ? body.get("diseno").toString() : null;
+            String plantillaPdf = body.get("plantillaPdf") != null ? body.get("plantillaPdf").toString() : null;
+            String firmaImagen = body.get("firmaImagen") != null ? body.get("firmaImagen").toString() : null;
+
+            diplomaService.actualizarDiploma(idDiploma, firma, diseno, plantillaPdf, firmaImagen);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Diploma actualizado exitosamente. Se notificó a todos los destinatarios.");
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Error interno: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @DeleteMapping("/{idDiploma}")
+    public ResponseEntity<?> eliminarDiploma(@PathVariable Integer idDiploma) {
+        try {
+            diplomaService.eliminarDiploma(idDiploma);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("mensaje", "Diploma eliminado exitosamente");
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Error interno: " + ex.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
@@ -110,6 +171,28 @@ public class DiplomaController {
         } catch (Exception ex) {
             Map<String, String> error = new HashMap<>();
             error.put("mensaje", "Error interno");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @GetMapping("/{idDiploma}/descargar/{idUsuario}")
+    public ResponseEntity<?> descargarDiploma(@PathVariable Integer idDiploma, @PathVariable Integer idUsuario) {
+        try {
+            byte[] pdfBytes = diplomaService.generarDiplomaPdf(idDiploma, idUsuario);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "diploma.pdf");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+
+        } catch (IllegalArgumentException ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Error al generar diploma: " + ex.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }

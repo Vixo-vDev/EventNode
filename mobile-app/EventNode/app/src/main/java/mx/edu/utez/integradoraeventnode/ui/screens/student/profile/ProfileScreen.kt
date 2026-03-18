@@ -25,6 +25,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -35,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,13 +48,17 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.launch
+import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
+import org.json.JSONObject
 
 @Composable
 fun ProfileScreen(
@@ -64,7 +70,7 @@ fun ProfileScreen(
     onLogout: () -> Unit = {}
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
-    var password by remember { mutableStateOf("********") }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE) }
@@ -197,46 +203,48 @@ fun ProfileScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
+                        .padding(horizontal = 20.dp)
+                        .clickable { showChangePasswordDialog = true },
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "Cambiar contraseña",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "CONTRASEÑA ACTUAL",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF7A7A7A),
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        TextField(
-                            value = password,
-                            onValueChange = { password = it },
+                    Row(
+                        modifier = Modifier.padding(20.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp)),
-                            visualTransformation = PasswordVisualTransformation(),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFFF8F9FB),
-                                unfocusedContainerColor = Color(0xFFF8F9FB),
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
-                            ),
-                            leadingIcon = {
-                                Image(
-                                    bitmap = assetImageBitmap("lock.png"),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
-                                    colorFilter = ColorFilter.tint(Color.Gray)
-                                )
-                            }
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFF0F7FF)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                bitmap = assetImageBitmap("lock.png"),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                colorFilter = ColorFilter.tint(Color(0xFF2F6FED))
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Cambiar contraseña",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Actualiza tu contraseña de acceso",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF7A7A7A)
+                            )
+                        }
+                        Image(
+                            bitmap = assetImageBitmap("vista.png"),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            colorFilter = ColorFilter.tint(Color(0xFFAAAAAA))
                         )
                     }
                 }
@@ -279,6 +287,14 @@ fun ProfileScreen(
                 showLogoutDialog = false
                 onLogout()
             }
+        )
+    }
+
+    // Change Password Dialog
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            correo = correo,
+            onDismiss = { showChangePasswordDialog = false }
         )
     }
 }
@@ -417,6 +433,300 @@ private fun BottomNavItem(label: String, icon: String, selected: Boolean, onClic
             modifier = Modifier.size(18.dp)
         )
         Text(text = label, style = MaterialTheme.typography.labelMedium, color = color)
+    }
+}
+
+@Composable
+private fun ChangePasswordDialog(correo: String, onDismiss: () -> Unit) {
+    // Steps: "sendCode" -> "code" -> "newPassword" -> "success"
+    var step by remember { mutableStateOf("sendCode") }
+    var code by remember { mutableStateOf(List(6) { "" }) }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var showNewPwd by remember { mutableStateOf(false) }
+    var showConfirmPwd by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    Dialog(onDismissRequest = { if (!loading) onDismiss() }) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp).verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // --- Step 1: Send Code ---
+                if (step == "sendCode") {
+                    Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFF0F7FF)), contentAlignment = Alignment.Center) {
+                        Image(bitmap = assetImageBitmap("lock.png"), contentDescription = null, modifier = Modifier.size(32.dp), colorFilter = ColorFilter.tint(Color(0xFF2F6FED)))
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text("Cambiar contraseña", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Se enviará un código de verificación a tu correo:", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF666666), textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(correo, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color(0xFF2F6FED), textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    if (error != null) {
+                        Text(error!!, color = Color(0xFFEF5350), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 12.dp))
+                    }
+
+                    Button(
+                        onClick = {
+                            if (correo.isBlank()) { error = "No se encontró tu correo"; return@Button }
+                            loading = true; error = null
+                            scope.launch {
+                                try {
+                                    val resp = ApiClient.apiService.enviarCodigoRecuperacion(mapOf("correo" to correo))
+                                    if (resp.isSuccessful) {
+                                        step = "code"
+                                    } else {
+                                        val err = resp.errorBody()?.string()
+                                        error = try { JSONObject(err ?: "").optString("mensaje", "Error al enviar código") } catch (_: Exception) { "Error al enviar código" }
+                                    }
+                                } catch (_: Exception) { error = "Error de conexión" }
+                                finally { loading = false }
+                            }
+                        },
+                        enabled = !loading,
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                    ) {
+                        Text(if (loading) "Enviando..." else "Enviar código", fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Cancelar", style = MaterialTheme.typography.labelLarge, color = Color(0xFF666666), modifier = Modifier.clickable { onDismiss() })
+                }
+
+                // --- Step 2: Verify Code ---
+                if (step == "code") {
+                    Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFF0F7FF)), contentAlignment = Alignment.Center) {
+                        Image(bitmap = assetImageBitmap("correo.png"), contentDescription = null, modifier = Modifier.size(32.dp), colorFilter = ColorFilter.tint(Color(0xFF2F6FED)))
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text("Verificar Código", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Ingresa el código de 6 dígitos que enviamos a $correo", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF666666), textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    if (error != null) {
+                        Text(error!!, color = Color(0xFFEF5350), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 12.dp))
+                    }
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
+                        for (i in 0..5) {
+                            OutlinedTextField(
+                                value = code[i],
+                                onValueChange = { v ->
+                                    if (v.length <= 1 && v.all { it.isDigit() }) {
+                                        code = code.toMutableList().also { it[i] = v }
+                                        error = null
+                                    }
+                                },
+                                modifier = Modifier.width(44.dp).height(52.dp),
+                                textStyle = androidx.compose.ui.text.TextStyle(textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, fontSize = 20.sp),
+                                shape = RoundedCornerShape(10.dp),
+                                singleLine = true,
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color(0xFFF0F7FF),
+                                    unfocusedContainerColor = Color(0xFFF8F9FB),
+                                    focusedIndicatorColor = Color(0xFF2F6FED),
+                                    unfocusedIndicatorColor = Color(0xFFE1E2EC)
+                                )
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            val codeStr = code.joinToString("")
+                            if (codeStr.length != 6) { error = "Ingresa el código completo"; return@Button }
+                            loading = true; error = null
+                            scope.launch {
+                                try {
+                                    val resp = ApiClient.apiService.verificarCodigo(mapOf("correo" to correo, "codigo" to codeStr))
+                                    if (resp.isSuccessful) {
+                                        step = "newPassword"
+                                    } else {
+                                        val err = resp.errorBody()?.string()
+                                        error = try { JSONObject(err ?: "").optString("mensaje", "Código incorrecto") } catch (_: Exception) { "Código incorrecto" }
+                                    }
+                                } catch (_: Exception) { error = "Error de conexión" }
+                                finally { loading = false }
+                            }
+                        },
+                        enabled = !loading,
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                    ) {
+                        Text(if (loading) "Verificando..." else "Verificar", fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        Text("¿No recibiste el código? ", style = MaterialTheme.typography.bodySmall, color = Color(0xFF666666))
+                        Text("Reenviar", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF2F6FED),
+                            modifier = Modifier.clickable {
+                                loading = true; error = null
+                                scope.launch {
+                                    try {
+                                        ApiClient.apiService.enviarCodigoRecuperacion(mapOf("correo" to correo))
+                                        code = List(6) { "" }
+                                    } catch (_: Exception) { error = "Error al reenviar" }
+                                    finally { loading = false }
+                                }
+                            })
+                    }
+                }
+
+                // --- Step 3: New Password ---
+                if (step == "newPassword") {
+                    val hasMin = newPassword.length >= 8
+                    val hasUpper = newPassword.any { it.isUpperCase() }
+                    val hasSpecial = newPassword.any { !it.isLetterOrDigit() }
+                    val match = newPassword == confirmPassword && newPassword.isNotEmpty()
+
+                    Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFF0F7FF)), contentAlignment = Alignment.Center) {
+                        Image(bitmap = assetImageBitmap("lock.png"), contentDescription = null, modifier = Modifier.size(32.dp), colorFilter = ColorFilter.tint(Color(0xFF2F6FED)))
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text("Nueva contraseña", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Crea una contraseña segura que no hayas utilizado antes.", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF666666), textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    if (error != null) {
+                        Text(error!!, color = Color(0xFFEF5350), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 12.dp))
+                    }
+
+                    Text("Nueva contraseña", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newPassword,
+                        onValueChange = { newPassword = it; error = null },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        visualTransformation = if (showNewPwd) VisualTransformation.None else PasswordVisualTransformation(),
+                        leadingIcon = { Image(bitmap = assetImageBitmap("lock.png"), contentDescription = null, modifier = Modifier.size(20.dp), colorFilter = ColorFilter.tint(Color.Gray)) },
+                        trailingIcon = {
+                            IconButton(onClick = { showNewPwd = !showNewPwd }) {
+                                Image(bitmap = assetImageBitmap(if (showNewPwd) "vista.png" else "eye.png"), contentDescription = null, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text("REQUISITOS DE SEGURIDAD", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2F6FED), fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ProfileValidationRow("Mínimo 8 caracteres", hasMin)
+                        ProfileValidationRow("Al menos una mayúscula", hasUpper)
+                        ProfileValidationRow("Un carácter especial (#, \$, etc.)", hasSpecial)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text("Confirmar contraseña", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        visualTransformation = if (showConfirmPwd) VisualTransformation.None else PasswordVisualTransformation(),
+                        leadingIcon = { Image(bitmap = assetImageBitmap("lock.png"), contentDescription = null, modifier = Modifier.size(20.dp), colorFilter = ColorFilter.tint(Color.Gray)) },
+                        trailingIcon = {
+                            IconButton(onClick = { showConfirmPwd = !showConfirmPwd }) {
+                                Image(bitmap = assetImageBitmap(if (showConfirmPwd) "vista.png" else "eye.png"), contentDescription = null, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    )
+                    if (confirmPassword.isNotEmpty() && !match) {
+                        Text("Las contraseñas no coinciden", color = Color(0xFFEF5350), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            if (!hasMin || !hasUpper || !hasSpecial) { error = "La contraseña no cumple los requisitos"; return@Button }
+                            if (!match) { error = "Las contraseñas no coinciden"; return@Button }
+                            loading = true; error = null
+                            scope.launch {
+                                try {
+                                    val resp = ApiClient.apiService.restablecerPassword(mapOf(
+                                        "correo" to correo,
+                                        "codigo" to code.joinToString(""),
+                                        "nuevaPassword" to newPassword
+                                    ))
+                                    if (resp.isSuccessful) {
+                                        step = "success"
+                                    } else {
+                                        val err = resp.errorBody()?.string()
+                                        error = try { JSONObject(err ?: "").optString("mensaje", "Error") } catch (_: Exception) { "Error al restablecer" }
+                                    }
+                                } catch (_: Exception) { error = "Error de conexión" }
+                                finally { loading = false }
+                            }
+                        },
+                        enabled = !loading && hasMin && hasUpper && hasSpecial && match,
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                    ) {
+                        Text(if (loading) "Restableciendo..." else "Cambiar contraseña", fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Cancelar", style = MaterialTheme.typography.labelLarge, color = Color(0xFF666666), modifier = Modifier.clickable { onDismiss() })
+                }
+
+                // --- Step 4: Success ---
+                if (step == "success") {
+                    Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFE8F5E9)), contentAlignment = Alignment.Center) {
+                        Image(bitmap = assetImageBitmap("check-circle.png"), contentDescription = null, modifier = Modifier.size(32.dp), colorFilter = ColorFilter.tint(Color(0xFF4CAF50)))
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text("¡Contraseña Actualizada!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Tu contraseña ha sido cambiada con éxito.", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF666666), textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Button(
+                        onClick = { onDismiss() },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                    ) {
+                        Text("Listo", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileValidationRow(text: String, isValid: Boolean) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 2.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(if (isValid) Color(0xFF4CAF50) else Color(0xFFCCCCCC))
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = if (isValid) Color(0xFF4CAF50) else Color(0xFF666666)
+        )
     }
 }
 

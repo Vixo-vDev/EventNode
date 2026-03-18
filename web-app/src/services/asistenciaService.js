@@ -46,6 +46,22 @@ export const asistenciaService = {
     return response.json();
   },
 
+  actualizarEstado: async (idAsistencia, estado) => {
+    const response = await fetch(`${API_URL}/asistencias/${idAsistencia}/estado`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authService.getAuthHeader()
+      },
+      body: JSON.stringify({ estado }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.mensaje || 'Error al actualizar estado');
+    }
+    return response.json();
+  },
+
   contarAsistencias: async (idEvento) => {
     const response = await fetch(`${API_URL}/asistencias/evento/${idEvento}/count`);
     if (!response.ok) return 0;

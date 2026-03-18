@@ -55,7 +55,7 @@ function AdminPreCheckIn() {
 
       <div className="card border-0 shadow-sm rounded-4 mb-4">
         <div className="card-body p-4">
-          <div className="d-flex flex-column flex-md-row gap-3 mb-4">
+          <div className="d-flex flex-column flex-md-row gap-3 mb-4 justify-content-between">
             <div className="input-group bg-light rounded-3 overflow-hidden flex-grow-1" style={{ maxWidth: '400px', border: 'none' }}>
               <span className="input-group-text bg-transparent border-0 pe-1">
                 <i className="bi bi-search text-secondary"></i>
@@ -82,7 +82,7 @@ function AdminPreCheckIn() {
               <table className="table table-hover align-middle mb-0">
                 <thead className="border-bottom">
                   <tr>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Matrícula</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 ps-3" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Matrícula</th>
                     <th className="text-uppercase text-secondary small fw-bold pb-3 border-0" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Nombre Completo</th>
                     <th className="text-uppercase text-secondary small fw-bold pb-3 border-0" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Correo</th>
                     <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 text-end pe-4" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Estado</th>
@@ -91,7 +91,7 @@ function AdminPreCheckIn() {
                 <tbody className="border-top-0">
                   {filtered.map((student) => (
                     <tr key={student.idPrecheckin}>
-                      <td className="fw-bold small py-3 border-light">{student.matricula || '—'}</td>
+                      <td className="fw-bold small py-3 border-light ps-3">{student.matricula || '—'}</td>
                       <td className="small py-3 border-light text-secondary">{student.nombre}</td>
                       <td className="small py-3 border-light text-secondary">{student.correo}</td>
                       <td className="py-3 border-light text-end pe-4">

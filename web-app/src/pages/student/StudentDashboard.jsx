@@ -38,7 +38,7 @@ function StudentDashboard({ loggedUser, onLogout }) {
         <Route path="/evento/:id" element={<StudentEventDetail user={loggedUser} />} />
         <Route path="/evento/:id/inscrito" element={<StudentEventEnrolled />} />
         <Route path="/diplomas" element={<StudentDiplomas user={loggedUser} />} />
-        <Route path="/diplomas/:id" element={<StudentDiplomaDetail />} />
+        <Route path="/diplomas/:id" element={<StudentDiplomaDetail user={loggedUser} />} />
         <Route path="/perfil" element={<StudentProfile user={loggedUser} />} />
       </Routes>
       <CerrarSesionModal onLogout={handleLogout} />

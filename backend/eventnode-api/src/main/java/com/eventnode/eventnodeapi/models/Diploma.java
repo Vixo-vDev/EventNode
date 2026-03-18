@@ -25,6 +25,14 @@ public class Diploma {
     @Column(name = "diseno", nullable = false, length = 255)
     private String diseno;
 
+    @Lob
+    @Column(name = "plantilla_pdf", columnDefinition = "LONGTEXT")
+    private String plantillaPdf;
+
+    @Lob
+    @Column(name = "firma_imagen", columnDefinition = "LONGTEXT")
+    private String firmaImagen;
+
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
 
@@ -88,5 +96,21 @@ public class Diploma {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public String getPlantillaPdf() {
+        return plantillaPdf;
+    }
+
+    public void setPlantillaPdf(String plantillaPdf) {
+        this.plantillaPdf = plantillaPdf;
+    }
+
+    public String getFirmaImagen() {
+        return firmaImagen;
+    }
+
+    public void setFirmaImagen(String firmaImagen) {
+        this.firmaImagen = firmaImagen;
     }
 }

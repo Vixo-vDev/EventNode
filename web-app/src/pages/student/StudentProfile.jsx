@@ -2,11 +2,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { userService } from '../../services/userService'
 import CuentaVinculadaModal from '../../components/modals/CuentaVinculadaModal'
-import RestablecerContrasenaModal from '../../components/modals/RestablecerContrasenaModal'
-import VerificarCodigoModal from '../../components/modals/VerificarCodigoModal'
-import CodigoVerificadoModal from '../../components/modals/CodigoVerificadoModal'
-import NuevaContrasenaModal from '../../components/modals/NuevaContrasenaModal'
-import ContrasenaActualizadaModal from '../../components/modals/ContrasenaActualizadaModal'
+import CambiarContrasenaModal from '../../components/modals/CambiarContrasenaModal'
 
 function StudentProfile({ user }) {
   const [perfil, setPerfil] = useState(null)
@@ -129,7 +125,7 @@ function StudentProfile({ user }) {
               <button
                 className="btn btn-link text-primary text-decoration-none small fw-semibold p-0"
                 data-bs-toggle="modal"
-                data-bs-target="#resetPasswordModal"
+                data-bs-target="#cambiarContrasenaModal"
               >
                 <i className="bi bi-pencil me-1"></i>
                 Cambiar contraseña
@@ -169,11 +165,7 @@ function StudentProfile({ user }) {
       </div>
 
       <CuentaVinculadaModal />
-      <RestablecerContrasenaModal />
-      <VerificarCodigoModal />
-      <CodigoVerificadoModal />
-      <NuevaContrasenaModal />
-      <ContrasenaActualizadaModal />
+      <CambiarContrasenaModal correo={perfil?.correo || user?.email || ''} />
     </div>
   )
 }
