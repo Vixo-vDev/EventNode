@@ -57,6 +57,7 @@ import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.student.profile.ProfileBottomNav
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 
 
 @Composable
@@ -83,12 +84,15 @@ fun HomeScreen(
         }
     }
     var searchText by remember { mutableStateOf("") }
-    
+
     var eventos by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
+    var studentDiplomas by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     
+    val context = LocalContext.current
+
     LaunchedEffect(Unit) {
         isLoading = true
         try {
@@ -97,6 +101,17 @@ fun HomeScreen(
                 eventos = response.body() ?: emptyList()
             } else {
                 errorMessage = "Error al cargar eventos"
+            }
+
+            // Fetch diplomas
+            val sharedPrefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
+            val token = sharedPrefs.getString("token", "") ?: ""
+            val userId = sharedPrefs.getInt("id", 0)
+            if (token.isNotEmpty() && userId > 0) {
+                val diplomaResponse = ApiClient.apiService.listarDiplomasEstudiante("Bearer $token", userId)
+                if (diplomaResponse.isSuccessful) {
+                    studentDiplomas = diplomaResponse.body() ?: emptyList()
+                }
             }
         } catch (e: Exception) {
             errorMessage = "Error de conexión"
@@ -200,25 +215,56 @@ fun HomeScreen(
 
                     SectionHeader(title = "Diploma", action = "Ver historial", onActionClick = onDiplomas)
                     Spacer(modifier = Modifier.height(12.dp))
-                    SimpleEventCard(
-                        category = "WEB DEV",
-                        mainText = "SUMMIT",
-                        title = "Web Development Summit '23",
-                        subtitle = "Septiembre 2023",
-                        status = "DIPLOMA EMITIDO",
-                        cardColor = Color(0xFFC9D7C4),
-                        onClick = onDiplomas
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    SimpleEventCard(
-                        category = "MINIMAL",
-                        mainText = "DATA SCIENCE",
-                        title = "Seminario Avanzado: Big Data",
-                        subtitle = "Agosto 2023",
-                        status = "DIPLOMA EMITIDO",
-                        cardColor = Color(0xFFA8B8B6),
-                        onClick = onDiplomas
-                    )
+
+                    if (studentDiplomas.isEmpty()) {
+                        Text(
+                            text = "Sin diplomas aún",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    } else {
+                        studentDiplomas.take(2).forEachIndexed { index, diploma ->
+                            val nombreEvento = diploma["nombreEvento"] as? String ?: "Evento"
+                            val fechaEnvio = diploma["fechaEnvio"] as? String ?: ""
+                            val estadoEnvio = diploma["estadoEnvio"] as? String ?: "DIPLOMA EMITIDO"
+
+                            // Extract category from event name (first word or first 8 chars)
+                            val category = nombreEvento.split(" ").firstOrNull()?.uppercase() ?: "EVENTO"
+
+                            // Extract main text (second word or remaining)
+                            val mainText = nombreEvento.split(" ").drop(1).joinToString(" ").take(12).uppercase()
+
+                            // Format date
+                            val formattedDate = if (fechaEnvio.length >= 10) {
+                                fechaEnvio.substring(0, 10).replace("-", "/")
+                            } else {
+                                fechaEnvio
+                            }
+
+                            // Color palette for cards
+                            val cardColors = listOf(
+                                Color(0xFFC9D7C4),
+                                Color(0xFFA8B8B6),
+                                Color(0xFFB5C8E8),
+                                Color(0xFFD4C5B9)
+                            )
+
+                            SimpleEventCard(
+                                category = category,
+                                mainText = mainText,
+                                title = nombreEvento,
+                                subtitle = formattedDate,
+                                status = estadoEnvio,
+                                cardColor = cardColors[index % cardColors.size],
+                                onClick = onDiplomas
+                            )
+                            if (index < minOf(1, studentDiplomas.size - 1)) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
+                    }
                 }
             }
             Box(

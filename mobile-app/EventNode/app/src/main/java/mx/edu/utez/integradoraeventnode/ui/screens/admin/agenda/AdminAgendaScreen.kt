@@ -278,27 +278,27 @@ private fun AdminAgendaCard(
     ) {
         Column {
             Box {
-                // Banner image or placeholder
-                if (event.banner != null && event.banner!!.isNotEmpty()) {
-                    try {
-                        val decodedBytes = android.util.Base64.decode(event.banner!!, android.util.Base64.DEFAULT)
-                        val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(160.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                    } catch (e: Exception) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(160.dp)
-                                .background(Color(0xFF2F6FED))
-                        )
-                    }
+                // Banner image or placeholder - decode outside composable tree
+                val bannerBitmap = remember(event.banner) {
+                    if (!event.banner.isNullOrEmpty()) {
+                        try {
+                            val decodedBytes = android.util.Base64.decode(event.banner!!, android.util.Base64.DEFAULT)
+                            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
+                        } catch (e: Exception) {
+                            null
+                        }
+                    } else null
+                }
+
+                if (bannerBitmap != null) {
+                    Image(
+                        bitmap = bannerBitmap,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp),
+                        contentScale = ContentScale.Crop
+                    )
                 } else {
                     Box(
                         modifier = Modifier
