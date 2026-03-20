@@ -61,7 +61,6 @@ function AdminAnalytics() {
       setCategoryData(Object.entries(catMap).map(([name, data]) => ({ name, ...data })))
 
     } catch (err) {
-      console.error('Error fetching analytics:', err)
     } finally {
       setLoading(false)
     }

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { diplomaService } from '../../services/diplomaService'
 import { eventService } from '../../services/eventService'
+import { closeModal } from '../../services/apiHelper'
 import CrearDiplomaModal from '../../components/modals/CrearDiplomaModal'
 import EditarDiplomaModal from '../../components/modals/EditarDiplomaModal'
 import ConfirmModal from '../../components/modals/ConfirmModal'
@@ -73,11 +74,7 @@ function AdminDiplomas() {
       })
       toast.success('Diploma creado exitosamente')
       setFormData({ idEvento: '', firma: '', diseno: 'Personalizado', plantillaPdf: '', firmaImagen: '' })
-      const modalEl = document.getElementById('crearDiplomaModal')
-      if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
-      }
+      closeModal('crearDiplomaModal')
       setLoading(true)
       fetchDiplomas()
     } catch (err) {
@@ -106,11 +103,7 @@ function AdminDiplomas() {
     try {
       const result = await diplomaService.actualizarDiploma(idDiploma, datos)
       toast.success(result.mensaje || 'Diploma actualizado exitosamente')
-      const modalEl = document.getElementById('editarDiplomaModal')
-      if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
-      }
+      closeModal('editarDiplomaModal')
       setSelectedDiploma(null)
       setLoading(true)
       fetchDiplomas()
@@ -126,11 +119,7 @@ function AdminDiplomas() {
     setDeleting(diplomaToDelete.idDiploma)
     try {
       await diplomaService.eliminarDiploma(diplomaToDelete.idDiploma)
-      const modalEl = document.getElementById('confirmarEliminarDiplomaModal')
-      if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
-      }
+      closeModal('confirmarEliminarDiplomaModal')
       toast.success('Diploma eliminado exitosamente')
       setDiplomaToDelete(null)
       setLoading(true)

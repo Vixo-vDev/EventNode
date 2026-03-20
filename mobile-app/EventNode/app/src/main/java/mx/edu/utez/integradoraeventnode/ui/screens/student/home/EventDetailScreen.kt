@@ -52,10 +52,11 @@ import androidx.compose.ui.unit.dp
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.student.profile.ProfileBottomNav
+import mx.edu.utez.integradoraeventnode.utils.PreferencesHelper
+import mx.edu.utez.integradoraeventnode.utils.AppColors
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
-import android.content.Context
 import android.util.Base64
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -75,10 +76,8 @@ fun EventDetailScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val prefs = context.getSharedPreferences("EventNodePrefs", Context.MODE_PRIVATE)
-    val userId = prefs.getInt("id", -1)
-    val token = prefs.getString("token", "") ?: ""
-    val bearerToken = if (token.isNotEmpty()) "Bearer $token" else ""
+    val userId = PreferencesHelper.getUserId(context)
+    val bearerToken = PreferencesHelper.getBearerToken(context)
 
     var showRegisterModal by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
@@ -127,7 +126,7 @@ fun EventDetailScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     CircularProgressIndicator(
-                        color = Color(0xFF2F6FED),
+                        color = AppColors.Primary,
                         modifier = Modifier.size(50.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -148,7 +147,7 @@ fun EventDetailScreen(
                     Button(
                         onClick = onBack,
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                        colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
                     ) {
                         Text("Volver")
                     }
@@ -239,7 +238,7 @@ fun EventDetailScreen(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF2F6FED)
+                                    color = AppColors.Primary
                                 )
                             }
                         }
@@ -309,7 +308,7 @@ fun EventDetailScreen(
                                 .fillMaxWidth()
                                 .height(56.dp),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                            colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
                         ) {
                             Text("Registrarse al Evento", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
@@ -394,7 +393,7 @@ fun EventDetailScreen(
                                     .fillMaxWidth()
                                     .height(50.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                                colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
                             ) {
                                 Text("Ver en agenda", fontWeight = FontWeight.Bold)
                             }
@@ -494,7 +493,7 @@ private fun DetailBottomNav(onBack: () -> Unit, onAgenda: () -> Unit, onDiplomas
 
 @Composable
 private fun BottomNavItem(label: String, icon: String, selected: Boolean, onClick: () -> Unit) {
-    val color = if (selected) Color(0xFF2F6FED) else Color(0xFF8B8B8B)
+    val color = if (selected) AppColors.Primary else Color(0xFF8B8B8B)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable { onClick() }

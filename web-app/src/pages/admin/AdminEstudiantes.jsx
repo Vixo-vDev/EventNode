@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { userService } from '../../services/userService'
+import { closeModal } from '../../services/apiHelper'
 import EditarEstudianteModal from '../../components/modals/EditarEstudianteModal'
 import CrearAdministradorModal from '../../components/modals/CrearAdministradorModal'
 
@@ -88,11 +89,7 @@ function AdminEstudiantes({ user }) {
       toast.success('Administrador creado exitosamente')
       setAdminForm(INITIAL_ADMIN_FORM)
       // Cerrar modal programáticamente usando Bootstrap JS
-      const modalEl = document.getElementById('crearAdminModal')
-      if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
-      }
+      closeModal('crearAdminModal')
       // Refrescar lista
       setLoading(true)
       fetchUsers()

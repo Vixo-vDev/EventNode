@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import mx.edu.utez.integradoraeventnode.utils.PreferencesHelper
 import mx.edu.utez.integradoraeventnode.ui.screens.auth.LoginScreen
 import mx.edu.utez.integradoraeventnode.ui.screens.auth.RegisterScreen
 import mx.edu.utez.integradoraeventnode.ui.screens.admin.agenda.*
@@ -33,10 +34,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             IntegradoraEventNodeTheme {
                 val context = androidx.compose.ui.platform.LocalContext.current
-                val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
-                val mantenerSesion = prefs.getBoolean("mantenerSesion", false)
-                val rol = prefs.getString("rol", "") ?: ""
-                val token = prefs.getString("token", "") ?: ""
+                val mantenerSesion = PreferencesHelper.getMantenerSesion(context)
+                val rol = PreferencesHelper.getRol(context)
+                val token = PreferencesHelper.getToken(context)
 
                 val startScreen = if (mantenerSesion && token.isNotEmpty()) {
                     if (rol.contains("ADMIN", ignoreCase = true)) AppScreen.AdminHome else AppScreen.Home
@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
                             onAnalitica = { currentScreen = AppScreen.AdminAnalytics },
                             onProfile = { currentScreen = AppScreen.AdminProfile },
                             onLogout = {
-                                prefs.edit().putBoolean("mantenerSesion", false).apply()
+                                PreferencesHelper.setMantenerSesion(context, false)
                                 currentScreen = AppScreen.Login
                             }
                         )
@@ -134,7 +134,7 @@ class MainActivity : ComponentActivity() {
                             onAnalitica = { currentScreen = AppScreen.AdminAnalytics },
                             onEditProfile = { currentScreen = AppScreen.AdminEditProfile },
                             onLogout = {
-                                prefs.edit().putBoolean("mantenerSesion", false).apply()
+                                PreferencesHelper.setMantenerSesion(context, false)
                                 currentScreen = AppScreen.Login
                             }
                         )
@@ -220,7 +220,7 @@ class MainActivity : ComponentActivity() {
                             onDiplomas = { currentScreen = AppScreen.Diplomas },
                             onEditProfile = { currentScreen = AppScreen.EditProfile },
                             onLogout = {
-                                prefs.edit().putBoolean("mantenerSesion", false).apply()
+                                PreferencesHelper.setMantenerSesion(context, false)
                                 currentScreen = AppScreen.Login
                             }
                         )

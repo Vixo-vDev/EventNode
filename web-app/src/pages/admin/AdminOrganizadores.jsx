@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { eventService } from '../../services/eventService'
+import { closeModal } from '../../services/apiHelper'
 
 const INITIAL_FORM = { nombre: '', correo: '', descripcion: '' }
 const DESC_MAX_LENGTH = 60
@@ -77,11 +78,7 @@ function AdminOrganizadores() {
       }
       setFormData(INITIAL_FORM)
       setEditingId(null)
-      const modalEl = document.getElementById('orgFormModal')
-      if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
-      }
+      closeModal('orgFormModal')
       setLoading(true)
       fetchOrganizadores()
     } catch (err) {
@@ -99,11 +96,7 @@ function AdminOrganizadores() {
       await eventService.eliminarOrganizador(deleteTarget.idOrganizador)
       toast.success('Organizador eliminado')
       setDeleteTarget(null)
-      const modalEl = document.getElementById('deleteOrgModal')
-      if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
-      }
+      closeModal('deleteOrgModal')
       setLoading(true)
       fetchOrganizadores()
     } catch (err) {

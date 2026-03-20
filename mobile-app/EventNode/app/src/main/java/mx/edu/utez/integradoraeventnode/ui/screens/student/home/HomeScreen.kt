@@ -1,6 +1,5 @@
 package mx.edu.utez.integradoraeventnode.ui.screens.student.home
 
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,14 +49,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import android.util.Base64
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.student.profile.ProfileBottomNav
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import mx.edu.utez.integradoraeventnode.utils.PreferencesHelper
+import mx.edu.utez.integradoraeventnode.utils.AppColors
+import mx.edu.utez.integradoraeventnode.ui.utils.decodeBase64Image
 
 
 @Composable
@@ -68,21 +68,6 @@ fun HomeScreen(
     onDiplomas: () -> Unit = {},
     onProfile: () -> Unit = {}
 ) {
-    // Helper function to decode base64 images
-    fun decodeBase64Image(base64Str: String?): ImageBitmap? {
-        if (base64Str.isNullOrEmpty()) return null
-        return try {
-            val cleanBase64 = if (base64Str.contains(",")) {
-                base64Str.substringAfter(",")
-            } else {
-                base64Str
-            }
-            val imageBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
-            BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)?.asImageBitmap()
-        } catch (e: Exception) {
-            null
-        }
-    }
     var searchText by remember { mutableStateOf("") }
 
     var eventos by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
@@ -104,9 +89,8 @@ fun HomeScreen(
             }
 
             // Fetch diplomas
-            val sharedPrefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
-            val token = sharedPrefs.getString("token", "") ?: ""
-            val userId = sharedPrefs.getInt("id", 0)
+            val token = PreferencesHelper.getToken(context)
+            val userId = PreferencesHelper.getUserId(context)
             if (token.isNotEmpty() && userId > 0) {
                 val diplomaResponse = ApiClient.apiService.listarDiplomasEstudiante("Bearer $token", userId)
                 if (diplomaResponse.isSuccessful) {
@@ -120,7 +104,7 @@ fun HomeScreen(
         }
     }
 
-    Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
+    Surface(modifier = modifier.fillMaxSize(), color = AppColors.Background) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -298,7 +282,7 @@ private fun SectionHeader(title: String, action: String, onActionClick: () -> Un
                     .width(4.dp)
                     .height(16.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0xFF2F6FED))
+                    .background(AppColors.Primary)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -309,7 +293,7 @@ private fun SectionHeader(title: String, action: String, onActionClick: () -> Un
         Text(
             text = action,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF2F6FED),
+            color = AppColors.Primary,
             modifier = Modifier.clickable { onActionClick() }
         )
     }
@@ -375,7 +359,7 @@ private fun EventCard(
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(if(tag == "ACTIVO") Color(0xFF2F6FED) else Color(0xFF757575))
+                            .background(if(tag == "ACTIVO") AppColors.Primary else Color(0xFF757575))
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                     
@@ -434,7 +418,7 @@ private fun EventCard(
                     onClick = onDetailsClick,
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
                 ) {
                     Text(buttonText, fontWeight = FontWeight.Bold)
                 }
@@ -524,7 +508,7 @@ private fun SimpleEventCard(
                     Text(
                         text = "Ver más",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF2F6FED),
+                        color = AppColors.Primary,
                         fontWeight = FontWeight.Bold
                     )
                 }

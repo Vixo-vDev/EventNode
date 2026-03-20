@@ -16,7 +16,6 @@ function AdminDiplomaDetail() {
         setDiploma(data)
       } catch (err) {
         setError('No se pudo cargar el diploma')
-        console.error(err)
       } finally {
         setLoading(false)
       }
@@ -37,7 +36,6 @@ function AdminDiplomaDetail() {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } catch (err) {
-      console.error('Error al descargar diploma:', err)
     } finally {
       setDownloading(prev => ({ ...prev, [idUsuario]: false }))
     }
