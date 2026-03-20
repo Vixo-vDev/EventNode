@@ -14,6 +14,7 @@ import AdminDiplomaDetail from './AdminDiplomaDetail'
 import AdminEstudiantes from './AdminEstudiantes'
 import AdminPerfil from './AdminPerfil'
 import AdminOrganizadores from './AdminOrganizadores'
+import AdminAnalytics from './AdminAnalytics'
 import CerrarSesionModal from '../../components/modals/CerrarSesionModal'
 
 function AdminDashboard({ loggedUser, onLogout }) {
@@ -27,6 +28,7 @@ function AdminDashboard({ loggedUser, onLogout }) {
     { path: '/admin/diplomas', exact: false, label: 'Diplomas', icon: 'bi bi-award' },
     { path: '/admin/organizadores', exact: false, label: 'Organizadores', icon: 'bi bi-building' },
     { path: '/admin/estudiantes', exact: false, label: 'Estudiantes', icon: 'bi bi-people' },
+    { path: '/admin/analiticas', exact: false, label: 'Analíticas', icon: 'bi bi-graph-up' },
     { path: '/admin/perfil', exact: false, label: 'Perfil', icon: 'bi bi-person' }
   ]
 
@@ -44,6 +46,7 @@ function AdminDashboard({ loggedUser, onLogout }) {
         <Route path="/diploma/:id" element={<AdminDiplomaDetail />} />
         <Route path="/organizadores" element={<AdminOrganizadores />} />
         <Route path="/estudiantes" element={<AdminEstudiantes user={loggedUser} />} />
+        <Route path="/analiticas" element={<AdminAnalytics />} />
         <Route path="/perfil" element={<AdminPerfil user={loggedUser} />} />
       </Routes>
       <CerrarSesionModal onLogout={handleLogout} />

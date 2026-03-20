@@ -24,7 +24,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,25 +41,84 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.CircularProgressIndicator
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
-import java.util.UUID
+import kotlinx.coroutines.launch
+import android.content.Context
+import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 
 @Composable
 fun CheckinQrScreen(
+    eventId: Int = -1,
+    eventName: String = "",
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
     onHome: () -> Unit = {},
     onDiplomas: () -> Unit = {},
     onProfile: () -> Unit = {}
 ) {
-    val checkinCode = remember { "eventnode:checkin:${UUID.randomUUID()}" }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val prefs = context.getSharedPreferences("EventNodePrefs", Context.MODE_PRIVATE)
+    val userId = prefs.getInt("id", -1)
+
+    var isLoading by remember { mutableStateOf(eventId != -1 && eventName.isEmpty()) }
+    var displayEventName by remember { mutableStateOf(eventName) }
+    var displayEventTime by remember { mutableStateOf("") }
+    var displayEventLocation by remember { mutableStateOf("") }
+
+    LaunchedEffect(eventId) {
+        if (eventId != -1) {
+            scope.launch {
+                try {
+                    val response = ApiClient.apiService.getEvento(eventId)
+                    if (response.isSuccessful) {
+                        val evento = response.body()
+                        if (evento != null) {
+                            displayEventName = evento.nombre
+                            displayEventTime = "${evento.fechaInicio} - ${evento.fechaFin}"
+                            displayEventLocation = evento.ubicacion
+                        }
+                    }
+                } catch (e: Exception) {
+                    displayEventName = "Evento"
+                } finally {
+                    isLoading = false
+                }
+            }
+        }
+    }
+
+    val checkinCode = remember(eventId, userId) {
+        if (eventId != -1 && userId != -1) {
+            "eventnode:checkin:${eventId}:${userId}"
+        } else {
+            "eventnode:checkin:invalid"
+        }
+    }
     val qrBitmap = remember(checkinCode) { generateQrBitmap(checkinCode, 400) }
 
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
+            if (isLoading) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF2F6FED),
+                        modifier = Modifier.size(50.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Cargando evento...")
+                }
+            } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -145,13 +207,17 @@ fun CheckinQrScreen(
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Festival en el Campus",
+                            text = displayEventName.ifEmpty { "Evento" },
                             style = MaterialTheme.typography.titleSmall
                         )
                         Spacer(modifier = Modifier.height(6.dp))
-                        RowInfo(icon = "chart-histogram.png", text = "10:00 AM - 04:00 PM")
-                        Spacer(modifier = Modifier.height(4.dp))
-                        RowInfo(icon = "book-open-reader.png", text = "Auditorio Principal, Campus Central")
+                        if (displayEventTime.isNotEmpty()) {
+                            RowInfo(icon = "chart-histogram.png", text = displayEventTime)
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                        if (displayEventLocation.isNotEmpty()) {
+                            RowInfo(icon = "book-open-reader.png", text = displayEventLocation)
+                        }
                         Spacer(modifier = Modifier.height(10.dp))
                         Box(
                             modifier = Modifier
@@ -175,6 +241,7 @@ fun CheckinQrScreen(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.widthIn(max = 260.dp)
                 )
+            }
             }
             Box(
                 modifier = Modifier

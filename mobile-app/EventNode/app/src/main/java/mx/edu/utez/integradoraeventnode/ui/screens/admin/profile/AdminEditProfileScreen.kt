@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import android.content.Context
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.admin.common.AdminBottomNav
@@ -45,16 +46,19 @@ fun AdminEditProfileScreen(
     onAnalitica: () -> Unit = {},
     onProfile: () -> Unit = {}
 ) {
-    var name by remember { mutableStateOf("Alejandro") }
-    var lastName by remember { mutableStateOf("García Mendoza") }
-    var email by remember { mutableStateOf("a.garcia@universidad.edu.mx") }
-    var id by remember { mutableStateOf("2023045621") }
-    var gender by remember { mutableStateOf("Masculino") }
-    var quarter by remember { mutableStateOf("4°") }
-    
-    var currentPassword by remember { mutableStateOf("*******") }
-    var newPassword by remember { mutableStateOf("*******") }
-    var confirmPassword by remember { mutableStateOf("*******") }
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("EventNodePrefs", Context.MODE_PRIVATE)
+
+    var name by remember { mutableStateOf(prefs.getString("nombre", "") ?: "") }
+    var lastName by remember { mutableStateOf("${prefs.getString("apellidoPaterno", "") ?: ""} ${prefs.getString("apellidoMaterno", "") ?: ""}".trim()) }
+    var email by remember { mutableStateOf(prefs.getString("correo", "") ?: "") }
+    var id by remember { mutableStateOf(prefs.getString("matricula", "") ?: "") }
+    var gender by remember { mutableStateOf(if (prefs.getString("sexo", "") == "M") "Masculino" else if (prefs.getString("sexo", "") == "F") "Femenino" else "Otro") }
+    var quarter by remember { mutableStateOf("${prefs.getString("cuatrimestre", "") ?: ""}°") }
+
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
 
     var currentPasswordVisible by remember { mutableStateOf(false) }
     var newPasswordVisible by remember { mutableStateOf(false) }

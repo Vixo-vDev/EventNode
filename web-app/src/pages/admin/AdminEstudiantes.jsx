@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { userService } from '../../services/userService'
+import { closeModal } from '../../services/apiHelper'
 import EditarEstudianteModal from '../../components/modals/EditarEstudianteModal'
 import CrearAdministradorModal from '../../components/modals/CrearAdministradorModal'
 
@@ -16,6 +17,7 @@ function AdminEstudiantes({ user }) {
   const [students, setStudents] = useState([])
   const [admins, setAdmins] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
 
   // Estado para crear administrador
   const [adminForm, setAdminForm] = useState(INITIAL_ADMIN_FORM)
@@ -87,11 +89,7 @@ function AdminEstudiantes({ user }) {
       toast.success('Administrador creado exitosamente')
       setAdminForm(INITIAL_ADMIN_FORM)
       // Cerrar modal programáticamente usando Bootstrap JS
-      const modalEl = document.getElementById('crearAdminModal')
-      if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
-      }
+      closeModal('crearAdminModal')
       // Refrescar lista
       setLoading(true)
       fetchUsers()
@@ -126,6 +124,8 @@ function AdminEstudiantes({ user }) {
                 className="form-control bg-transparent border-0 shadow-none small"
                 placeholder="Buscar por nombre, matrícula o correo..."
                 style={{ fontSize: '13px' }}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
@@ -151,7 +151,13 @@ function AdminEstudiantes({ user }) {
                   </tr>
                 </thead>
                 <tbody className="border-top-0">
-                  {students.map(student => (
+                  {students
+                    .filter(student =>
+                      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      student.matricula.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      student.email.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map(student => (
                     <tr key={student.id}>
                       <td className="py-3 border-light ps-4">
                         <div className="d-flex align-items-center gap-3">

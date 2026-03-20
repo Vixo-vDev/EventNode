@@ -55,7 +55,7 @@ fun RegisterScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
     var expandedCuatrimestre by remember { mutableStateOf(false) }
-    val cuatrimestres = listOf("1", "2", "3", "4", "5", "7", "8", "9")
+    val cuatrimestres = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current

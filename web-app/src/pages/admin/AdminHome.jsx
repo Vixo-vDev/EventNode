@@ -1,33 +1,71 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { eventService } from '../../services/eventService'
+import { asistenciaService } from '../../services/asistenciaService'
+import { precheckinService } from '../../services/precheckinService'
+import { diplomaService } from '../../services/diplomaService'
 
 function AdminHome() {
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [totalEmitidos, setTotalEmitidos] = useState(0)
+  const [totalPendientes, setTotalPendientes] = useState(0)
+  const [overallAttendanceRate, setOverallAttendanceRate] = useState(0)
 
   useEffect(() => {
-    const fetchEventos = async () => {
+    const fetchData = async () => {
       try {
-        const data = await eventService.getEventos()
-        const mapped = data.slice(0, 5).map(e => ({
-          id: e.idEvento,
-          name: e.nombre,
-          date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { month: 'short', day: '2-digit' }).toUpperCase() + ', ' + new Date(e.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '',
-          status: e.estado,
-          capacityPercent: 0,
-          capacityText: '0%',
-          statusClass: e.estado === 'ACTIVO' ? 'bg-success text-success' : e.estado === 'CANCELADO' ? 'bg-danger text-danger' : 'bg-secondary text-secondary',
-          isCancelled: e.estado === 'CANCELADO',
-        }))
+        // Fetch events
+        const eventosData = await eventService.getEventos()
+
+        // Fetch diploma data
+        const diplomasData = await diplomaService.listarDiplomas()
+        const sumEmitidos = diplomasData.reduce((sum, d) => sum + (d.totalEmitidos || 0), 0)
+        const sumPendientes = diplomasData.reduce((sum, d) => sum + (d.totalPendientes || 0), 0)
+        setTotalEmitidos(sumEmitidos)
+        setTotalPendientes(sumPendientes)
+
+        // Map events and fetch capacity data
+        const mapped = await Promise.all(
+          eventosData.slice(0, 5).map(async (e) => {
+            const inscritos = await precheckinService.contarInscritos(e.idEvento)
+            const asistencias = await asistenciaService.contarAsistencias(e.idEvento)
+            const capacidadMaxima = e.capacidadMaxima || 1
+            const capacityPercent = Math.round((inscritos / capacidadMaxima) * 100)
+
+            return {
+              id: e.idEvento,
+              name: e.nombre,
+              date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { month: 'short', day: '2-digit' }).toUpperCase() + ', ' + new Date(e.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '',
+              status: e.estado,
+              capacityPercent: capacityPercent,
+              capacityText: `${capacityPercent}%`,
+              inscritos: inscritos,
+              asistencias: asistencias,
+              statusClass: e.estado === 'ACTIVO' ? 'bg-success text-success' : e.estado === 'CANCELADO' ? 'bg-danger text-danger' : 'bg-secondary text-secondary',
+              isCancelled: e.estado === 'CANCELADO',
+            }
+          })
+        )
         setEventos(mapped)
+
+        // Calculate overall attendance rate
+        if (mapped.length > 0) {
+          const totalAsistencias = mapped.reduce((sum, e) => sum + e.asistencias, 0)
+          const totalInscritos = mapped.reduce((sum, e) => sum + e.inscritos, 0)
+          const attendanceRate = totalInscritos > 0 ? Math.round((totalAsistencias / totalInscritos) * 100) : 0
+          setOverallAttendanceRate(attendanceRate)
+        }
       } catch {
         setEventos([])
+        setTotalEmitidos(0)
+        setTotalPendientes(0)
+        setOverallAttendanceRate(0)
       } finally {
         setLoading(false)
       }
     }
-    fetchEventos()
+    fetchData()
   }, [])
 
   const totalEventos = eventos.length
@@ -48,8 +86,8 @@ function AdminHome() {
                 </div>
               </div>
               <div className="text-secondary small mb-1">Asistencia</div>
-              <div className="fw-bold fs-2">{totalEventos > 0 ? '—' : '0%'}</div>
-              <div className="text-secondary" style={{ fontSize: '12px' }}>Sin datos de asistencia aun</div>
+              <div className="fw-bold fs-2">{overallAttendanceRate}%</div>
+              <div className="text-secondary" style={{ fontSize: '12px' }}>{eventos.length > 0 ? 'Tasa de asistencia' : 'Sin datos de asistencia aun'}</div>
             </div>
           </div>
         </div>
@@ -78,11 +116,11 @@ function AdminHome() {
               <div className="text-uppercase text-secondary small fw-bold mb-2" style={{ letterSpacing: '0.5px' }}>Diplomas</div>
               <div className="d-flex justify-content-between align-items-end">
                 <div>
-                  <div className="fw-bold fs-3 mb-0">0</div>
+                  <div className="fw-bold fs-3 mb-0">{totalEmitidos}</div>
                   <div className="text-secondary" style={{ fontSize: '12px' }}>Emitidos</div>
                 </div>
                 <div className="text-end">
-                  <div className="fw-bold fs-3 mb-0">0</div>
+                  <div className="fw-bold fs-3 mb-0">{totalPendientes}</div>
                   <div className="text-secondary" style={{ fontSize: '12px' }}>Pendientes</div>
                 </div>
               </div>

@@ -25,6 +25,9 @@ function StudentMyEvents({ user }) {
           location: e.ubicacion,
           category: e.categoriaNombre || 'GENERAL',
           inscripcionEstado: e.inscripcionEstado,
+          status: e.estado,
+          capacityCurrent: e.inscritos || 0,
+          capacityMax: e.capacidadMaxima || 0,
         }))
         setEventos(mapped)
       } catch {
@@ -76,6 +79,9 @@ function StudentMyEvents({ user }) {
                 date={event.date}
                 location={event.location}
                 category={event.category}
+                status={event.status}
+                capacityCurrent={event.capacityCurrent}
+                capacityMax={event.capacityMax}
                 detailUrl={`/estudiante/evento/${event.id}`}
               />
             </div>
