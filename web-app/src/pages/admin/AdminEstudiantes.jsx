@@ -16,6 +16,7 @@ function AdminEstudiantes({ user }) {
   const [students, setStudents] = useState([])
   const [admins, setAdmins] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
 
   // Estado para crear administrador
   const [adminForm, setAdminForm] = useState(INITIAL_ADMIN_FORM)
@@ -126,6 +127,8 @@ function AdminEstudiantes({ user }) {
                 className="form-control bg-transparent border-0 shadow-none small"
                 placeholder="Buscar por nombre, matrícula o correo..."
                 style={{ fontSize: '13px' }}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
@@ -151,7 +154,13 @@ function AdminEstudiantes({ user }) {
                   </tr>
                 </thead>
                 <tbody className="border-top-0">
-                  {students.map(student => (
+                  {students
+                    .filter(student =>
+                      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      student.matricula.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      student.email.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map(student => (
                     <tr key={student.id}>
                       <td className="py-3 border-light ps-4">
                         <div className="d-flex align-items-center gap-3">

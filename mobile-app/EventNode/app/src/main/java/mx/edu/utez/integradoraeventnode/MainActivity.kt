@@ -47,6 +47,8 @@ class MainActivity : ComponentActivity() {
                 var currentScreen by remember { mutableStateOf(startScreen) }
                 var selectedEventId by remember { mutableStateOf<Int?>(null) }
                 var adminSelectedEventId by remember { mutableStateOf<Int?>(null) }
+                var selectedCheckinEventId by remember { mutableStateOf<Int?>(null) }
+                var selectedCheckinEventName by remember { mutableStateOf("") }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
@@ -167,7 +169,11 @@ class MainActivity : ComponentActivity() {
                         AppScreen.Agenda -> AgendaScreen(
                             modifier = Modifier.padding(innerPadding),
                             onHome = { currentScreen = AppScreen.Home },
-                            onViewQr = { currentScreen = AppScreen.CheckinQr },
+                            onViewQr = { eventId, eventName ->
+                                selectedCheckinEventId = eventId
+                                selectedCheckinEventName = eventName
+                                currentScreen = AppScreen.CheckinQr
+                            },
                             onViewDetail = { eventId ->
                                 selectedEventId = eventId
                                 currentScreen = AppScreen.StudentEventDetail
@@ -176,6 +182,8 @@ class MainActivity : ComponentActivity() {
                             onProfile = { currentScreen = AppScreen.Profile }
                         )
                         AppScreen.CheckinQr -> CheckinQrScreen(
+                            eventId = selectedCheckinEventId ?: -1,
+                            eventName = selectedCheckinEventName,
                             modifier = Modifier.padding(innerPadding),
                             onBack = { currentScreen = AppScreen.Agenda },
                             onHome = { currentScreen = AppScreen.Home },
@@ -183,6 +191,7 @@ class MainActivity : ComponentActivity() {
                             onProfile = { currentScreen = AppScreen.Profile }
                         )
                         AppScreen.EventDetail -> EventDetailScreen(
+                            eventId = selectedEventId ?: -1,
                             modifier = Modifier.padding(innerPadding),
                             onBack = { currentScreen = AppScreen.Home },
                             onAgenda = { currentScreen = AppScreen.Agenda },

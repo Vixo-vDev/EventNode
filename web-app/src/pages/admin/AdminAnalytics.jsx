@@ -71,17 +71,15 @@ function AdminAnalytics() {
   const totalEventos = eventos.length
   const eventosActivos = eventos.filter(e => e.estado === 'ACTIVO').length
   const eventosCancelados = eventos.filter(e => e.estado === 'CANCELADO').length
-  const eventosTerminados = eventos.filter(e => e.estado === 'TERMINADO').length
+  const eventosTerminados = eventos.filter(e => e.estado === 'FINALIZADO').length
 
   const totalDiplomas = diplomas.length
   const diplomasEmitidos = diplomas.reduce((sum, d) => sum + (d.totalEmitidos || 0), 0)
   const diplomasPendientes = diplomas.reduce((sum, d) => sum + (d.totalPendientes || 0), 0)
 
   const totalUsuarios = usuarios.length
-  const estudiantes = usuarios.filter(u => u.rol === 'ESTUDIANTE' || u.rol === 'STUDENT')
-  const admins = usuarios.filter(u => u.rol === 'ADMINISTRADOR' || u.rol === 'ADMIN' || u.rol === 'SUPERADMIN')
-  const masculino = usuarios.filter(u => u.sexo === 'M').length
-  const femenino = usuarios.filter(u => u.sexo === 'F').length
+  const estudiantes = usuarios.filter(u => u.rol === 'ALUMNO' || u.rol === 'ESTUDIANTE' || u.rol === 'STUDENT')
+  const admins = usuarios.filter(u => u.rol === 'ADMINISTRADOR' || u.rol === 'SUPERADMIN')
 
   const totalAsistencias = attendanceData.reduce((s, e) => s + e.asistencias, 0)
   const totalInscritos = attendanceData.reduce((s, e) => s + e.inscritos, 0)

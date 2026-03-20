@@ -53,7 +53,7 @@ import android.util.Base64
 fun AgendaScreen(
     modifier: Modifier = Modifier,
     onHome: () -> Unit = {},
-    onViewQr: () -> Unit = {},
+    onViewQr: (Int, String) -> Unit = { _, _ -> },
     onViewDetail: (Int) -> Unit = {},
     onDiplomas: () -> Unit = {},
     onProfile: () -> Unit = {}
@@ -187,7 +187,7 @@ fun AgendaScreen(
                             imageColor = Color(0xFF9B7A4A),
                             bannerBase64 = bannerBase64,
                             bannerDecoder = ::decodeBase64Image,
-                            onViewQr = onViewQr,
+                            onViewQr = { onViewQr(eventId, nombre) },
                             onViewDetail = { onViewDetail(eventId) }
                         )
                         Spacer(modifier = Modifier.height(12.dp))

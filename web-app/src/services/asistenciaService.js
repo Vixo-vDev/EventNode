@@ -63,7 +63,9 @@ export const asistenciaService = {
   },
 
   contarAsistencias: async (idEvento) => {
-    const response = await fetch(`${API_URL}/asistencias/evento/${idEvento}/count`);
+    const response = await fetch(`${API_URL}/asistencias/evento/${idEvento}/count`, {
+      headers: { ...authService.getAuthHeader() }
+    });
     if (!response.ok) return 0;
     const data = await response.json();
     return data.count || 0;

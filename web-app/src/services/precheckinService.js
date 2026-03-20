@@ -58,7 +58,9 @@ export const precheckinService = {
   },
 
   contarInscritos: async (idEvento) => {
-    const response = await fetch(`${API_URL}/precheckin/evento/${idEvento}/count`);
+    const response = await fetch(`${API_URL}/precheckin/evento/${idEvento}/count`, {
+      headers: { ...authService.getAuthHeader() }
+    });
     if (!response.ok) return 0;
     const data = await response.json();
     return data.count || 0;
