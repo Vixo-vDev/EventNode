@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from '../i18n/I18nContext'
 
 function EventCard({ image, title, date, location, category, detailUrl, status, capacityCurrent, capacityMax }) {
+  const { t } = useTranslation()
   const isActive = status === 'ACTIVO'
   const isCancelled = status === 'CANCELADO'
   const isFinished = status === 'FINALIZADO'
@@ -53,7 +55,7 @@ function EventCard({ image, title, date, location, category, detailUrl, status, 
             <>
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className={`text-uppercase small fw-bold ${isFull ? 'text-danger' : isFinished ? 'text-secondary' : 'text-dark'}`}>
-                  {isFinished ? 'Finalizado' : isCancelled ? 'Cancelado' : 'Capacidad'}
+                  {isFinished ? t('events.finished') : isCancelled ? t('events.cancelled') : t('events.capacity')}
                 </span>
                 <span className={`small fw-semibold ${isFull ? 'text-danger' : ''}`}>
                   {capacityCurrent} / {capacityMax}

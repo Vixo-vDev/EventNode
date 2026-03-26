@@ -27,11 +27,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
+import mx.edu.utez.integradoraeventnode.R
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.admin.common.AdminBottomNav
+import mx.edu.utez.integradoraeventnode.utils.LocaleHelper
 
 @Composable
 fun AdminProfileScreen(
@@ -166,7 +169,7 @@ fun AdminProfileScreen(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Editar Perfil", color = Color.Black, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                        Text(text = stringResource(R.string.profile_edit), color = Color.Black, fontWeight = FontWeight.Medium, fontSize = 14.sp)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -205,21 +208,21 @@ fun AdminProfileScreen(
 
                 // Datos del Administrador Section
                 Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                    Text(text = "Datos del Administrador", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(text = stringResource(R.string.profile_admin_data), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    ProfileInfoItem(label = "Nombre completo:", value = nombreCompleto, icon = "user.png")
-                    ProfileInfoItem(label = "Correo:", value = correo, icon = "correo.png")
-                    ProfileInfoItem(label = "Matrícula:", value = matricula, icon = "user.png")
-                    ProfileInfoItem(label = "Género:", value = generoTexto, icon = "user.png")
+                    ProfileInfoItem(label = stringResource(R.string.profile_full_name), value = nombreCompleto, icon = "user.png")
+                    ProfileInfoItem(label = stringResource(R.string.profile_email), value = correo, icon = "correo.png")
+                    ProfileInfoItem(label = stringResource(R.string.profile_matricula), value = matricula, icon = "user.png")
+                    ProfileInfoItem(label = stringResource(R.string.profile_gender), value = generoTexto, icon = "user.png")
                     if (cuatrimestre.isNotEmpty()) {
-                        ProfileInfoItem(label = "Cuatrimestre:", value = cuatrimestre, icon = "user.png")
+                        ProfileInfoItem(label = stringResource(R.string.profile_quarter), value = cuatrimestre, icon = "user.png")
                     }
-                    ProfileInfoItem(label = "Rol:", value = rolTexto, icon = "user.png")
+                    ProfileInfoItem(label = stringResource(R.string.profile_role), value = rolTexto, icon = "user.png")
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    Text(text = "Certificados emitidos", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(text = stringResource(R.string.profile_certs_issued), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     if (isLoadingDiplomas) {
@@ -231,7 +234,7 @@ fun AdminProfileScreen(
                         }
                     } else if (diplomas.isEmpty()) {
                         Text(
-                            text = "No hay certificados emitidos",
+                            text = stringResource(R.string.profile_no_certs),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray,
                             modifier = Modifier.padding(16.dp)
@@ -251,6 +254,50 @@ fun AdminProfileScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
+                    // Language Selector
+                    Text(text = stringResource(R.string.language_title), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    val currentLang = LocaleHelper.getCurrentLanguage(context)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFF5F6FA))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        listOf("es" to stringResource(R.string.language_spanish), "en" to stringResource(R.string.language_english)).forEach { (code, label) ->
+                            val isSelected = currentLang == code
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        if (!isSelected) {
+                                            LocaleHelper.setLocale(context, code)
+                                            (context as? android.app.Activity)?.recreate()
+                                        }
+                                    },
+                                color = if (isSelected) Color(0xFF2F6FED) else Color.Transparent,
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text(
+                                    text = label,
+                                    modifier = Modifier
+                                        .padding(vertical = 10.dp)
+                                        .fillMaxWidth(),
+                                    textAlign = TextAlign.Center,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) Color.White else Color.Gray,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
                     Button(
                         onClick = { showLogoutDialog = true },
                         modifier = Modifier
@@ -259,7 +306,7 @@ fun AdminProfileScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF1744)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(text = "Cerrar Sesión", fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(text = stringResource(R.string.profile_logout), fontWeight = FontWeight.Bold, color = Color.White)
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -377,10 +424,10 @@ private fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     )
                 }
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(text = "¿Cerrar sesión?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(R.string.profile_logout_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "¿Estás seguro de que deseas salir de tu cuenta en EventNode? Tendrás que volver a ingresar tus credenciales para acceder.",
+                    text = stringResource(R.string.profile_logout_msg),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
@@ -392,7 +439,7 @@ private fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = "Sí, cerrar sesión", fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(R.string.profile_logout_confirm), fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
@@ -401,7 +448,7 @@ private fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F6FA)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = "Mantener sesión", color = Color.Black, fontWeight = FontWeight.Medium)
+                    Text(text = stringResource(R.string.profile_keep_session), color = Color.Black, fontWeight = FontWeight.Medium)
                 }
             }
         }

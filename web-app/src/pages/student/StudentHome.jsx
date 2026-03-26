@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from '../../i18n/I18nContext'
 import { eventService } from '../../services/eventService'
 import { diplomaService } from '../../services/diplomaService'
 import { authService } from '../../services/authService'
@@ -11,6 +12,7 @@ import eventUiux from '../../assets/events/event_uiux.png'
 const fallbackImages = [eventAi, eventMarketing, eventUiux]
 
 function StudentHome() {
+  const { t } = useTranslation()
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -66,9 +68,9 @@ function StudentHome() {
 
   return (
     <div>
-      <h2 className="fw-bold mb-1">Inicio</h2>
+      <h2 className="fw-bold mb-1">{t('studentHome.title')}</h2>
       <p className="text-secondary small mb-4">
-        Explora los eventos que tenemos preparados para ti
+        {t('studentHome.subtitle')}
       </p>
 
       <div className="d-flex align-items-center gap-2 mb-4">
@@ -79,7 +81,7 @@ function StudentHome() {
           <input
             type="text"
             className="form-control border-start-0"
-            placeholder="Buscar eventos..."
+            placeholder={t('studentHome.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -88,7 +90,7 @@ function StudentHome() {
 
       <h5 className="fw-bold mb-3">
         <i className="bi bi-calendar-event me-2 text-primary"></i>
-        Próximos Eventos
+        {t('studentHome.upcomingEvents')}
       </h5>
       {loading ? (
         <div className="text-center py-3">
@@ -119,9 +121,9 @@ function StudentHome() {
             <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
               <i className="bi bi-search text-primary fs-3"></i>
             </div>
-            <h6 className="fw-bold mb-1">No se encontraron eventos</h6>
+            <h6 className="fw-bold mb-1">{t('studentHome.noEvents')}</h6>
             <p className="text-secondary small mb-0">
-              Intenta con otro término de búsqueda.
+              {t('studentHome.tryOtherSearch')}
             </p>
           </div>
         </div>
@@ -131,9 +133,9 @@ function StudentHome() {
             <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
               <i className="bi bi-calendar-x text-primary fs-3"></i>
             </div>
-            <h6 className="fw-bold mb-1">No hay eventos próximos</h6>
+            <h6 className="fw-bold mb-1">{t('studentHome.noUpcoming')}</h6>
             <p className="text-secondary small mb-0">
-              Cuando se publiquen nuevos eventos, aparecerán aquí.
+              {t('studentHome.upcomingSoon')}
             </p>
           </div>
         </div>
@@ -141,7 +143,7 @@ function StudentHome() {
 
       <h5 className="fw-bold mb-3">
         <i className="bi bi-award me-2 text-primary"></i>
-        Diplomas
+        {t('studentHome.diplomas')}
       </h5>
       {diplomasLoading ? (
         <div className="text-center py-3">
@@ -166,7 +168,7 @@ function StudentHome() {
                     to="/estudiante/diplomas"
                     className="btn btn-primary btn-sm rounded-pill w-100"
                   >
-                    Ver Diploma
+                    {t('studentDiplomas.view')}
                   </Link>
                 </div>
               </div>
@@ -179,9 +181,9 @@ function StudentHome() {
             <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
               <i className="bi bi-award text-primary fs-3"></i>
             </div>
-            <h6 className="fw-bold mb-1">Aún no tienes diplomas</h6>
+            <h6 className="fw-bold mb-1">{t('studentHome.noDiplomas')}</h6>
             <p className="text-secondary small mb-0">
-              Asiste a eventos para obtener tus diplomas y certificaciones.
+              {t('studentHome.getDiplomas')}
             </p>
           </div>
         </div>

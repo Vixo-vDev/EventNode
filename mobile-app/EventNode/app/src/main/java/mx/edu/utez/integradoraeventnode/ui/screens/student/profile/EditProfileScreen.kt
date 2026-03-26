@@ -28,8 +28,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.border
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.launch
+import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
+import mx.edu.utez.integradoraeventnode.utils.PreferencesHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,8 +58,12 @@ fun EditProfileScreen(
     var currentPasswordVisible by remember { mutableStateOf(false) }
     var newPasswordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-    
+
     var showSuccessDialog by remember { mutableStateOf(false) }
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    val scope = rememberCoroutineScope()
 
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -215,7 +222,41 @@ fun EditProfileScreen(
 
                 // Bottom Save Button
                 Button(
-                    onClick = { showSuccessDialog = true },
+                    onClick = {
+                        scope.launch {
+                            try {
+                                val token = PreferencesHelper.getBearerToken(context)
+                                val userId = PreferencesHelper.getUserId(context)
+                                val lastNameParts = lastName.trim().split(Regex("\\s+"))
+                                val body = mapOf(
+                                    "nombre" to name,
+                                    "apellidoPaterno" to lastNameParts.getOrElse(0) { lastName },
+                                    "apellidoMaterno" to lastNameParts.getOrElse(1) { "" },
+                                    "sexo" to if (gender == "Masculino") "M" else if (gender == "Femenino") "F" else "",
+                                    "cuatrimestre" to quarter.replace("°", "").toIntOrNull()
+                                )
+                                val response = ApiClient.apiService.actualizarAlumno(token, userId, body)
+                                if (response.isSuccessful) {
+                                    // Update SharedPreferences
+                                    val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
+                                    prefs.edit()
+                                        .putString("nombre", name)
+                                        .putString("apellidoPaterno", lastNameParts.getOrElse(0) { lastName })
+                                        .putString("apellidoMaterno", lastNameParts.getOrElse(1) { "" })
+                                        .putString("sexo", if (gender == "Masculino") "M" else if (gender == "Femenino") "F" else "")
+                                        .putInt("cuatrimestre", quarter.replace("°", "").toIntOrNull() ?: 0)
+                                        .apply()
+                                    showSuccessDialog = true
+                                } else {
+                                    errorMessage = "Error al guardar los datos. Intenta nuevamente."
+                                    showErrorDialog = true
+                                }
+                            } catch (e: Exception) {
+                                errorMessage = "Error: ${e.message}"
+                                showErrorDialog = true
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp)
@@ -229,10 +270,18 @@ fun EditProfileScreen(
         }
     }
 
+    // Error Dialog
+    if (showErrorDialog) {
+        ErrorDialog(
+            message = errorMessage,
+            onDismiss = { showErrorDialog = false }
+        )
+    }
+
     // Success Dialog
     if (showSuccessDialog) {
         SuccessDialog(
-            onBackToProfile = { 
+            onBackToProfile = {
                 showSuccessDialog = false
                 onBack()
             },
@@ -241,6 +290,52 @@ fun EditProfileScreen(
                 onHome()
             }
         )
+    }
+}
+
+@Composable
+private fun ErrorDialog(message: String, onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier.size(80.dp).clip(CircleShape).background(Color(0xFFFEE5E5)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFFE74C3C)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("✕", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(text = "Error al guardar", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                ) {
+                    Text("Entendido", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
     }
 }
 

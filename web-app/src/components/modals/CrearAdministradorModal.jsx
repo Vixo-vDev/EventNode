@@ -1,16 +1,20 @@
+import { useTranslation } from '../../i18n/I18nContext'
+
 function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmit }) {
+  const { t } = useTranslation()
+
   return (
     <div className="modal fade" id="crearAdminModal" tabIndex="-1" aria-labelledby="crearAdminModalLabel" aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content border-0 rounded-4 shadow bg-white">
           <div className="modal-header border-0 px-4 pt-4 pb-0">
             <div>
-              <h5 className="fw-bold mb-1 text-dark" id="crearAdminModalLabel">Crear Administrador</h5>
+              <h5 className="fw-bold mb-1 text-dark" id="crearAdminModalLabel">{t('createAdmin.title')}</h5>
               <p className="text-secondary small mb-0" style={{ fontSize: '13px' }}>
-                Registrar una nueva cuenta de administrador en la plataforma.
+                {t('createAdmin.subtitle')}
               </p>
             </div>
-            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label={t('common.close')}></button>
           </div>
 
           <form onSubmit={onSubmit}>
@@ -22,12 +26,12 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
               )}
               <div className="row g-3">
                 <div className="col-12">
-                  <label className="form-label text-dark fw-bold small mb-2" style={{ fontSize: '12px' }}>Nombre</label>
+                  <label className="form-label text-dark fw-bold small mb-2" style={{ fontSize: '12px' }}>{t('createAdmin.name')}</label>
                   <input
                     type="text"
                     name="nombre"
                     className="form-control text-dark small"
-                    placeholder="Nombre(s)"
+                    placeholder={t('createAdmin.namePlaceholder')}
                     value={formData.nombre}
                     onChange={onChange}
                     required
@@ -35,12 +39,12 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                   />
                 </div>
                 <div className="col-12 col-md-6">
-                  <label className="form-label text-dark fw-bold small mb-2" style={{ fontSize: '12px' }}>Apellido Paterno</label>
+                  <label className="form-label text-dark fw-bold small mb-2" style={{ fontSize: '12px' }}>{t('auth.lastNameP')}</label>
                   <input
                     type="text"
                     name="apellidoPaterno"
                     className="form-control text-dark small"
-                    placeholder="Apellido paterno"
+                    placeholder={t('auth.lastNamePPlaceholder')}
                     value={formData.apellidoPaterno}
                     onChange={onChange}
                     required
@@ -48,19 +52,19 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                   />
                 </div>
                 <div className="col-12 col-md-6">
-                  <label className="form-label text-dark fw-bold small mb-2" style={{ fontSize: '12px' }}>Apellido Materno</label>
+                  <label className="form-label text-dark fw-bold small mb-2" style={{ fontSize: '12px' }}>{t('auth.lastNameM')}</label>
                   <input
                     type="text"
                     name="apellidoMaterno"
                     className="form-control text-dark small"
-                    placeholder="Apellido materno (opcional)"
+                    placeholder={t('auth.lastNameMPlaceholder')}
                     value={formData.apellidoMaterno}
                     onChange={onChange}
                     style={{ fontSize: '13px' }}
                   />
                 </div>
                 <div className="col-12">
-                  <label className="form-label text-dark fw-bold small mb-2" style={{ fontSize: '12px' }}>Correo Electrónico</label>
+                  <label className="form-label text-dark fw-bold small mb-2" style={{ fontSize: '12px' }}>{t('createAdmin.email')}</label>
                   <div className="input-group">
                     <span className="input-group-text bg-white border-end-0 text-secondary pe-2">
                       <i className="bi bi-envelope"></i>
@@ -69,7 +73,7 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                       type="email"
                       name="correo"
                       className="form-control border-start-0 ps-0 text-dark small"
-                      placeholder="correo@ejemplo.com"
+                      placeholder={t('createAdmin.emailPlaceholder')}
                       value={formData.correo}
                       onChange={onChange}
                       required
@@ -78,7 +82,7 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                   </div>
                 </div>
                 <div className="col-12">
-                  <label className="form-label text-dark fw-bold small mb-2" style={{ fontSize: '12px' }}>Contraseña</label>
+                  <label className="form-label text-dark fw-bold small mb-2" style={{ fontSize: '12px' }}>{t('auth.passwordLabel')}</label>
                   <div className="input-group">
                     <span className="input-group-text bg-white border-end-0 text-secondary pe-2">
                       <i className="bi bi-lock"></i>
@@ -87,7 +91,7 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                       type="password"
                       name="password"
                       className="form-control border-start-0 ps-0 text-dark small"
-                      placeholder="Mínimo 8 caracteres, 1 mayúscula, 1 número, 1 especial"
+                      placeholder={t('createAdmin.passwordHelp')}
                       value={formData.password}
                       onChange={onChange}
                       required
@@ -105,7 +109,7 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                 data-bs-dismiss="modal"
                 style={{ fontSize: '13px' }}
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
@@ -116,10 +120,10 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                 {isLoading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Creando...
+                    {t('createAdmin.creating')}
                   </>
                 ) : (
-                  'Crear Administrador'
+                  t('createAdmin.create')
                 )}
               </button>
             </div>

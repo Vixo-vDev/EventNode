@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { useTranslation } from '../../i18n/I18nContext'
 import { eventService } from '../../services/eventService'
 import { precheckinService } from '../../services/precheckinService'
 import { authService } from '../../services/authService'
 import eventDetailImg from '../../assets/events/event_detail.png'
 
 function StudentEventEnrolled() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const [evento, setEvento] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -48,7 +50,7 @@ function StudentEventEnrolled() {
     return (
       <div className="text-center py-5">
         <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Cargando...</span>
+          <span className="visually-hidden">{t('eventDetail.loading')}</span>
         </div>
       </div>
     )
@@ -57,9 +59,9 @@ function StudentEventEnrolled() {
   if (!evento) {
     return (
       <div className="text-center py-5">
-        <h5>Evento no encontrado</h5>
+        <h5>{t('eventDetail.eventNotFound')}</h5>
         <Link to="/estudiante/eventos" className="btn btn-primary btn-sm rounded-pill px-4 mt-2">
-          Volver a Eventos
+          {t('eventDetail.backToEvents')}
         </Link>
       </div>
     )
@@ -75,10 +77,10 @@ function StudentEventEnrolled() {
           className="text-secondary text-decoration-none small d-flex align-items-center gap-1"
         >
           <i className="bi bi-arrow-left"></i>
-          Regresar
+          {t('eventDetail.back')}
         </Link>
         <span className="text-secondary small">|</span>
-        <h5 className="fw-bold mb-0">Detalles del Evento</h5>
+        <h5 className="fw-bold mb-0">{t('eventDetail.scheduleDetails')}</h5>
       </div>
 
       <div className="rounded-4 overflow-hidden mb-4 position-relative"
@@ -95,7 +97,7 @@ function StudentEventEnrolled() {
             <span className="badge bg-primary rounded-pill">{evento.categoriaNombre || 'GENERAL'}</span>
             <span className="badge bg-success rounded-pill">
               <i className="bi bi-check-circle me-1"></i>
-              YA ESTÁS INSCRITO
+              {t('eventDetail.alreadyEnrolled')}
             </span>
           </div>
           <h2 className="fw-bold text-white mb-0">{evento.nombre}</h2>
@@ -108,7 +110,7 @@ function StudentEventEnrolled() {
             <div className="card-body p-4">
               <h6 className="fw-bold mb-3">
                 <i className="bi bi-info-circle text-primary me-2"></i>
-                Acerca de este evento
+                {t('eventDetail.about')}
               </h6>
               <p className="text-secondary small mb-0">
                 {evento.descripcion}
@@ -121,7 +123,7 @@ function StudentEventEnrolled() {
               <div className="card-body p-4">
                 <h6 className="fw-bold mb-3">
                   <i className="bi bi-people text-primary me-2"></i>
-                  Organizadores
+                  {t('eventDetail.organizers')}
                 </h6>
                 <div className="row g-3">
                   {evento.organizadores.map((org, idx) => (
@@ -146,14 +148,14 @@ function StudentEventEnrolled() {
         <div className="col-12 col-lg-4">
           <div className="card border-0 shadow-sm rounded-4">
             <div className="card-body p-4">
-              <h6 className="text-uppercase text-secondary small fw-bold mb-3">Detalles del Horario</h6>
+              <h6 className="text-uppercase text-secondary small fw-bold mb-3">{t('eventDetail.scheduleDetails')}</h6>
 
               <div className="d-flex align-items-start gap-3 mb-3">
                 <div className="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '36px', height: '36px' }}>
                   <i className="bi bi-calendar3 text-primary small"></i>
                 </div>
                 <div>
-                  <div className="text-secondary small">Fecha</div>
+                  <div className="text-secondary small">{t('eventDetail.date')}</div>
                   <div className="fw-semibold small">
                     {evento.fechaInicio ? new Date(evento.fechaInicio).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
                   </div>
@@ -165,7 +167,7 @@ function StudentEventEnrolled() {
                   <i className="bi bi-clock text-primary small"></i>
                 </div>
                 <div>
-                  <div className="text-secondary small">Horario</div>
+                  <div className="text-secondary small">{t('eventDetail.time')}</div>
                   <div className="fw-semibold small">
                     {evento.fechaInicio && evento.fechaFin
                       ? `${new Date(evento.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })} - ${new Date(evento.fechaFin).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`
@@ -179,7 +181,7 @@ function StudentEventEnrolled() {
                   <i className="bi bi-geo-alt text-primary small"></i>
                 </div>
                 <div>
-                  <div className="text-secondary small">Ubicación</div>
+                  <div className="text-secondary small">{t('eventDetail.location')}</div>
                   <div className="fw-semibold small">{evento.ubicacion || '—'}</div>
                 </div>
               </div>
@@ -189,7 +191,7 @@ function StudentEventEnrolled() {
                 onClick={handleCancelarInscripcion}
                 disabled={canceling}
               >
-                {canceling ? 'Cancelando...' : 'Cancelar Inscripción'}
+                {canceling ? 'Cancelando...' : t('eventDetail.cancelEnrollment')}
               </button>
             </div>
           </div>

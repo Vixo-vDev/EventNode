@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { authService } from '../services/authService'
+import { useTranslation } from '../i18n/I18nContext'
 
 function LoginForm({ onLogin }) {
+  const { t } = useTranslation()
   const [correo, setCorreo] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -37,7 +39,7 @@ function LoginForm({ onLogin }) {
       {error && <div className="alert alert-danger mb-3 p-2 small text-center">{error}</div>}
       <div className="mb-3">
         <label className="form-label small fw-semibold" htmlFor="loginEmail">
-          Correo Institucional
+          {t('auth.email')}
         </label>
         <div className="input-group">
           <span className="input-group-text bg-white border-end-0">
@@ -58,13 +60,13 @@ function LoginForm({ onLogin }) {
       <div className="mb-3">
         <div className="d-flex justify-content-between align-items-center mb-1">
           <label className="form-label small fw-semibold mb-0" htmlFor="loginPassword">
-            Contraseña
+            {t('auth.password')}
           </label>
           <Link
             to="/forgot-password"
             className="small text-primary text-decoration-none"
           >
-            ¿Haz olvidado la contraseña?
+            {t('auth.forgotPassword')}
           </Link>
         </div>
         <div className="input-group">
@@ -95,7 +97,7 @@ function LoginForm({ onLogin }) {
           onChange={(e) => setKeepSession(e.target.checked)}
         />
         <label className="form-check-label small" htmlFor="keepSession">
-          Mantener Sesión Iniciada
+          {t('auth.keepSession')}
         </label>
       </div>
 
@@ -104,18 +106,18 @@ function LoginForm({ onLogin }) {
         className="btn btn-primary w-100 py-2 rounded-pill fw-semibold"
         disabled={isLoading}
       >
-        {isLoading ? 'Iniciando Sesión...' : (
-          <>Iniciar Sesión <i className="bi bi-arrow-right ms-1"></i></>
+        {isLoading ? t('auth.loggingIn') : (
+          <>{t('auth.login')} <i className="bi bi-arrow-right ms-1"></i></>
         )}
       </button>
 
       <p className="text-center mt-4 mb-0 small text-secondary">
-        ¿No tienes una cuenta?{' '}
+        {t('auth.noAccount')}{' '}
         <Link
           to="/register"
           className="text-primary text-decoration-none fw-semibold"
         >
-          Crea una cuenta
+          {t('auth.createAccount')}
         </Link>
       </p>
     </form>

@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { authService } from '../../services/authService'
+import { useTranslation } from '../../i18n/I18nContext'
 
 function CambiarContrasenaModal({ correo }) {
+  const { t } = useTranslation()
   // Flow: 'send' -> 'code' -> 'newPassword' -> 'success'
   const [step, setStep] = useState('send')
   const [loading, setLoading] = useState(false)
@@ -168,9 +170,9 @@ function CambiarContrasenaModal({ correo }) {
                   style={{ width: '48px', height: '48px' }}>
                   <i className="bi bi-arrow-repeat text-primary fs-4"></i>
                 </div>
-                <h5 className="fw-bold mb-2">Cambiar Contraseña</h5>
+                <h5 className="fw-bold mb-2">{t('changePassword.title')}</h5>
                 <p className="text-secondary small mb-4">
-                  Te enviaremos un código de verificación a <strong>{correo}</strong> para confirmar tu identidad.
+                  {t('changePassword.sendCodeMsg').replace('{{email}}', correo)}
                 </p>
                 <button
                   className="btn btn-primary rounded-pill w-100 fw-semibold mb-2"
@@ -180,16 +182,16 @@ function CambiarContrasenaModal({ correo }) {
                   {loading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                      Enviando...
+                      {t('changePassword.sending')}
                     </>
-                  ) : 'Enviar código'}
+                  ) : t('changePassword.sendCode')}
                 </button>
                 <button
                   type="button"
                   className="btn btn-link text-secondary text-decoration-none small w-100"
                   data-bs-dismiss="modal"
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
               </div>
             )}
@@ -201,9 +203,9 @@ function CambiarContrasenaModal({ correo }) {
                   style={{ width: '48px', height: '48px' }}>
                   <i className="bi bi-envelope-check text-primary fs-4"></i>
                 </div>
-                <h5 className="fw-bold mb-2">Verificar Código</h5>
+                <h5 className="fw-bold mb-2">{t('passwordRecovery.verifyCode')}</h5>
                 <p className="text-secondary small mb-4">
-                  Ingresa el código de 6 dígitos que enviamos a <strong>{correo}</strong>
+                  {t('changePassword.codeMsg').replace('{{email}}', correo)}
                 </p>
                 <div className="d-flex justify-content-center gap-2 mb-4" onPaste={handleCodePaste}>
                   {codigo.map((digit, i) => (
@@ -229,18 +231,18 @@ function CambiarContrasenaModal({ correo }) {
                   {loading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                      Verificando...
+                      {t('changePassword.verifying')}
                     </>
-                  ) : 'Verificar'}
+                  ) : t('passwordRecovery.verify')}
                 </button>
                 <p className="text-secondary small mb-0">
-                  ¿No recibiste el código?{' '}
+                  {t('passwordRecovery.noCode')}{' '}
                   <button
                     className="btn btn-link text-primary text-decoration-underline small p-0 border-0"
                     onClick={handleResendCode}
                     disabled={loading}
                   >
-                    Reenviar código
+                    {t('passwordRecovery.resendCode')}
                   </button>
                 </p>
               </div>
@@ -254,13 +256,13 @@ function CambiarContrasenaModal({ correo }) {
                     style={{ width: '32px', height: '32px' }}>
                     <i className="bi bi-shield-lock text-primary small"></i>
                   </div>
-                  <h6 className="fw-bold mb-0">Establecer nueva contraseña</h6>
+                  <h6 className="fw-bold mb-0">{t('passwordRecovery.setNewPassword')}</h6>
                 </div>
                 <p className="text-secondary small mb-4">
-                  Crea una contraseña segura que no hayas utilizado antes.
+                  {t('passwordRecovery.securePasswordMsg')}
                 </p>
                 <div className="mb-3">
-                  <label className="form-label text-secondary small">Nueva contraseña</label>
+                  <label className="form-label text-secondary small">{t('passwordRecovery.newPassword')}</label>
                   <div className="input-group">
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -275,24 +277,24 @@ function CambiarContrasenaModal({ correo }) {
                   </div>
                 </div>
                 <div className="mb-3">
-                  <div className="text-uppercase text-secondary small fw-bold mb-2">Requisitos de seguridad</div>
+                  <div className="text-uppercase text-secondary small fw-bold mb-2">{t('passwordRecovery.securityRequirements')}</div>
                   <div className="d-flex flex-column gap-1">
                     <div className={`d-flex align-items-center gap-2 small ${hasMinLength ? 'text-success' : 'text-secondary'}`}>
                       <i className={`bi ${hasMinLength ? 'bi-check-circle-fill' : 'bi-circle'}`} style={{ fontSize: '10px' }}></i>
-                      Mínimo 8 caracteres
+                      {t('passwordRecovery.min8Chars')}
                     </div>
                     <div className={`d-flex align-items-center gap-2 small ${hasUppercase ? 'text-success' : 'text-secondary'}`}>
                       <i className={`bi ${hasUppercase ? 'bi-check-circle-fill' : 'bi-circle'}`} style={{ fontSize: '10px' }}></i>
-                      Al menos una letra mayúscula
+                      {t('passwordRecovery.oneUppercase')}
                     </div>
                     <div className={`d-flex align-items-center gap-2 small ${hasSpecialChar ? 'text-success' : 'text-secondary'}`}>
                       <i className={`bi ${hasSpecialChar ? 'bi-check-circle-fill' : 'bi-circle'}`} style={{ fontSize: '10px' }}></i>
-                      Un carácter especial (#, $, etc.)
+                      {t('passwordRecovery.oneSpecial')}
                     </div>
                   </div>
                 </div>
                 <div className="mb-4">
-                  <label className="form-label text-secondary small">Confirmar nueva contraseña</label>
+                  <label className="form-label text-secondary small">{t('passwordRecovery.confirmPassword')}</label>
                   <div className="input-group">
                     <input
                       type={showConfirm ? 'text' : 'password'}
@@ -306,7 +308,7 @@ function CambiarContrasenaModal({ correo }) {
                     </button>
                   </div>
                   {confirmPassword && !passwordsMatch && (
-                    <div className="text-danger small mt-1">Las contraseñas no coinciden</div>
+                    <div className="text-danger small mt-1">{t('passwordRecovery.passwordMismatch')}</div>
                   )}
                 </div>
                 <button
@@ -317,12 +319,12 @@ function CambiarContrasenaModal({ correo }) {
                   {loading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                      Restableciendo...
+                      {t('passwordRecovery.resetting')}
                     </>
-                  ) : 'Restablecer contraseña'}
+                  ) : t('passwordRecovery.resetPassword')}
                 </button>
                 <button type="button" className="btn btn-link text-secondary text-decoration-none small w-100" data-bs-dismiss="modal">
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
               </div>
             )}
@@ -334,15 +336,15 @@ function CambiarContrasenaModal({ correo }) {
                   style={{ width: '64px', height: '64px' }}>
                   <i className="bi bi-check-circle-fill text-success fs-2"></i>
                 </div>
-                <h5 className="fw-bold mb-2">¡Contraseña Actualizada!</h5>
+                <h5 className="fw-bold mb-2">{t('passwordRecovery.passwordUpdated')}</h5>
                 <p className="text-secondary small mb-4">
-                  Tu contraseña ha sido cambiada con éxito.
+                  {t('passwordRecovery.passwordUpdatedMsg')}
                 </p>
                 <button
                   className="btn btn-primary rounded-pill w-100 fw-semibold"
                   onClick={closeModal}
                 >
-                  Aceptar
+                  {t('passwordRecovery.accept')}
                 </button>
               </div>
             )}

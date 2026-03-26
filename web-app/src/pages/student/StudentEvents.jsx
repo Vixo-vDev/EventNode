@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from '../../i18n/I18nContext'
 import { eventService } from '../../services/eventService'
 import EventCard from '../../components/EventCard'
 import eventAi from '../../assets/events/event_ai.png'
@@ -9,6 +10,7 @@ import eventUiux from '../../assets/events/event_uiux.png'
 const fallbackImages = [eventAi, eventMarketing, eventUiux]
 
 function StudentEvents() {
+  const { t } = useTranslation()
   const [eventos, setEventos] = useState([])
   const [categorias, setCategorias] = useState([])
   const [loading, setLoading] = useState(true)
@@ -67,9 +69,9 @@ function StudentEvents() {
     <div>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
         <div>
-          <h2 className="fw-bold mb-1">Explorar Eventos</h2>
+          <h2 className="fw-bold mb-1">{t('studentEvents.title')}</h2>
           <p className="text-secondary small mb-0">
-            Descubre y únete a los próximos eventos académicos y talleres.
+            {t('studentEvents.subtitle')}
           </p>
         </div>
         <div className="input-group shadow-sm rounded-3 overflow-hidden" style={{ maxWidth: '280px' }}>
@@ -79,7 +81,7 @@ function StudentEvents() {
           <input
             type="text"
             className="form-control border-start-0 border-0 shadow-none"
-            placeholder="Buscar por nombre..."
+            placeholder={t('studentEvents.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -89,12 +91,12 @@ function StudentEvents() {
       <ul className="nav nav-tabs mb-3">
         <li className="nav-item">
           <Link to="/estudiante/eventos" className="nav-link active fw-semibold small">
-            Explorar los Eventos
+            {t('studentEvents.exploreTab')}
           </Link>
         </li>
         <li className="nav-item">
           <Link to="/estudiante/mis-eventos" className="nav-link text-secondary small">
-            Mis Eventos
+            {t('studentEvents.myEventsTab')}
           </Link>
         </li>
       </ul>
@@ -105,7 +107,7 @@ function StudentEvents() {
           className={`btn btn-sm rounded-pill px-3 fw-semibold ${!activeCategory ? 'btn-primary' : 'btn-outline-secondary'}`}
           onClick={() => setActiveCategory('')}
         >
-          Todas
+          {t('studentEvents.allCategories')}
         </button>
         {categorias.map(cat => (
           <button
@@ -148,9 +150,9 @@ function StudentEvents() {
             <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
               <i className="bi bi-calendar-plus text-primary fs-3"></i>
             </div>
-            <h6 className="fw-bold mb-1">No se encontraron eventos</h6>
+            <h6 className="fw-bold mb-1">{t('studentEvents.noEvents')}</h6>
             <p className="text-secondary small mb-0">
-              {search || activeCategory ? 'Intenta con otros filtros de búsqueda.' : 'Aún no se han publicado eventos. Vuelve pronto para descubrir nuevas actividades.'}
+              {search || activeCategory ? t('studentEvents.noEventsMsg') : t('studentEvents.noEventsMsg')}
             </p>
           </div>
         </div>

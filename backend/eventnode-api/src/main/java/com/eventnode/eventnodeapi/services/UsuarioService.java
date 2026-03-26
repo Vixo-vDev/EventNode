@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -138,13 +139,40 @@ public class UsuarioService {
     public void cambiarEstado(Integer idUsuario) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-        
+
         if ("ACTIVO".equals(usuario.getEstado())) {
             usuario.setEstado("INACTIVO");
         } else {
             usuario.setEstado("ACTIVO");
         }
-        
+
         usuarioRepository.save(usuario);
+    }
+
+    @Transactional
+    public PerfilResponse actualizarPerfil(Integer idUsuario, Map<String, Object> datos) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        if (datos.containsKey("nombre")) {
+            String nombre = (String) datos.get("nombre");
+            if (nombre == null || nombre.trim().isEmpty()) {
+                throw new IllegalArgumentException("El nombre es obligatorio");
+            }
+            usuario.setNombre(nombre.trim());
+        }
+        if (datos.containsKey("apellidoPaterno")) {
+            String ap = (String) datos.get("apellidoPaterno");
+            if (ap == null || ap.trim().isEmpty()) {
+                throw new IllegalArgumentException("El apellido paterno es obligatorio");
+            }
+            usuario.setApellidoPaterno(ap.trim());
+        }
+        if (datos.containsKey("apellidoMaterno")) {
+            usuario.setApellidoMaterno(datos.get("apellidoMaterno") != null ? ((String) datos.get("apellidoMaterno")).trim() : null);
+        }
+
+        usuarioRepository.save(usuario);
+        return obtenerPerfil(idUsuario);
     }
 }

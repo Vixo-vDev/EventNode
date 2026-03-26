@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { eventService } from '../../services/eventService'
+import { useTranslation } from '../../i18n/I18nContext'
 
 function EditarEventoModal({ evento, categorias = [], onSubmit }) {
+  const { t } = useTranslation()
   const fileInputRef = useRef(null)
   const formRef = useRef(null)
   const [bannerPreview, setBannerPreview] = useState(null)
@@ -193,23 +195,23 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
         <form ref={formRef} noValidate className="modal-content border-0 rounded-4 shadow">
           <div className="modal-header border-0 px-4 pt-4 pb-0">
             <div>
-              <h5 className="fw-bold mb-1">Editar Evento</h5>
+              <h5 className="fw-bold mb-1">{t('editEvent.title')}</h5>
               <p className="text-secondary small mb-0">
-                Actualiza la información detallada de tu evento en EventNode.
+                {t('editEvent.subtitle')}
               </p>
             </div>
-            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('common.close')}></button>
           </div>
           <div className="modal-body px-4 py-3">
             {/* Banner */}
             <div className="mb-4">
-              <label className="form-label fw-semibold small">Banner del Evento</label>
+              <label className="form-label fw-semibold small">{t('editEvent.changeBanner')}</label>
               <input type="file" ref={fileInputRef} accept="image/*" className="d-none" onChange={handleBannerChange} />
               <div className="rounded-3 overflow-hidden position-relative" style={{ cursor: 'pointer' }} onClick={handleBannerClick}>
                 {bannerPreview ? (
                   <img
                     src={bannerPreview}
-                    alt="Banner del evento"
+                    alt={t('editEvent.changeBanner')}
                     className="w-100"
                     style={{ height: '180px', objectFit: 'cover' }}
                   />
@@ -219,12 +221,12 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
                     style={{ border: '2px dashed #dee2e6', height: '180px' }}
                   >
                     <i className="bi bi-image text-secondary fs-3 mb-2"></i>
-                    <div className="text-secondary small">Haz clic para seleccionar un banner</div>
+                    <div className="text-secondary small">{t('editEvent.selectBanner')}</div>
                   </div>
                 )}
                 {bannerPreview && (
                   <div className="position-absolute top-50 start-50 translate-middle bg-dark bg-opacity-50 text-white px-3 py-2 rounded-pill d-flex align-items-center gap-2" style={{ pointerEvents: 'none' }}>
-                    <i className="bi bi-camera"></i> Cambiar Banner
+                    <i className="bi bi-camera"></i> {t('editEvent.changeBanner')}
                   </div>
                 )}
               </div>
@@ -233,23 +235,23 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
             {/* Nombre + Ubicación */}
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Nombre del Evento *</label>
+                <label className="form-label fw-semibold small">{t('editEvent.eventName')}</label>
                 <input
                   type="text"
                   name="nombre"
                   className="form-control"
-                  placeholder="Nombre del evento"
+                  placeholder={t('editEvent.eventName')}
                   value={formData.nombre}
                   onChange={handleChange}
                 />
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Ubicación *</label>
+                <label className="form-label fw-semibold small">{t('editEvent.location')}</label>
                 <input
                   type="text"
                   name="ubicacion"
                   className="form-control"
-                  placeholder="Ubicación del evento"
+                  placeholder={t('editEvent.location')}
                   value={formData.ubicacion}
                   onChange={handleChange}
                 />
@@ -258,12 +260,12 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
 
             {/* Descripción */}
             <div className="mb-3">
-              <label className="form-label fw-semibold small">Descripción *</label>
+              <label className="form-label fw-semibold small">{t('editEvent.description')}</label>
               <textarea
                 name="descripcion"
                 className="form-control"
                 rows="3"
-                placeholder="Descripción del evento..."
+                placeholder={t('editEvent.description')}
                 value={formData.descripcion}
                 onChange={handleChange}
               ></textarea>
@@ -296,14 +298,14 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
             {/* Categoría + Capacidad */}
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Categoría *</label>
+                <label className="form-label fw-semibold small">{t('editEvent.category')}</label>
                 <select
                   name="idCategoria"
                   className="form-select"
                   value={formData.idCategoria}
                   onChange={handleChange}
                 >
-                  <option value="">Seleccionar...</option>
+                  <option value="">{t('editEvent.selectCategory')}</option>
                   {categorias.map(cat => (
                     <option key={cat.idCategoria} value={cat.idCategoria}>
                       {cat.nombre}
@@ -312,12 +314,12 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
                 </select>
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Capacidad Máxima *</label>
+                <label className="form-label fw-semibold small">{t('editEvent.maxCapacity')}</label>
                 <input
                   type="number"
                   name="capacidadMaxima"
                   className="form-control"
-                  placeholder="Ej: 100"
+                  placeholder={t('editEvent.capacityPlaceholder')}
                   min="1"
                   value={formData.capacidadMaxima}
                   onChange={handleChange}
@@ -355,7 +357,7 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
 
             {/* Organizador con búsqueda y etiquetas */}
             <div className="mb-2" ref={orgContainerRef} style={{ position: 'relative' }}>
-              <label className="form-label fw-semibold small">Organizador (opcional)</label>
+              <label className="form-label fw-semibold small">{t('editEvent.organizer')}</label>
               <div
                 className="d-flex flex-wrap align-items-center gap-2 form-control p-2"
                 style={{ minHeight: '38px', cursor: 'text' }}
@@ -380,7 +382,7 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
                   ref={orgInputRef}
                   type="text"
                   className="border-0 flex-grow-1 small"
-                  placeholder={selectedOrgs.length === 0 ? 'Escribe un nombre y presiona Enter...' : 'Agregar otro...'}
+                  placeholder={selectedOrgs.length === 0 ? t('editEvent.organizerPlaceholder') : t('editEvent.addAnother')}
                   style={{ outline: 'none', minWidth: '120px', fontSize: '13px' }}
                   value={orgQuery}
                   onChange={(e) => setOrgQuery(e.target.value)}
@@ -422,14 +424,14 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
                 </div>
               )}
               <div className="text-secondary mt-1" style={{ fontSize: '11px' }}>
-                Busca un organizador existente y presiona Enter para agregarlo como etiqueta.
+                {t('editEvent.organizerHelp')}
               </div>
             </div>
           </div>
 
           <div className="modal-footer border-top px-4 py-3">
             <button type="button" className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -440,12 +442,12 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
               {isLoading ? (
                 <>
                   <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                  Actualizando...
+                  {t('editEvent.updating')}
                 </>
               ) : (
                 <>
                   <i className="bi bi-check-circle"></i>
-                  Actualizar Evento
+                  {t('editEvent.updateEvent')}
                 </>
               )}
             </button>
@@ -459,8 +461,8 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
               <div className="mb-3">
                 <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '3rem' }}></i>
               </div>
-              <h5>¡Evento Actualizado!</h5>
-              <p className="text-secondary small">Los cambios se han guardado exitosamente.</p>
+              <h5>{t('editEvent.eventUpdated')}</h5>
+              <p className="text-secondary small">{t('editEvent.changesSaved')}</p>
               <button className="btn btn-primary rounded-pill px-4 mt-2 mx-auto" onClick={() => {
                 setShowSuccess(false)
                 const modalEl = document.getElementById('editarEventoModal')
@@ -469,7 +471,7 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
                   if (bsModal) bsModal.hide()
                 }
               }}>
-                Aceptar
+                {t('common.accept')}
               </button>
           </div>
         </div>
@@ -481,9 +483,9 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
               <div className="mb-3">
                 <i className="bi bi-x-circle-fill text-danger" style={{ fontSize: '3rem' }}></i>
               </div>
-              <h5>Revisa los datos</h5>
-              <p className="text-secondary small">Por favor, asegúrate de completar todos los campos obligatorios (*) antes de continuar.</p>
-              <button className="btn btn-danger rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowError(false)}>Entendido</button>
+              <h5>{t('editEvent.reviewData')}</h5>
+              <p className="text-secondary small">{t('editEvent.requiredFields')}</p>
+              <button className="btn btn-danger rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowError(false)}>{t('common.understood')}</button>
           </div>
         </div>
       )}

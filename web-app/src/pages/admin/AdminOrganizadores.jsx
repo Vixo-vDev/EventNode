@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
+import { useTranslation } from '../../i18n/I18nContext'
 import { eventService } from '../../services/eventService'
 import { closeModal } from '../../services/apiHelper'
 
@@ -7,6 +8,7 @@ const INITIAL_FORM = { nombre: '', correo: '', descripcion: '' }
 const DESC_MAX_LENGTH = 60
 
 function AdminOrganizadores() {
+  const { t } = useTranslation()
   const [organizadores, setOrganizadores] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -64,17 +66,17 @@ function AdminOrganizadores() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formData.nombre.trim()) {
-      setFormError('El nombre es obligatorio')
+      setFormError(t('organizers.nameRequired'))
       return
     }
     setFormLoading(true)
     try {
       if (editingId) {
         await eventService.actualizarOrganizador(editingId, formData)
-        toast.success('Organizador actualizado')
+        toast.success(t('organizers.organizerUpdated'))
       } else {
         await eventService.crearOrganizador(formData)
-        toast.success('Organizador creado')
+        toast.success(t('organizers.organizerCreated'))
       }
       setFormData(INITIAL_FORM)
       setEditingId(null)
@@ -94,7 +96,7 @@ function AdminOrganizadores() {
     setDeleteLoading(true)
     try {
       await eventService.eliminarOrganizador(deleteTarget.idOrganizador)
-      toast.success('Organizador eliminado')
+      toast.success(t('organizers.organizerDeleted'))
       setDeleteTarget(null)
       closeModal('deleteOrgModal')
       setLoading(true)
@@ -110,9 +112,9 @@ function AdminOrganizadores() {
     <div>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
-          <h2 className="fw-bold mb-1">Organizadores</h2>
+          <h2 className="fw-bold mb-1">{t('organizers.title')}</h2>
           <p className="text-secondary small mb-0">
-            Administra los organizadores que pueden asociarse a los eventos.
+            {t('organizers.subtitle')}
           </p>
         </div>
         <button
@@ -122,7 +124,7 @@ function AdminOrganizadores() {
           onClick={openCreate}
         >
           <i className="bi bi-plus-circle"></i>
-          Nuevo Organizador
+          {t('organizers.newOrganizer')}
         </button>
       </div>
 
@@ -135,7 +137,7 @@ function AdminOrganizadores() {
             <input
               type="text"
               className="form-control bg-transparent border-0 shadow-none small"
-              placeholder="Buscar por nombre o correo..."
+              placeholder={t('organizers.searchPlaceholder')}
               style={{ fontSize: '13px' }}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -147,7 +149,7 @@ function AdminOrganizadores() {
           {loading ? (
             <div className="text-center py-5">
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Cargando...</span>
+                <span className="visually-hidden">{t('common.loading')}</span>
               </div>
             </div>
           ) : filtered.length > 0 ? (
@@ -155,10 +157,10 @@ function AdminOrganizadores() {
               <table className="table table-hover align-middle mb-0">
                 <thead>
                   <tr>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom ps-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>Nombre</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Correo</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Descripcion</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom text-end pe-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>Acciones</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom ps-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>{t('organizers.name')}</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>{t('organizers.email')}</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>{t('organizers.description')}</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom text-end pe-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>{t('organizers.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="border-top-0">
@@ -221,16 +223,16 @@ function AdminOrganizadores() {
               <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
                 <i className="bi bi-building text-primary fs-4"></i>
               </div>
-              <h6 className="fw-bold mb-1">No hay organizadores registrados</h6>
+              <h6 className="fw-bold mb-1">{t('organizers.noOrganizers')}</h6>
               <p className="text-secondary small mb-0">
-                Crea organizadores para asociarlos a tus eventos.
+                {t('organizers.createMsg')}
               </p>
             </div>
           )}
         </div>
         <div className="card-footer bg-transparent border-top p-3">
           <span className="text-secondary small">
-            Mostrando {filtered.length} de {organizadores.length} organizadores
+            {t('organizers.showing', { current: filtered.length, total: organizadores.length })}
           </span>
         </div>
       </div>
@@ -240,26 +242,26 @@ function AdminOrganizadores() {
         <div className="modal-dialog modal-dialog-centered">
           <form onSubmit={handleSubmit} noValidate className="modal-content border-0 rounded-4 shadow">
             <div className="modal-header border-0 px-4 pt-4 pb-0">
-              <h5 className="fw-bold">{editingId ? 'Editar Organizador' : 'Nuevo Organizador'}</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              <h5 className="fw-bold">{editingId ? t('organizers.editOrganizer') : t('organizers.newOrganizer')}</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('common.close')}></button>
             </div>
             <div className="modal-body px-4 py-3">
               {formError && (
                 <div className="alert alert-danger small p-2 mb-3">{formError}</div>
               )}
               <div className="mb-3">
-                <label className="form-label fw-semibold small">Nombre *</label>
+                <label className="form-label fw-semibold small">{t('organizers.name')} *</label>
                 <input
                   type="text"
                   name="nombre"
                   className="form-control"
-                  placeholder="Nombre del organizador"
+                  placeholder={t('organizers.name')}
                   value={formData.nombre}
                   onChange={handleChange}
                 />
               </div>
               <div className="mb-3">
-                <label className="form-label fw-semibold small">Correo</label>
+                <label className="form-label fw-semibold small">{t('organizers.email')}</label>
                 <input
                   type="email"
                   name="correo"
@@ -270,21 +272,21 @@ function AdminOrganizadores() {
                 />
               </div>
               <div className="mb-3">
-                <label className="form-label fw-semibold small">Descripcion</label>
+                <label className="form-label fw-semibold small">{t('organizers.description')}</label>
                 <textarea
                   name="descripcion"
                   className="form-control"
                   rows="2"
-                  placeholder="Descripcion del organizador..."
+                  placeholder={t('organizers.descriptionPlaceholder')}
                   value={formData.descripcion}
                   onChange={handleChange}
                 ></textarea>
               </div>
             </div>
             <div className="modal-footer border-top px-4 py-3">
-              <button type="button" className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">{t('common.cancel')}</button>
               <button type="submit" className="btn btn-primary rounded-pill px-4" disabled={formLoading}>
-                {formLoading ? 'Guardando...' : editingId ? 'Actualizar' : 'Crear'}
+                {formLoading ? t('common.processing') : editingId ? t('organizers.update') : t('organizers.create')}
               </button>
             </div>
           </form>
@@ -298,14 +300,14 @@ function AdminOrganizadores() {
             <div className="mb-3">
               <i className="bi bi-exclamation-triangle-fill text-danger" style={{ fontSize: '3rem' }}></i>
             </div>
-            <h6 className="fw-bold mb-2">Eliminar Organizador</h6>
+            <h6 className="fw-bold mb-2">{t('organizers.deleteOrganizer')}</h6>
             <p className="text-secondary small mb-3">
-              ¿Estas seguro de eliminar a <strong>{deleteTarget?.nombre}</strong>? Esta accion no se puede deshacer.
+              {t('organizers.deleteConfirm', { name: deleteTarget?.nombre })}
             </p>
             <div className="d-flex justify-content-center gap-2">
-              <button className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">Cancelar</button>
+              <button className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">{t('common.cancel')}</button>
               <button className="btn btn-danger rounded-pill px-4" onClick={handleDelete} disabled={deleteLoading}>
-                {deleteLoading ? 'Eliminando...' : 'Eliminar'}
+                {deleteLoading ? t('organizers.deleting') : t('organizers.delete')}
               </button>
             </div>
           </div>
@@ -316,27 +318,27 @@ function AdminOrganizadores() {
         <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }}>
           <div className="bg-white border-0 rounded-4 shadow" style={{ maxWidth: '500px', width: '90%' }}>
               <div className="modal-header border-0 px-4 pt-4 pb-0">
-                <h5 className="fw-bold">Detalle del Organizador</h5>
+                <h5 className="fw-bold">{t('organizers.detail')}</h5>
                 <button type="button" className="btn-close" onClick={() => setDetailTarget(null)}></button>
               </div>
               <div className="modal-body px-4 py-3">
                 <div className="mb-3">
-                  <span className="text-secondary small fw-bold text-uppercase">Nombre</span>
+                  <span className="text-secondary small fw-bold text-uppercase">{t('organizers.name')}</span>
                   <div className="fw-semibold">{detailTarget.nombre}</div>
                 </div>
                 {detailTarget.correo && (
                   <div className="mb-3">
-                    <span className="text-secondary small fw-bold text-uppercase">Correo</span>
+                    <span className="text-secondary small fw-bold text-uppercase">{t('organizers.email')}</span>
                     <div>{detailTarget.correo}</div>
                   </div>
                 )}
                 <div>
-                  <span className="text-secondary small fw-bold text-uppercase">Descripción</span>
+                  <span className="text-secondary small fw-bold text-uppercase">{t('organizers.description')}</span>
                   <div className="mt-1" style={{ whiteSpace: 'pre-wrap' }}>{detailTarget.descripcion}</div>
                 </div>
               </div>
               <div className="modal-footer border-top px-4 py-3">
-                <button className="btn btn-primary rounded-pill px-4" onClick={() => setDetailTarget(null)}>Cerrar</button>
+                <button className="btn btn-primary rounded-pill px-4" onClick={() => setDetailTarget(null)}>{t('organizers.close')}</button>
               </div>
           </div>
         </div>

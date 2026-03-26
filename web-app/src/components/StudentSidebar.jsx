@@ -1,7 +1,9 @@
 import { NavLink, Link, useLocation } from 'react-router-dom'
+import { useTranslation } from '../i18n/I18nContext'
 
 function StudentSidebar() {
   const location = useLocation()
+  const { t } = useTranslation()
   const isEventosActive = location.pathname.startsWith('/estudiante/eventos') || location.pathname.startsWith('/estudiante/mis-eventos') || location.pathname.startsWith('/estudiante/evento')
 
   return (
@@ -12,7 +14,7 @@ function StudentSidebar() {
           <i className="bi bi-person-fill text-secondary"></i>
         </div>
         <div className="text-truncate">
-          <div className="fw-semibold small text-truncate text-dark">Estudiante</div>
+          <div className="fw-semibold small text-truncate text-dark">{t('nav.student')}</div>
           <div className="text-secondary small text-truncate">estudiante@utez.edu.mx</div>
         </div>
       </div>
@@ -25,7 +27,7 @@ function StudentSidebar() {
         }
       >
         <i className="bi bi-house"></i>
-        Inicio
+        {t('nav.home')}
       </NavLink>
 
       <Link
@@ -33,7 +35,7 @@ function StudentSidebar() {
         className={`d-flex align-items-center gap-2 px-3 py-2 text-decoration-none ${isEventosActive ? 'bg-primary bg-opacity-10 text-primary fw-semibold border-start border-3 border-primary' : 'text-secondary'}`}
       >
         <i className="bi bi-calendar-event"></i>
-        Eventos
+        {t('nav.events')}
       </Link>
 
       <NavLink
@@ -43,7 +45,7 @@ function StudentSidebar() {
         }
       >
         <i className="bi bi-award"></i>
-        Diplomas
+        {t('nav.diplomas')}
       </NavLink>
 
       <NavLink
@@ -53,7 +55,7 @@ function StudentSidebar() {
         }
       >
         <i className="bi bi-person"></i>
-        Perfil
+        {t('nav.profile')}
       </NavLink>
 
       <div className="mt-auto px-3 py-2">
@@ -64,7 +66,7 @@ function StudentSidebar() {
           data-bs-target="#logoutModal"
         >
           <i className="bi bi-box-arrow-left"></i>
-          Cerrar sesión
+          {t('nav.logout')}
         </button>
       </div>
     </nav>

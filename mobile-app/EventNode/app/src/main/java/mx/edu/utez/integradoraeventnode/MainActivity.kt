@@ -1,5 +1,6 @@
 package mx.edu.utez.integradoraeventnode
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import mx.edu.utez.integradoraeventnode.utils.LocaleHelper
 import mx.edu.utez.integradoraeventnode.utils.PreferencesHelper
 import mx.edu.utez.integradoraeventnode.ui.screens.auth.LoginScreen
 import mx.edu.utez.integradoraeventnode.ui.screens.auth.RegisterScreen
@@ -28,6 +30,10 @@ import mx.edu.utez.integradoraeventnode.ui.screens.student.agenda.*
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.onAttach(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

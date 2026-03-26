@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { useTranslation } from '../../i18n/I18nContext'
 import { diplomaService } from '../../services/diplomaService'
 import { eventService } from '../../services/eventService'
 import { closeModal } from '../../services/apiHelper'
@@ -9,6 +10,7 @@ import EditarDiplomaModal from '../../components/modals/EditarDiplomaModal'
 import ConfirmModal from '../../components/modals/ConfirmModal'
 
 function AdminDiplomas() {
+  const { t } = useTranslation()
   const [diplomas, setDiplomas] = useState([])
   const [loading, setLoading] = useState(true)
   const [eventos, setEventos] = useState([])
@@ -52,15 +54,15 @@ function AdminDiplomas() {
 
   const handleCreateDiploma = async () => {
     if (!formData.idEvento) {
-      toast.error('Selecciona un evento')
+      toast.error(t('diplomas.selectEvent'))
       return
     }
     if (!formData.plantillaPdf) {
-      toast.error('Sube una plantilla PDF')
+      toast.error(t('diplomas.uploadPdfTemplate'))
       return
     }
     if (!formData.firmaImagen) {
-      toast.error('Sube una imagen de firma')
+      toast.error(t('diplomas.uploadSignatureImage'))
       return
     }
     setCreating(true)
@@ -72,7 +74,7 @@ function AdminDiplomas() {
         plantillaPdf: formData.plantillaPdf,
         firmaImagen: formData.firmaImagen
       })
-      toast.success('Diploma creado exitosamente')
+      toast.success(t('diplomas.diplomaCreated'))
       setFormData({ idEvento: '', firma: '', diseno: 'Personalizado', plantillaPdf: '', firmaImagen: '' })
       closeModal('crearDiplomaModal')
       setLoading(true)
@@ -88,7 +90,7 @@ function AdminDiplomas() {
     setEmitting(idDiploma)
     try {
       const result = await diplomaService.emitirDiplomas(idDiploma)
-      toast.success(`${result.totalEmitidos} diploma(s) emitido(s) y enviado(s) por correo`)
+      toast.success(`${result.totalEmitidos} ${t('diplomas.diplomasEmittedAndSent')}`)
       setLoading(true)
       fetchDiplomas()
     } catch (err) {
@@ -102,7 +104,7 @@ function AdminDiplomas() {
     setEditing(true)
     try {
       const result = await diplomaService.actualizarDiploma(idDiploma, datos)
-      toast.success(result.mensaje || 'Diploma actualizado exitosamente')
+      toast.success(result.mensaje || t('diplomas.diplomaUpdatedSuccess'))
       closeModal('editarDiplomaModal')
       setSelectedDiploma(null)
       setLoading(true)
@@ -120,7 +122,7 @@ function AdminDiplomas() {
     try {
       await diplomaService.eliminarDiploma(diplomaToDelete.idDiploma)
       closeModal('confirmarEliminarDiplomaModal')
-      toast.success('Diploma eliminado exitosamente')
+      toast.success(t('diplomas.diplomaDeletedSuccess'))
       setDiplomaToDelete(null)
       setLoading(true)
       fetchDiplomas()
@@ -139,7 +141,7 @@ function AdminDiplomas() {
     <div>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
-          <h2 className="fw-bold mb-1">Gestión de Diplomas</h2>
+          <h2 className="fw-bold mb-1">{t('diplomas.title')}</h2>
         </div>
         <button
           className="btn btn-primary rounded-pill d-flex align-items-center gap-2 flex-shrink-0 px-4"
@@ -147,7 +149,7 @@ function AdminDiplomas() {
           data-bs-target="#crearDiplomaModal"
         >
           <i className="bi bi-plus-lg"></i>
-          Crear Nuevo Certificado
+          {t('diplomas.createNew')}
         </button>
       </div>
 
@@ -160,7 +162,7 @@ function AdminDiplomas() {
                   <i className="bi bi-file-earmark-check"></i>
                 </div>
               </div>
-              <div className="text-secondary small mb-1" style={{ fontSize: '13px' }}>Total de Certificaciones</div>
+              <div className="text-secondary small mb-1" style={{ fontSize: '13px' }}>{t('diplomas.totalCertifications')}</div>
               <h3 className="fw-bold mb-0">{totalCertificaciones}</h3>
             </div>
           </div>
@@ -173,7 +175,7 @@ function AdminDiplomas() {
                   <i className="bi bi-check-circle"></i>
                 </div>
               </div>
-              <div className="text-secondary small mb-1" style={{ fontSize: '13px' }}>Certificados Entregados</div>
+              <div className="text-secondary small mb-1" style={{ fontSize: '13px' }}>{t('diplomas.delivered')}</div>
               <h3 className="fw-bold mb-0">{totalEntregados}</h3>
             </div>
           </div>
@@ -186,7 +188,7 @@ function AdminDiplomas() {
                   <i className="bi bi-clock-history"></i>
                 </div>
               </div>
-              <div className="text-secondary small mb-1" style={{ fontSize: '13px' }}>Certificados Pendientes</div>
+              <div className="text-secondary small mb-1" style={{ fontSize: '13px' }}>{t('diplomas.pendingCerts')}</div>
               <h3 className="fw-bold mb-0">{totalPendientes}</h3>
             </div>
           </div>
@@ -196,7 +198,7 @@ function AdminDiplomas() {
       {loading ? (
         <div className="text-center py-5">
           <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Cargando...</span>
+            <span className="visually-hidden">{t('common.loading')}</span>
           </div>
         </div>
       ) : diplomas.length > 0 ? (
@@ -214,23 +216,23 @@ function AdminDiplomas() {
                       <div className="d-flex gap-2 mt-1">
                         {d.tienePlantilla && (
                           <span className="badge bg-success bg-opacity-10 text-success" style={{ fontSize: '10px' }}>
-                            <i className="bi bi-file-pdf me-1"></i>PDF
+                            <i className="bi bi-file-pdf me-1"></i>{t('diplomas.pdf')}
                           </span>
                         )}
                         {d.tieneFirma && (
                           <span className="badge bg-primary bg-opacity-10 text-primary" style={{ fontSize: '10px' }}>
-                            <i className="bi bi-pen me-1"></i>Firma
+                            <i className="bi bi-pen me-1"></i>{t('diplomas.signature')}
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
                   <div className="d-flex justify-content-between mb-2">
-                    <span className="text-secondary small">Emitidos</span>
+                    <span className="text-secondary small">{t('diplomas.emitted')}</span>
                     <span className="fw-bold small">{d.totalEmitidos || 0}</span>
                   </div>
                   <div className="d-flex justify-content-between mb-3">
-                    <span className="text-secondary small">Pendientes</span>
+                    <span className="text-secondary small">{t('diplomas.pendingStat')}</span>
                     <span className="fw-bold small">{d.totalPendientes || 0}</span>
                   </div>
                   {(d.totalPendientes || 0) > 0 && (
@@ -240,9 +242,9 @@ function AdminDiplomas() {
                       disabled={emitting === d.idDiploma}
                     >
                       {emitting === d.idDiploma ? (
-                        <><span className="spinner-border spinner-border-sm me-1" role="status"></span>Enviando...</>
+                        <><span className="spinner-border spinner-border-sm me-1" role="status"></span>{t('diplomas.sending')}</>
                       ) : (
-                        <><i className="bi bi-send me-1"></i>Emitir Diplomas</>
+                        <><i className="bi bi-send me-1"></i>{t('diplomas.emit')}</>
                       )}
                     </button>
                   )}
@@ -253,7 +255,7 @@ function AdminDiplomas() {
                       data-bs-target="#editarDiplomaModal"
                       onClick={() => setSelectedDiploma(d)}
                     >
-                      <i className="bi bi-pencil me-1"></i>Editar
+                      <i className="bi bi-pencil me-1"></i>{t('diplomas.edit')}
                     </button>
                     <button
                       className="btn btn-outline-danger btn-sm flex-grow-1 rounded-pill fw-semibold"
@@ -265,7 +267,7 @@ function AdminDiplomas() {
                       {deleting === d.idDiploma ? (
                         <><span className="spinner-border spinner-border-sm me-1" role="status"></span>...</>
                       ) : (
-                        <><i className="bi bi-trash me-1"></i>Eliminar</>
+                        <><i className="bi bi-trash me-1"></i>{t('diplomas.delete')}</>
                       )}
                     </button>
                   </div>
@@ -280,12 +282,12 @@ function AdminDiplomas() {
             <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
               <i className="bi bi-award text-primary fs-3"></i>
             </div>
-            <h6 className="fw-bold mb-1">No hay diplomas registrados</h6>
+            <h6 className="fw-bold mb-1">{t('diplomas.noDiplomas')}</h6>
             <p className="text-secondary small mb-2">
-              Crea eventos y registra asistencias para poder emitir diplomas y certificaciones.
+              {t('diplomas.createMsg')}
             </p>
             <button className="btn btn-primary btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#crearDiplomaModal">
-              Crear Primer Certificado
+              {t('diplomas.createFirst')}
             </button>
           </div>
         </div>
@@ -307,10 +309,10 @@ function AdminDiplomas() {
 
       <ConfirmModal
         id="confirmarEliminarDiplomaModal"
-        title="Eliminar Diploma"
-        message={diplomaToDelete ? `¿Estás seguro de eliminar el diploma del evento "${diplomaToDelete.nombreEvento}"? Esta acción no se puede deshacer.` : ''}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
+        title={t('diplomas.deleteTitle')}
+        message={diplomaToDelete ? t('diplomas.deleteConfirm', { name: diplomaToDelete.nombreEvento }) : ''}
+        confirmText={t('diplomas.delete')}
+        cancelText={t('common.cancel')}
         onConfirm={handleConfirmDelete}
         isLoading={!!deleting}
         variant="danger"

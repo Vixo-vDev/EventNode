@@ -4,8 +4,10 @@ import { asistenciaService } from '../../services/asistenciaService'
 import { precheckinService } from '../../services/precheckinService'
 import { diplomaService } from '../../services/diplomaService'
 import { userService } from '../../services/userService'
+import { useTranslation } from '../../i18n/I18nContext'
 
 function AdminAnalytics() {
+  const { t } = useTranslation()
   const [loading, setLoading] = useState(true)
   const [eventos, setEventos] = useState([])
   const [diplomas, setDiplomas] = useState([])
@@ -93,9 +95,9 @@ function AdminAnalytics() {
       <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
         <div className="text-center">
           <div className="spinner-border text-primary mb-3" role="status">
-            <span className="visually-hidden">Cargando...</span>
+            <span className="visually-hidden">{t('common.loading')}</span>
           </div>
-          <p className="text-secondary">Cargando analíticas...</p>
+          <p className="text-secondary">{t('analytics.loadingAnalytics')}</p>
         </div>
       </div>
     )
@@ -105,11 +107,11 @@ function AdminAnalytics() {
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h2 className="fw-bold mb-1">Analíticas</h2>
-          <p className="text-secondary mb-0">Resumen general de la plataforma</p>
+          <h2 className="fw-bold mb-1">{t('analytics.title')}</h2>
+          <p className="text-secondary mb-0">{t('analytics.subtitle')}</p>
         </div>
         <button className="btn btn-outline-primary btn-sm rounded-pill px-3" onClick={fetchAllData}>
-          <i className="bi bi-arrow-clockwise me-1"></i>Actualizar
+          <i className="bi bi-arrow-clockwise me-1"></i>{t('analytics.refresh')}
         </button>
       </div>
 
@@ -121,11 +123,11 @@ function AdminAnalytics() {
               <div className="rounded-3 bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style={{ width: '40px', height: '40px' }}>
                 <i className="bi bi-calendar-event text-primary"></i>
               </div>
-              <div className="text-secondary small mb-1">Total Eventos</div>
+              <div className="text-secondary small mb-1">{t('analytics.totalEvents')}</div>
               <div className="fw-bold fs-2">{totalEventos}</div>
               <div className="d-flex gap-2 mt-1" style={{ fontSize: '12px' }}>
-                <span className="text-success"><i className="bi bi-circle-fill me-1" style={{ fontSize: '6px' }}></i>{eventosActivos} activos</span>
-                <span className="text-secondary"><i className="bi bi-circle-fill me-1" style={{ fontSize: '6px' }}></i>{eventosTerminados} terminados</span>
+                <span className="text-success"><i className="bi bi-circle-fill me-1" style={{ fontSize: '6px' }}></i>{eventosActivos} {t('analytics.activeEvents')}</span>
+                <span className="text-secondary"><i className="bi bi-circle-fill me-1" style={{ fontSize: '6px' }}></i>{eventosTerminados} {t('analytics.finishedEvents')}</span>
               </div>
             </div>
           </div>
@@ -137,9 +139,9 @@ function AdminAnalytics() {
               <div className="rounded-3 bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style={{ width: '40px', height: '40px' }}>
                 <i className="bi bi-people-fill text-success"></i>
               </div>
-              <div className="text-secondary small mb-1">Tasa de Asistencia</div>
+              <div className="text-secondary small mb-1">{t('analytics.attendanceRate')}</div>
               <div className="fw-bold fs-2">{overallRate}%</div>
-              <div style={{ fontSize: '12px' }} className="text-secondary">{totalAsistencias} asistencias / {totalInscritos} inscritos</div>
+              <div style={{ fontSize: '12px' }} className="text-secondary">{t('analytics.attendanceFraction', { total: totalInscritos }).replace('asistencias', totalAsistencias)}</div>
             </div>
           </div>
         </div>
@@ -150,11 +152,11 @@ function AdminAnalytics() {
               <div className="rounded-3 bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style={{ width: '40px', height: '40px' }}>
                 <i className="bi bi-award-fill text-warning"></i>
               </div>
-              <div className="text-secondary small mb-1">Diplomas</div>
+              <div className="text-secondary small mb-1">{t('analytics.diplomasStat')}</div>
               <div className="fw-bold fs-2">{totalDiplomas}</div>
               <div className="d-flex gap-2 mt-1" style={{ fontSize: '12px' }}>
-                <span className="text-success">{diplomasEmitidos} emitidos</span>
-                <span className="text-warning">{diplomasPendientes} pendientes</span>
+                <span className="text-success">{diplomasEmitidos} {t('analytics.emitted')}</span>
+                <span className="text-warning">{diplomasPendientes} {t('analytics.pendingStat')}</span>
               </div>
             </div>
           </div>
@@ -166,11 +168,11 @@ function AdminAnalytics() {
               <div className="rounded-3 bg-info bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style={{ width: '40px', height: '40px' }}>
                 <i className="bi bi-person-fill text-info"></i>
               </div>
-              <div className="text-secondary small mb-1">Usuarios</div>
+              <div className="text-secondary small mb-1">{t('analytics.users')}</div>
               <div className="fw-bold fs-2">{totalUsuarios}</div>
               <div className="d-flex gap-2 mt-1" style={{ fontSize: '12px' }}>
-                <span className="text-primary">{estudiantes.length} estudiantes</span>
-                <span className="text-secondary">{admins.length} admins</span>
+                <span className="text-primary">{estudiantes.length} {t('analytics.studentsStat')}</span>
+                <span className="text-secondary">{admins.length} {t('analytics.adminsStat')}</span>
               </div>
             </div>
           </div>
@@ -184,7 +186,7 @@ function AdminAnalytics() {
             <div className="card-body p-3">
               <h6 className="fw-bold mb-3">
                 <i className="bi bi-bar-chart-fill text-primary me-2"></i>
-                Asistencia por Evento
+                {t('analytics.attendanceByEvent')}
               </h6>
               {topEvents.length > 0 ? (
                 <div>
@@ -209,7 +211,7 @@ function AdminAnalytics() {
               ) : (
                 <div className="text-center py-4">
                   <i className="bi bi-bar-chart text-secondary fs-1 d-block mb-2"></i>
-                  <p className="text-secondary small mb-0">No hay datos de asistencia disponibles</p>
+                  <p className="text-secondary small mb-0">{t('analytics.noAttendanceData')}</p>
                 </div>
               )}
             </div>
@@ -222,7 +224,7 @@ function AdminAnalytics() {
             <div className="card-body p-3">
               <h6 className="fw-bold mb-3">
                 <i className="bi bi-pie-chart-fill text-primary me-2"></i>
-                Estado de Eventos
+                {t('analytics.eventStatus')}
               </h6>
               {totalEventos > 0 ? (
                 <div>
@@ -249,7 +251,7 @@ function AdminAnalytics() {
                       </svg>
                       <div className="position-absolute top-50 start-50 translate-middle text-center">
                         <div className="fw-bold fs-4">{totalEventos}</div>
-                        <div className="text-secondary" style={{ fontSize: '10px' }}>TOTAL</div>
+                        <div className="text-secondary" style={{ fontSize: '10px' }}>{t('analytics.total')}</div>
                       </div>
                     </div>
                   </div>
@@ -258,21 +260,21 @@ function AdminAnalytics() {
                     <div className="d-flex justify-content-between align-items-center">
                       <div className="d-flex align-items-center gap-2">
                         <span className="rounded-circle bg-success" style={{ width: '10px', height: '10px', display: 'inline-block' }}></span>
-                        <span className="small">Activos</span>
+                        <span className="small">{t('analytics.activeLabel')}</span>
                       </div>
                       <span className="fw-semibold small">{eventosActivos}</span>
                     </div>
                     <div className="d-flex justify-content-between align-items-center">
                       <div className="d-flex align-items-center gap-2">
                         <span className="rounded-circle bg-secondary" style={{ width: '10px', height: '10px', display: 'inline-block' }}></span>
-                        <span className="small">Terminados</span>
+                        <span className="small">{t('analytics.finishedLabel')}</span>
                       </div>
                       <span className="fw-semibold small">{eventosTerminados}</span>
                     </div>
                     <div className="d-flex justify-content-between align-items-center">
                       <div className="d-flex align-items-center gap-2">
                         <span className="rounded-circle bg-danger" style={{ width: '10px', height: '10px', display: 'inline-block' }}></span>
-                        <span className="small">Cancelados</span>
+                        <span className="small">{t('analytics.cancelledLabel')}</span>
                       </div>
                       <span className="fw-semibold small">{eventosCancelados}</span>
                     </div>
@@ -281,7 +283,7 @@ function AdminAnalytics() {
               ) : (
                 <div className="text-center py-4">
                   <i className="bi bi-pie-chart text-secondary fs-1 d-block mb-2"></i>
-                  <p className="text-secondary small mb-0">Sin eventos registrados</p>
+                  <p className="text-secondary small mb-0">{t('analytics.noEventsRegistered')}</p>
                 </div>
               )}
             </div>
@@ -296,7 +298,7 @@ function AdminAnalytics() {
             <div className="card-body p-3">
               <h6 className="fw-bold mb-3">
                 <i className="bi bi-tags-fill text-primary me-2"></i>
-                Eventos por Categoría
+                {t('analytics.eventsByCategory')}
               </h6>
               {categoryData.length > 0 ? (
                 <div>
@@ -304,13 +306,13 @@ function AdminAnalytics() {
                     <div key={i} className="mb-3">
                       <div className="d-flex justify-content-between align-items-center mb-1">
                         <span className="small fw-medium">{cat.name}</span>
-                        <span className="badge bg-primary bg-opacity-10 text-primary small">{cat.total} eventos</span>
+                        <span className="badge bg-primary bg-opacity-10 text-primary small">{cat.total} {t('analytics.events')}</span>
                       </div>
                       <div className="progress" style={{ height: '6px' }}>
                         <div className="progress-bar bg-primary" style={{ width: `${totalEventos > 0 ? (cat.total / totalEventos) * 100 : 0}%` }}></div>
                       </div>
                       {cat.activos > 0 && (
-                        <div className="text-success mt-1" style={{ fontSize: '11px' }}>{cat.activos} activo{cat.activos > 1 ? 's' : ''}</div>
+                        <div className="text-success mt-1" style={{ fontSize: '11px' }}>{cat.activos} {t('analytics.activeCount')}</div>
                       )}
                     </div>
                   ))}
@@ -318,7 +320,7 @@ function AdminAnalytics() {
               ) : (
                 <div className="text-center py-4">
                   <i className="bi bi-tags text-secondary fs-1 d-block mb-2"></i>
-                  <p className="text-secondary small mb-0">Sin categorías</p>
+                  <p className="text-secondary small mb-0">{t('analytics.noEventsToShow')}</p>
                 </div>
               )}
             </div>
@@ -331,24 +333,24 @@ function AdminAnalytics() {
             <div className="card-body p-3">
               <h6 className="fw-bold mb-3">
                 <i className="bi bi-people-fill text-primary me-2"></i>
-                Demografía de Usuarios
+                {t('analytics.userDemographics')}
               </h6>
               {totalUsuarios > 0 ? (
                 <div>
                   {/* Role distribution */}
                   <div>
-                    <div className="small text-secondary mb-2 fw-semibold">Distribución por Rol</div>
+                    <div className="small text-secondary mb-2 fw-semibold">{t('analytics.roleDistribution')}</div>
                     <div className="row g-2">
                       <div className="col-6">
                         <div className="border rounded-3 p-2 text-center">
                           <div className="fw-bold fs-4 text-primary">{estudiantes.length}</div>
-                          <div className="text-secondary" style={{ fontSize: '11px' }}>Estudiantes</div>
+                          <div className="text-secondary" style={{ fontSize: '11px' }}>{t('analytics.studentsLabel')}</div>
                         </div>
                       </div>
                       <div className="col-6">
                         <div className="border rounded-3 p-2 text-center">
                           <div className="fw-bold fs-4 text-warning">{admins.length}</div>
-                          <div className="text-secondary" style={{ fontSize: '11px' }}>Administradores</div>
+                          <div className="text-secondary" style={{ fontSize: '11px' }}>{t('analytics.administratorsLabel')}</div>
                         </div>
                       </div>
                     </div>
@@ -357,7 +359,7 @@ function AdminAnalytics() {
               ) : (
                 <div className="text-center py-4">
                   <i className="bi bi-person text-secondary fs-1 d-block mb-2"></i>
-                  <p className="text-secondary small mb-0">Sin usuarios registrados</p>
+                  <p className="text-secondary small mb-0">{t('analytics.noEventsToShow')}</p>
                 </div>
               )}
             </div>
@@ -371,7 +373,7 @@ function AdminAnalytics() {
           <div className="p-3 pb-2">
             <h6 className="fw-bold mb-0">
               <i className="bi bi-table text-primary me-2"></i>
-              Detalle de Eventos
+              {t('analytics.eventDetails')}
             </h6>
           </div>
           {attendanceData.length > 0 ? (
@@ -379,12 +381,12 @@ function AdminAnalytics() {
               <table className="table table-hover mb-0 align-middle">
                 <thead className="border-top">
                   <tr>
-                    <th className="text-uppercase text-secondary small fw-semibold ps-3 py-3" style={{ fontSize: '11px' }}>Evento</th>
-                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>Categoría</th>
-                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>Estado</th>
-                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>Inscritos</th>
-                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>Asistencia</th>
-                    <th className="text-uppercase text-secondary small fw-semibold pe-3 py-3" style={{ fontSize: '11px' }}>Tasa</th>
+                    <th className="text-uppercase text-secondary small fw-semibold ps-3 py-3" style={{ fontSize: '11px' }}>{t('analytics.eventCol')}</th>
+                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>{t('analytics.categoryCol')}</th>
+                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>{t('events.status')}</th>
+                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>{t('analytics.enrolledCol')}</th>
+                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>{t('analytics.attendanceCol')}</th>
+                    <th className="text-uppercase text-secondary small fw-semibold pe-3 py-3" style={{ fontSize: '11px' }}>{t('analytics.rateCol')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -419,7 +421,7 @@ function AdminAnalytics() {
           ) : (
             <div className="text-center py-5">
               <i className="bi bi-inbox text-secondary fs-1 d-block mb-2"></i>
-              <p className="text-secondary small mb-0">No hay eventos para mostrar</p>
+              <p className="text-secondary small mb-0">{t('analytics.noEventsToShow')}</p>
             </div>
           )}
         </div>

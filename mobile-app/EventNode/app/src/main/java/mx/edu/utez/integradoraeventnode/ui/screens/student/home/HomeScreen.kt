@@ -169,7 +169,18 @@ fun HomeScreen(
                             textAlign = TextAlign.Center
                         )
                     } else {
-                        eventos.forEach { evento ->
+                        val filteredEventos = if (searchText.isBlank()) eventos else eventos.filter { it.nombre.contains(searchText, ignoreCase = true) }
+
+                        if (filteredEventos.isEmpty()) {
+                            Text(
+                                text = "No se encontraron eventos",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray,
+                                modifier = Modifier.fillMaxWidth().padding(32.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        } else {
+                            filteredEventos.forEach { evento ->
                             val cat = evento.nombreCategoria ?: "EVENTO"
                             val mainTextLength = if (evento.nombre.length > 15) 15 else evento.nombre.length
                             val main = evento.nombre.substring(0, mainTextLength).uppercase()
@@ -194,6 +205,7 @@ fun HomeScreen(
                                 onDetailsClick = { onViewDetails(evento.idEvento) }
                             )
                             Spacer(modifier = Modifier.height(24.dp))
+                        }
                         }
                     }
 

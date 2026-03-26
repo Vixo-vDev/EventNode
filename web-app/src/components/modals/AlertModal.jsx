@@ -1,4 +1,7 @@
+import { useTranslation } from '../../i18n/I18nContext'
+
 function AlertModal({ id = 'alertModal', title = 'Aviso', message, variant = 'warning' }) {
+  const { t } = useTranslation()
   const iconClass = variant === 'danger' ? 'bi-x-circle text-danger' : variant === 'warning' ? 'bi-exclamation-triangle text-warning' : variant === 'success' ? 'bi-check-circle text-success' : 'bi-info-circle text-primary'
 
   return (
@@ -17,7 +20,7 @@ function AlertModal({ id = 'alertModal', title = 'Aviso', message, variant = 'wa
               data-bs-dismiss="modal"
               style={{ fontSize: '13px' }}
             >
-              Entendido
+              {t('common.understood')}
             </button>
           </div>
         </div>

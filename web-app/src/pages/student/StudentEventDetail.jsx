@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { useTranslation } from '../../i18n/I18nContext'
 import { eventService } from '../../services/eventService'
 import { precheckinService } from '../../services/precheckinService'
 import eventDetailImg from '../../assets/events/event_detail.png'
 
 function StudentEventDetail({ user }) {
+  const { t } = useTranslation()
   const { id } = useParams()
   const [evento, setEvento] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -71,7 +73,7 @@ function StudentEventDetail({ user }) {
     return (
       <div className="text-center py-5">
         <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Cargando...</span>
+          <span className="visually-hidden">{t('eventDetail.loading')}</span>
         </div>
       </div>
     )
@@ -80,9 +82,9 @@ function StudentEventDetail({ user }) {
   if (!evento) {
     return (
       <div className="text-center py-5">
-        <h5>Evento no encontrado</h5>
+        <h5>{t('eventDetail.eventNotFound')}</h5>
         <Link to="/estudiante/eventos" className="btn btn-primary btn-sm rounded-pill px-4 mt-2">
-          Volver a Eventos
+          {t('eventDetail.backToEvents')}
         </Link>
       </div>
     )
@@ -96,10 +98,10 @@ function StudentEventDetail({ user }) {
       <div className="d-flex align-items-center gap-2 mb-4">
         <Link to="/estudiante/eventos" className="text-secondary text-decoration-none small d-flex align-items-center gap-1">
           <i className="bi bi-arrow-left"></i>
-          Regresar
+          {t('eventDetail.back')}
         </Link>
         <span className="text-secondary small">|</span>
-        <h5 className="fw-bold mb-0">Detalles del Evento</h5>
+        <h5 className="fw-bold mb-0">{t('eventDetail.scheduleDetails')}</h5>
       </div>
 
       <div className="rounded-4 overflow-hidden mb-4 position-relative shadow" style={{ maxHeight: '300px' }}>
@@ -116,7 +118,7 @@ function StudentEventDetail({ user }) {
             <div className="card-body p-4">
               <h6 className="fw-bold mb-3">
                 <i className="bi bi-info-circle text-primary me-2"></i>
-                Acerca de este evento
+                {t('eventDetail.about')}
               </h6>
               <p className="text-secondary small mb-0">{evento.descripcion}</p>
 
@@ -124,7 +126,7 @@ function StudentEventDetail({ user }) {
                 <div className="mt-4">
                   <h6 className="fw-bold mb-3">
                     <i className="bi bi-person-badge text-primary me-2"></i>
-                    Organizadores
+                    {t('eventDetail.organizers')}
                   </h6>
                   <ul className="list-unstyled mb-0">
                     {evento.organizadores.map(org => (
@@ -146,14 +148,14 @@ function StudentEventDetail({ user }) {
         <div className="col-12 col-lg-4">
           <div className="card border-0 shadow-sm rounded-4">
             <div className="card-body p-4">
-              <h6 className="text-uppercase text-secondary small fw-bold mb-3">Detalles del Horario</h6>
+              <h6 className="text-uppercase text-secondary small fw-bold mb-3">{t('eventDetail.scheduleDetails')}</h6>
 
               <div className="d-flex align-items-start gap-3 mb-3">
                 <div className="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '36px', height: '36px' }}>
                   <i className="bi bi-calendar3 text-primary small"></i>
                 </div>
                 <div>
-                  <div className="text-secondary small">Fecha</div>
+                  <div className="text-secondary small">{t('eventDetail.date')}</div>
                   <div className="fw-semibold small">
                     {new Date(evento.fechaInicio).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </div>
@@ -165,7 +167,7 @@ function StudentEventDetail({ user }) {
                   <i className="bi bi-clock text-primary small"></i>
                 </div>
                 <div>
-                  <div className="text-secondary small">Horario</div>
+                  <div className="text-secondary small">{t('eventDetail.time')}</div>
                   <div className="fw-semibold small">
                     {new Date(evento.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })} - {new Date(evento.fechaFin).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
                   </div>
@@ -177,7 +179,7 @@ function StudentEventDetail({ user }) {
                   <i className="bi bi-geo-alt text-primary small"></i>
                 </div>
                 <div>
-                  <div className="text-secondary small">Ubicación</div>
+                  <div className="text-secondary small">{t('eventDetail.location')}</div>
                   <div className="fw-semibold small">{evento.ubicacion}</div>
                 </div>
               </div>
@@ -187,7 +189,7 @@ function StudentEventDetail({ user }) {
                   <i className="bi bi-people text-primary small"></i>
                 </div>
                 <div className="flex-grow-1">
-                  <div className="text-secondary small">Capacidad</div>
+                  <div className="text-secondary small">{t('eventDetail.scheduleDetails')}</div>
                   <div className="fw-semibold small">{inscritos} / {evento.capacidadMaxima}</div>
                   <div className="progress mt-1" style={{ height: '4px' }}>
                     <div className={`progress-bar ${capacityPercent >= 100 ? 'bg-danger' : 'bg-primary'}`} style={{ width: `${Math.min(capacityPercent, 100)}%` }}></div>
@@ -197,15 +199,15 @@ function StudentEventDetail({ user }) {
 
               {enrolled ? (
                 <button className="btn btn-outline-danger w-100 rounded-pill fw-semibold" onClick={handleCancelar} disabled={enrolling}>
-                  {enrolling ? 'Cancelando...' : 'Cancelar Inscripción'}
+                  {enrolling ? 'Cancelando...' : t('eventDetail.cancelEnrollment')}
                 </button>
               ) : evento.estado === 'ACTIVO' ? (
                 <button className="btn btn-primary w-100 rounded-pill fw-semibold" onClick={handleInscribirse} disabled={enrolling || capacityPercent >= 100}>
-                  {enrolling ? 'Inscribiendo...' : capacityPercent >= 100 ? 'Evento Lleno' : 'Inscribirme'}
+                  {enrolling ? 'Inscribiendo...' : capacityPercent >= 100 ? t('eventDetail.eventFull') : t('eventDetail.enroll')}
                 </button>
               ) : (
                 <button className="btn btn-secondary w-100 rounded-pill fw-semibold" disabled>
-                  Evento {evento.estado}
+                  {t('eventDetail.scheduleDetails')} {evento.estado}
                 </button>
               )}
             </div>

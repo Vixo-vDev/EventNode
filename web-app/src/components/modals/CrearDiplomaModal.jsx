@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
 import { toast } from 'react-toastify'
+import { useTranslation } from '../../i18n/I18nContext'
 
 function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, isLoading }) {
+  const { t } = useTranslation()
   const [pdfFile, setPdfFile] = useState(null)
   const [pdfPreview, setPdfPreview] = useState(null)
   const [firmaFile, setFirmaFile] = useState(null)
@@ -89,12 +91,12 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
         <div className="modal-content border-0 rounded-4 shadow bg-light">
           <div className="modal-header border-0 bg-white px-4 pt-4 pb-3 rounded-top-4">
             <div>
-              <h5 className="fw-bold mb-1 text-dark" id="crearDiplomaModalLabel">Crear Nuevo Diploma</h5>
+              <h5 className="fw-bold mb-1 text-dark" id="crearDiplomaModalLabel">{t('createDiploma.title')}</h5>
               <p className="text-secondary small mb-0" style={{ fontSize: '13px' }}>
-                Sube la plantilla PDF, selecciona el evento y agrega la firma.
+                {t('createDiploma.subtitle')}
               </p>
             </div>
-            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label={t('common.close')}></button>
           </div>
 
           <div className="modal-body p-4 bg-light" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
@@ -102,7 +104,7 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
             <div className="bg-white rounded-3 p-4 mb-3 shadow-sm border-0">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <i className="bi bi-calendar-event text-primary"></i>
-                <h6 className="fw-bold mb-0 text-dark fs-6">Evento</h6>
+                <h6 className="fw-bold mb-0 text-dark fs-6">{t('createDiploma.event')}</h6>
               </div>
               <select
                 className="form-select text-secondary small"
@@ -112,7 +114,7 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
                 onChange={onChange}
                 required
               >
-                <option value="">Seleccionar evento...</option>
+                <option value="">{t('createDiploma.selectEvent')}</option>
                 {eventos.map(e => (
                   <option key={e.idEvento} value={e.idEvento}>{e.nombre}</option>
                 ))}
@@ -123,10 +125,10 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
             <div className="bg-white rounded-3 p-4 mb-3 shadow-sm border-0">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <i className="bi bi-file-earmark-pdf text-danger"></i>
-                <h6 className="fw-bold mb-0 text-dark fs-6">Plantilla PDF</h6>
+                <h6 className="fw-bold mb-0 text-dark fs-6">{t('createDiploma.pdfTemplate')}</h6>
               </div>
               <p className="text-secondary small mb-3" style={{ fontSize: '12px' }}>
-                Sube el diseño base del diploma en PDF. El nombre del estudiante se colocará centrado automáticamente.
+                {t('createDiploma.pdfInstruction')}
               </p>
 
               <input
@@ -146,8 +148,8 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
                   onDrop={handlePdfDrop}
                 >
                   <i className="bi bi-cloud-arrow-up text-primary fs-2 d-block mb-2"></i>
-                  <p className="mb-1 fw-semibold small">Arrastra tu archivo PDF aquí</p>
-                  <p className="text-secondary mb-0" style={{ fontSize: '12px' }}>o haz clic para seleccionar (máx. 15MB)</p>
+                  <p className="mb-1 fw-semibold small">{t('createDiploma.dragPdf')}</p>
+                  <p className="text-secondary mb-0" style={{ fontSize: '12px' }}>{t('createDiploma.pdfLimit')}</p>
                 </div>
               ) : (
                 <div className="d-flex align-items-center gap-3 p-3 bg-light rounded-3 border">
@@ -156,7 +158,7 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
                   </div>
                   <div className="flex-grow-1 overflow-hidden">
                     <p className="mb-0 fw-semibold small text-truncate">{pdfPreview}</p>
-                    <p className="mb-0 text-secondary" style={{ fontSize: '11px' }}>Plantilla cargada</p>
+                    <p className="mb-0 text-secondary" style={{ fontSize: '11px' }}>{t('createDiploma.templateLoaded')}</p>
                   </div>
                   <button type="button" className="btn btn-sm btn-outline-danger rounded-circle" onClick={removePdf} style={{ width: '30px', height: '30px', padding: 0 }}>
                     <i className="bi bi-x"></i>
@@ -169,10 +171,10 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
             <div className="bg-white rounded-3 p-4 mb-3 shadow-sm border-0">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <i className="bi bi-pen text-primary"></i>
-                <h6 className="fw-bold mb-0 text-dark fs-6">Firma</h6>
+                <h6 className="fw-bold mb-0 text-dark fs-6">{t('createDiploma.signatureLabel')}</h6>
               </div>
               <p className="text-secondary small mb-3" style={{ fontSize: '12px' }}>
-                Sube una imagen de la firma que aparecerá en el diploma (PNG o JPG, fondo transparente recomendado).
+                {t('createDiploma.signatureInstruction')}
               </p>
 
               <input
@@ -192,15 +194,15 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
                   onDrop={handleFirmaDrop}
                 >
                   <i className="bi bi-image text-primary fs-2 d-block mb-2"></i>
-                  <p className="mb-1 fw-semibold small">Arrastra la imagen de firma aquí</p>
-                  <p className="text-secondary mb-0" style={{ fontSize: '12px' }}>PNG o JPG (máx. 5MB)</p>
+                  <p className="mb-1 fw-semibold small">{t('createDiploma.dragSignature')}</p>
+                  <p className="text-secondary mb-0" style={{ fontSize: '12px' }}>{t('createDiploma.signatureLimit')}</p>
                 </div>
               ) : (
                 <div className="text-center">
                   <div className="d-inline-block position-relative mb-2">
                     <img
                       src={firmaPreview}
-                      alt="Firma"
+                      alt={t('createDiploma.signatureLabel')}
                       className="border rounded-3"
                       style={{ maxHeight: '100px', maxWidth: '100%', objectFit: 'contain', backgroundColor: '#f8f9fa' }}
                     />
@@ -213,7 +215,7 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
                       <i className="bi bi-x"></i>
                     </button>
                   </div>
-                  <p className="text-secondary mb-0" style={{ fontSize: '11px' }}>Firma cargada</p>
+                  <p className="text-secondary mb-0" style={{ fontSize: '11px' }}>{t('createDiploma.signatureLoaded')}</p>
                 </div>
               )}
             </div>
@@ -222,25 +224,25 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
             <div className="bg-white rounded-3 p-4 shadow-sm border-0">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <i className="bi bi-person-badge text-primary"></i>
-                <h6 className="fw-bold mb-0 text-dark fs-6">Nombre del firmante</h6>
+                <h6 className="fw-bold mb-0 text-dark fs-6">{t('createDiploma.signerName')}</h6>
               </div>
               <input
                 type="text"
                 className="form-control small"
-                placeholder="Ej: Mtro. Juan Pérez García"
+                placeholder={t('createDiploma.signerPlaceholder')}
                 name="firma"
                 value={formData.firma || ''}
                 onChange={onChange}
               />
               <p className="text-secondary mt-2 mb-0" style={{ fontSize: '11px' }}>
-                Este nombre aparecerá debajo de la firma en el diploma.
+                {t('createDiploma.signerHelp')}
               </p>
             </div>
           </div>
 
           <div className="modal-footer border-0 px-4 py-3 bg-white rounded-bottom-4 d-flex justify-content-end gap-2">
             <button type="button" className="btn btn-outline-secondary px-4 fw-semibold" data-bs-dismiss="modal" style={{ fontSize: '13px' }}>
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -250,9 +252,9 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
               disabled={isLoading || !formData.idEvento || !formData.plantillaPdf || !formData.firmaImagen}
             >
               {isLoading ? (
-                <><span className="spinner-border spinner-border-sm me-1" role="status"></span>Creando...</>
+                <><span className="spinner-border spinner-border-sm me-1" role="status"></span>{t('createDiploma.creating')}</>
               ) : (
-                <><i className="bi bi-check2"></i>Guardar Diploma</>
+                <><i className="bi bi-check2"></i>{t('createDiploma.save')}</>
               )}
             </button>
           </div>

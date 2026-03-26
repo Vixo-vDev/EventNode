@@ -4,8 +4,10 @@ import { eventService } from '../../services/eventService'
 import { asistenciaService } from '../../services/asistenciaService'
 import { precheckinService } from '../../services/precheckinService'
 import { diplomaService } from '../../services/diplomaService'
+import { useTranslation } from '../../i18n/I18nContext'
 
 function AdminHome() {
+  const { t } = useTranslation()
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
   const [totalEmitidos, setTotalEmitidos] = useState(0)
@@ -73,7 +75,7 @@ function AdminHome() {
 
   return (
     <div>
-      <h2 className="fw-bold mb-4">Panel</h2>
+      <h2 className="fw-bold mb-4">{t('adminHome.dashboard')}</h2>
 
       <div className="row g-3 mb-4">
         <div className="col-12 col-md-4">
@@ -85,9 +87,9 @@ function AdminHome() {
                   <i className="bi bi-people-fill text-primary"></i>
                 </div>
               </div>
-              <div className="text-secondary small mb-1">Asistencia</div>
+              <div className="text-secondary small mb-1">{t('adminHome.attendance')}</div>
               <div className="fw-bold fs-2">{overallAttendanceRate}%</div>
-              <div className="text-secondary" style={{ fontSize: '12px' }}>{eventos.length > 0 ? 'Tasa de asistencia' : 'Sin datos de asistencia aun'}</div>
+              <div className="text-secondary" style={{ fontSize: '12px' }}>{eventos.length > 0 ? t('adminHome.attendanceRate') : t('adminHome.noAttendanceData')}</div>
             </div>
           </div>
         </div>
@@ -101,10 +103,10 @@ function AdminHome() {
                   <i className="bi bi-calendar-check text-success"></i>
                 </div>
                 {eventosActivos > 0 && (
-                  <span className="badge bg-danger bg-opacity-10 text-danger small fw-semibold rounded-pill px-2">LIVE</span>
+                  <span className="badge bg-danger bg-opacity-10 text-danger small fw-semibold rounded-pill px-2">{t('adminHome.live')}</span>
                 )}
               </div>
-              <div className="text-secondary small mb-1">Eventos Activos</div>
+              <div className="text-secondary small mb-1">{t('adminHome.activeEvents')}</div>
               <div className="fw-bold fs-2">{eventosActivos}</div>
             </div>
           </div>
@@ -113,15 +115,15 @@ function AdminHome() {
         <div className="col-12 col-md-4">
           <div className="card border-0 shadow-sm rounded-4 h-100 card-stat" style={{ borderTop: '3px solid var(--bs-primary)' }}>
             <div className="card-body p-3">
-              <div className="text-uppercase text-secondary small fw-bold mb-2" style={{ letterSpacing: '0.5px' }}>Diplomas</div>
+              <div className="text-uppercase text-secondary small fw-bold mb-2" style={{ letterSpacing: '0.5px' }}>{t('adminHome.diplomas')}</div>
               <div className="d-flex justify-content-between align-items-end">
                 <div>
                   <div className="fw-bold fs-3 mb-0">{totalEmitidos}</div>
-                  <div className="text-secondary" style={{ fontSize: '12px' }}>Emitidos</div>
+                  <div className="text-secondary" style={{ fontSize: '12px' }}>{t('adminHome.emitted')}</div>
                 </div>
                 <div className="text-end">
                   <div className="fw-bold fs-3 mb-0">{totalPendientes}</div>
-                  <div className="text-secondary" style={{ fontSize: '12px' }}>Pendientes</div>
+                  <div className="text-secondary" style={{ fontSize: '12px' }}>{t('adminHome.pending')}</div>
                 </div>
               </div>
             </div>
@@ -132,9 +134,9 @@ function AdminHome() {
       <div className="card border-0 shadow-sm rounded-4">
         <div className="card-body p-0">
           <div className="d-flex justify-content-between align-items-center p-3 pb-2">
-            <h5 className="fw-bold mb-0">Detalles de Eventos</h5>
+            <h5 className="fw-bold mb-0">{t('adminHome.eventDetails')}</h5>
             <Link to="/admin/eventos" className="text-primary text-decoration-none small fw-semibold">
-              Ver Todos
+              {t('adminHome.viewAll')}
             </Link>
           </div>
 
@@ -149,10 +151,10 @@ function AdminHome() {
               <table className="table table-hover mb-0 align-middle">
                 <thead className="border-top">
                   <tr>
-                    <th className="text-uppercase text-secondary small fw-semibold ps-3 py-3" style={{ fontSize: '11px' }}>Nombre del Evento</th>
-                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>Fecha/Tiempo</th>
-                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>Estado</th>
-                    <th className="text-uppercase text-secondary small fw-semibold pe-3 py-3" style={{ fontSize: '11px' }}>Capacidad</th>
+                    <th className="text-uppercase text-secondary small fw-semibold ps-3 py-3" style={{ fontSize: '11px' }}>{t('adminHome.eventName')}</th>
+                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>{t('adminHome.dateTime')}</th>
+                    <th className="text-uppercase text-secondary small fw-semibold py-3" style={{ fontSize: '11px' }}>{t('adminHome.status')}</th>
+                    <th className="text-uppercase text-secondary small fw-semibold pe-3 py-3" style={{ fontSize: '11px' }}>{t('adminHome.capacity')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -185,12 +187,12 @@ function AdminHome() {
               <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
                 <i className="bi bi-calendar-plus text-primary fs-4"></i>
               </div>
-              <h6 className="fw-bold mb-1">No hay eventos registrados</h6>
+              <h6 className="fw-bold mb-1">{t('adminHome.noEvents')}</h6>
               <p className="text-secondary small mb-2">
-                Crea tu primer evento para comenzar a gestionar la plataforma.
+                {t('adminHome.createFirstMsg')}
               </p>
               <Link to="/admin/eventos" className="btn btn-primary btn-sm rounded-pill px-4">
-                Crear Evento
+                {t('adminHome.createEvent')}
               </Link>
             </div>
           )}

@@ -5,10 +5,12 @@ import { eventService } from '../../services/eventService'
 import { precheckinService } from '../../services/precheckinService'
 import { asistenciaService } from '../../services/asistenciaService'
 import { diplomaService } from '../../services/diplomaService'
+import { useTranslation } from '../../i18n/I18nContext'
 import eventTechSummit from '../../assets/events/event_tech_summit.png'
 
 function AdminEventDetail() {
   const { id } = useParams()
+  const { t } = useTranslation()
   const [evento, setEvento] = useState(null)
   const [loading, setLoading] = useState(true)
   const [inscritos, setInscritos] = useState(0)
@@ -86,8 +88,8 @@ function AdminEventDetail() {
   if (!evento) {
     return (
       <div className="text-center py-5">
-        <h5>Evento no encontrado</h5>
-        <Link to="/admin/eventos" className="btn btn-primary btn-sm rounded-pill px-4 mt-2">Volver</Link>
+        <h5>{t('eventDetail.eventNotFound')}</h5>
+        <Link to="/admin/eventos" className="btn btn-primary btn-sm rounded-pill px-4 mt-2">{t('eventDetail.backToEvents')}</Link>
       </div>
     )
   }
@@ -125,7 +127,7 @@ function AdminEventDetail() {
             <div className="card-body p-3">
               <div className="d-flex align-items-center gap-2 mb-2">
                 <i className="bi bi-people-fill text-primary"></i>
-                <span className="text-uppercase text-secondary small fw-bold">Capacidad</span>
+                <span className="text-uppercase text-secondary small fw-bold">{t('eventDetail.capacity')}</span>
               </div>
               <div className="d-flex align-items-center gap-3">
                 <span className="fw-bold fs-2">{capacityPercent}%</span>
@@ -145,7 +147,7 @@ function AdminEventDetail() {
             <div className="card-body p-3">
               <div className="d-flex align-items-center gap-2 mb-2">
                 <i className="bi bi-award-fill text-primary"></i>
-                <span className="text-uppercase text-secondary small fw-bold">Asistencias</span>
+                <span className="text-uppercase text-secondary small fw-bold">{t('events.title')}</span>
               </div>
               <div className="fw-bold fs-2">{asistencias}</div>
             </div>
@@ -156,19 +158,19 @@ function AdminEventDetail() {
           {isActive ? (
             <div className="card border-0 rounded-3 h-100 bg-danger bg-opacity-10 border border-danger border-opacity-25">
               <div className="card-body p-3">
-                <div className="text-uppercase text-danger small fw-bold mb-1">Cancelar Evento</div>
+                <div className="text-uppercase text-danger small fw-bold mb-1">{t('eventDetail.cancelEvent')}</div>
                 <p className="text-secondary small mb-2" style={{ fontSize: '11px' }}>
-                  La cancelación notificará a todos los estudiantes registrados.
+                  {t('eventDetail.cancelNotice')}
                 </p>
                 <button className="btn btn-danger rounded-pill w-100 btn-sm" onClick={handleCancelEvent} disabled={cancelling}>
-                  {cancelling ? 'Cancelando...' : 'Cancelar Evento'}
+                  {cancelling ? t('common.processing') : t('eventDetail.cancelEvent')}
                 </button>
               </div>
             </div>
           ) : (
             <div className="card border-0 rounded-3 h-100 bg-secondary bg-opacity-10">
               <div className="card-body p-3">
-                <div className="text-uppercase text-secondary small fw-bold mb-1">Estado</div>
+                <div className="text-uppercase text-secondary small fw-bold mb-1">{t('events.status')}</div>
                 <div className="fw-bold fs-4">{evento.estado}</div>
               </div>
             </div>
@@ -183,19 +185,19 @@ function AdminEventDetail() {
             <div className="col-12 col-md-8">
               <h6 className="fw-bold mb-1">
                 <i className="bi bi-qr-code me-2 text-primary"></i>
-                Código QR de Asistencia
+                {t('eventDetail.qrCode')}
               </h6>
               <p className="text-secondary small mb-3">
-                Los estudiantes pueden escanear este código QR para registrar su asistencia al evento. Al escanearlo, quedarán en estado <strong>Pendiente</strong> hasta que el administrador confirme su asistencia.
+                {t('eventDetail.qrInstruction')}
               </p>
               <div className="d-flex gap-3">
                 <Link to={`/admin/evento/${id}/pre-check-in`} className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none">
                   <i className="bi bi-person-check"></i>
-                  Pre Check-In ({inscritos})
+                  {t('eventDetail.preCheckin')} ({inscritos})
                 </Link>
                 <Link to={`/admin/evento/${id}/check-in`} className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none">
                   <i className="bi bi-person-check-fill"></i>
-                  Check-In ({asistencias})
+                  {t('eventDetail.checkin')} ({asistencias})
                 </Link>
               </div>
             </div>
@@ -217,12 +219,12 @@ function AdminEventDetail() {
         <div className="col-12 col-md-8">
           <div className="card border-0 rounded-3 h-100 text-white" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)' }}>
             <div className="card-body p-3">
-              <div className="text-uppercase small fw-bold mb-1">Enviar Diplomas</div>
+              <div className="text-uppercase small fw-bold mb-1">{t('eventDetail.sendDiplomas')}</div>
               <p className="small opacity-75 mb-2" style={{ fontSize: '11px' }}>
-                Se mandarán automáticamente los diplomas a los estudiantes con Check-In marcados como Asistido.
+                {t('eventDetail.diplomaInstruction')}
               </p>
               <button className="btn btn-light rounded-pill w-100 btn-sm fw-semibold text-primary" onClick={handleEmitirDiplomas} disabled={emitting}>
-                {emitting ? 'Emitiendo...' : 'Enviar Diplomas'}
+                {emitting ? t('eventDetail.emitting') : t('eventDetail.sendDiplomas')}
               </button>
             </div>
           </div>
