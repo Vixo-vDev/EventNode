@@ -205,7 +205,6 @@ fun AdminEventDetailScreen(
                         )
                     }
                     }
-                }
 
                     // Overlapping Card (Design from Image 1)
                     Column(

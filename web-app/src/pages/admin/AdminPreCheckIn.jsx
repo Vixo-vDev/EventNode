@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { eventService } from '../../services/eventService'
 import { precheckinService } from '../../services/precheckinService'
+import { useTranslation } from '../../i18n/I18nContext'
 
 function AdminPreCheckIn() {
   const { id } = useParams()
+  const { t } = useTranslation()
   const [evento, setEvento] = useState(null)
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -46,7 +48,7 @@ function AdminPreCheckIn() {
       </div>
 
       <div className="mb-4">
-        <h2 className="fw-bold mb-1">Lista de Pre-check-in</h2>
+        <h2 className="fw-bold mb-1">{t('precheckin.title')}</h2>
         <div className="text-secondary small d-flex align-items-center gap-2">
           <i className="bi bi-calendar-event"></i>
           {evento?.nombre}
@@ -63,7 +65,7 @@ function AdminPreCheckIn() {
               <input
                 type="text"
                 className="form-control bg-transparent border-0 shadow-none small"
-                placeholder="Buscar por nombre, matrícula o correo..."
+                placeholder={t('precheckin.searchPlaceholder')}
                 style={{ fontSize: '13px' }}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -106,13 +108,13 @@ function AdminPreCheckIn() {
             </div>
           ) : (
             <div className="text-center py-4">
-              <p className="text-secondary small mb-0">No hay estudiantes inscritos en este evento.</p>
+              <p className="text-secondary small mb-0">{t('precheckin.noStudents')}</p>
             </div>
           )}
         </div>
         <div className="card-footer bg-transparent border-top p-3">
           <span className="text-secondary small">
-            Mostrando {filtered.length} de {students.length} estudiantes
+            {t('precheckin.showing', { current: filtered.length, total: students.length })}
           </span>
         </div>
       </div>

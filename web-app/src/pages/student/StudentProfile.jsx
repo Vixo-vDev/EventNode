@@ -1,36 +1,83 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
+import { useTranslation } from '../../i18n/I18nContext'
 import { userService } from '../../services/userService'
 import CuentaVinculadaModal from '../../components/modals/CuentaVinculadaModal'
 import CambiarContrasenaModal from '../../components/modals/CambiarContrasenaModal'
 
 function StudentProfile({ user }) {
+  const { t, language, setLanguage } = useTranslation()
   const [perfil, setPerfil] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  // Editable fields
+  const [nombre, setNombre] = useState('')
+  const [apellidoPaterno, setApellidoPaterno] = useState('')
+  const [apellidoMaterno, setApellidoMaterno] = useState('')
+  const [sexo, setSexo] = useState('')
+  const [cuatrimestre, setCuatrimestre] = useState('')
 
   useEffect(() => {
     if (!user?.id) return
-
     const fetchPerfil = async () => {
       try {
         const data = await userService.getPerfil(user.id)
         setPerfil(data)
+        setNombre(data.nombre || '')
+        setApellidoPaterno(data.apellidoPaterno || '')
+        setApellidoMaterno(data.apellidoMaterno || '')
+        setSexo(data.sexo || '')
+        setCuatrimestre(data.cuatrimestre?.toString() || '')
       } catch (err) {
         toast.error(err.message)
       } finally {
         setLoading(false)
       }
     }
-
     fetchPerfil()
   }, [user?.id])
+
+  const handleSave = async () => {
+    if (!nombre.trim() || !apellidoPaterno.trim()) {
+      toast.error('Nombre y apellido paterno son obligatorios')
+      return
+    }
+    setSaving(true)
+    try {
+      await userService.actualizarAlumno(user.id, {
+        nombre: nombre.trim(),
+        apellidoPaterno: apellidoPaterno.trim(),
+        apellidoMaterno: apellidoMaterno.trim(),
+        sexo,
+        cuatrimestre: cuatrimestre ? parseInt(cuatrimestre) : undefined,
+      })
+      toast.success('Perfil actualizado correctamente')
+      // Refresh profile
+      const updated = await userService.getPerfil(user.id)
+      setPerfil(updated)
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCancel = () => {
+    if (!perfil) return
+    setNombre(perfil.nombre || '')
+    setApellidoPaterno(perfil.apellidoPaterno || '')
+    setApellidoMaterno(perfil.apellidoMaterno || '')
+    setSexo(perfil.sexo || '')
+    setCuatrimestre(perfil.cuatrimestre?.toString() || '')
+  }
 
   const userName = perfil
     ? `${perfil.nombre} ${perfil.apellidoPaterno}`
     : user?.name || 'Estudiante UTEZ'
-  const userInitials = userName.split(' ').map(n => n[0]).join('')
+  const userInitials = userName.split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
-  const sexoLabel = perfil?.sexo === 'M' ? 'Masculino' : perfil?.sexo === 'F' ? 'Femenino' : perfil?.sexo || ''
+  const sexoLabel = perfil?.sexo === 'M' ? t('profile.male') : perfil?.sexo === 'F' ? t('profile.female') : perfil?.sexo || ''
 
   if (loading) {
     return (
@@ -44,7 +91,7 @@ function StudentProfile({ user }) {
 
   return (
     <div>
-      <h2 className="fw-bold mb-4">Perfil</h2>
+      <h2 className="fw-bold mb-4">{t('profile.title')}</h2>
 
       <div className="card border-0 shadow-sm rounded-4 mb-4">
         <div className="card-body p-4">
@@ -59,50 +106,54 @@ function StudentProfile({ user }) {
                 {perfil?.estado || 'Activo'}
               </span>
             </div>
-            <div className="ms-md-auto">
-              <button className="btn btn-link text-primary text-decoration-none small fw-semibold">
-                Cambiar foto
-              </button>
-            </div>
           </div>
 
           <h6 className="fw-bold mb-3">
             <i className="bi bi-person-badge text-primary me-2"></i>
-            Información Personal
+            {t('profile.personalInfo')}
           </h6>
 
           <div className="row g-3 mb-4">
             <div className="col-12 col-md-4">
-              <label className="form-label text-secondary small">Nombre(s)</label>
-              <input type="text" className="form-control bg-light" value={perfil?.nombre || ''} readOnly />
+              <label className="form-label text-secondary small">{t('profile.firstName')}</label>
+              <input type="text" className="form-control" value={nombre} onChange={e => setNombre(e.target.value)} />
             </div>
             <div className="col-12 col-md-4">
-              <label className="form-label text-secondary small">Apellido Paterno</label>
-              <input type="text" className="form-control bg-light" value={perfil?.apellidoPaterno || ''} readOnly />
+              <label className="form-label text-secondary small">{t('profile.lastNameP')}</label>
+              <input type="text" className="form-control" value={apellidoPaterno} onChange={e => setApellidoPaterno(e.target.value)} />
             </div>
             <div className="col-12 col-md-4">
-              <label className="form-label text-secondary small">Apellido Materno</label>
-              <input type="text" className="form-control bg-light" value={perfil?.apellidoMaterno || ''} readOnly />
+              <label className="form-label text-secondary small">{t('profile.lastNameM')}</label>
+              <input type="text" className="form-control" value={apellidoMaterno} onChange={e => setApellidoMaterno(e.target.value)} />
             </div>
             <div className="col-12 col-md-6">
-              <label className="form-label text-secondary small">Correo</label>
+              <label className="form-label text-secondary small">{t('profile.email')}</label>
               <input type="email" className="form-control bg-light" value={perfil?.correo || ''} readOnly />
             </div>
             <div className="col-12 col-md-6">
-              <label className="form-label text-secondary small">Matrícula</label>
+              <label className="form-label text-secondary small">{t('profile.matricula')}</label>
               <input type="text" className="form-control bg-light" value={perfil?.matricula || ''} readOnly />
             </div>
             <div className="col-12 col-md-4">
-              <label className="form-label text-secondary small">Edad</label>
+              <label className="form-label text-secondary small">{t('profile.age')}</label>
               <input type="text" className="form-control bg-light" value={perfil?.edad ?? ''} readOnly />
             </div>
             <div className="col-12 col-md-4">
-              <label className="form-label text-secondary small">Sexo</label>
-              <input type="text" className="form-control bg-light" value={sexoLabel} readOnly />
+              <label className="form-label text-secondary small">{t('profile.gender')}</label>
+              <select className="form-select" value={sexo} onChange={e => setSexo(e.target.value)}>
+                <option value="">{t('auth.select')}</option>
+                <option value="M">{t('profile.male')}</option>
+                <option value="F">{t('profile.female')}</option>
+              </select>
             </div>
             <div className="col-12 col-md-4">
-              <label className="form-label text-secondary small">Cuatrimestre</label>
-              <input type="text" className="form-control bg-light" value={perfil?.cuatrimestre ?? ''} readOnly />
+              <label className="form-label text-secondary small">{t('profile.quarter')}</label>
+              <select className="form-select" value={cuatrimestre} onChange={e => setCuatrimestre(e.target.value)}>
+                <option value="">{t('auth.select')}</option>
+                {[1,2,3,4,5,6,7,8,9].map(c => (
+                  <option key={c} value={c}>{c}°</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -110,11 +161,11 @@ function StudentProfile({ user }) {
 
           <h6 className="fw-bold mb-3">
             <i className="bi bi-shield-lock text-primary me-2"></i>
-            Seguridad
+            {t('profile.security')}
           </h6>
 
           <div className="mb-4">
-            <label className="form-label text-secondary small">Contraseña</label>
+            <label className="form-label text-secondary small">{t('profile.password')}</label>
             <div className="d-flex align-items-center gap-3">
               <div className="input-group" style={{ maxWidth: '250px' }}>
                 <span className="input-group-text bg-light border-end-0">
@@ -128,18 +179,37 @@ function StudentProfile({ user }) {
                 data-bs-target="#cambiarContrasenaModal"
               >
                 <i className="bi bi-pencil me-1"></i>
-                Cambiar contraseña
+                {t('profile.changePassword')}
               </button>
             </div>
           </div>
 
-          <div className="d-flex justify-content-end gap-2">
-            <button className="btn btn-link text-secondary text-decoration-none">
-              Cancelar
+          <hr className="my-4" />
+
+          <h6 className="fw-bold mb-3">
+            <i className="bi bi-translate text-primary me-2"></i>
+            {t('profile.language')}
+          </h6>
+          <div className="d-flex gap-2 mb-4">
+            <button className={`btn ${language === 'es' ? 'btn-primary' : 'btn-outline-primary'} rounded-pill px-3`} onClick={() => setLanguage('es')}>
+              {t('profile.spanish')}
             </button>
-            <button className="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2">
-              <i className="bi bi-save"></i>
-              Guardar cambios
+            <button className={`btn ${language === 'en' ? 'btn-primary' : 'btn-outline-primary'} rounded-pill px-3`} onClick={() => setLanguage('en')}>
+              {t('profile.english')}
+            </button>
+          </div>
+
+          <div className="d-flex justify-content-end gap-2">
+            <button className="btn btn-link text-secondary text-decoration-none" onClick={handleCancel} disabled={saving}>
+              {t('profile.cancel')}
+            </button>
+            <button className="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2" onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <span className="spinner-border spinner-border-sm"></span>
+              ) : (
+                <i className="bi bi-save"></i>
+              )}
+              {saving ? t('profile.saving') : t('profile.saveChanges')}
             </button>
           </div>
         </div>
@@ -157,9 +227,9 @@ function StudentProfile({ user }) {
           <i className="bi bi-check-lg text-white small"></i>
         </div>
         <div>
-          <div className="fw-semibold small">Verificación de Cuenta</div>
+          <div className="fw-semibold small">{t('profile.accountVerification')}</div>
           <div className="text-secondary small">
-            Tu cuenta está verificada por la matrícula
+            {t('profile.accountVerified')}
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { eventService } from '../../services/eventService'
+import { useTranslation } from '../../i18n/I18nContext'
 import eventConcert from '../../assets/events/event_concert.png'
 import eventTechSummit from '../../assets/events/event_tech_summit.png'
 import eventGala from '../../assets/events/event_gala.png'
@@ -115,6 +116,7 @@ const STATUS_FILTERS = [
 ]
 
 function GestionEventos({ user }) {
+  const { t } = useTranslation()
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState(null)
@@ -302,9 +304,9 @@ function GestionEventos({ user }) {
       <div className="fade-in">
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
         <div>
-          <h2 className="fw-bold mb-1">Eventos</h2>
+          <h2 className="fw-bold mb-1">{t('events.title')}</h2>
           <p className="text-secondary small mb-0">
-            Supervise y administre todos sus eventos activos en tiempo real
+            {t('events.subtitle')}
           </p>
         </div>
         <button
@@ -313,7 +315,7 @@ function GestionEventos({ user }) {
           data-bs-target="#crearEventoModal"
         >
           <i className="bi bi-plus-circle"></i>
-          Nuevo Evento
+          {t('events.newEvent')}
         </button>
       </div>
 
@@ -324,7 +326,7 @@ function GestionEventos({ user }) {
         <input
           type="text"
           className="form-control border-start-0 border-0 shadow-none"
-          placeholder="Buscar eventos por nombre..."
+          placeholder={t('events.searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -371,9 +373,9 @@ function GestionEventos({ user }) {
             <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
               <i className="bi bi-calendar-x text-primary fs-4"></i>
             </div>
-            <h6 className="fw-bold mb-1">No se encontraron eventos</h6>
+            <h6 className="fw-bold mb-1">{t('events.noEvents')}</h6>
             <p className="text-secondary small mb-0">
-              {searchTerm || activeFilter ? 'Intenta con otros filtros de búsqueda.' : 'Crea tu primer evento para comenzar.'}
+              {searchTerm || activeFilter ? t('events.tryOtherFilters') : t('events.createFirst')}
             </p>
           </div>
         )}
@@ -389,9 +391,9 @@ function GestionEventos({ user }) {
               style={{ width: '48px', height: '48px' }}>
               <i className="bi bi-plus-lg text-secondary fs-4"></i>
             </div>
-            <h6 className="fw-bold mb-1 fst-italic">Crear Nuevo Evento</h6>
+            <h6 className="fw-bold mb-1 fst-italic">{t('events.createNewEvent')}</h6>
             <p className="text-secondary small mb-0 fst-italic">
-              Configure fechas, ubicación y entradas
+              {t('events.configureEvent')}
             </p>
           </div>
         </div>
@@ -416,9 +418,9 @@ function GestionEventos({ user }) {
               <div className="mb-3">
                 <i className="bi bi-exclamation-triangle-fill text-danger" style={{ fontSize: '3rem' }}></i>
               </div>
-              <h6 className="fw-bold mb-2">Eliminar Evento</h6>
+              <h6 className="fw-bold mb-2">{t('events.deleteEvent')}</h6>
               <p className="text-secondary small mb-3">
-                ¿Estás seguro de eliminar el evento <strong>"{deleteTarget.title}"</strong>? Esta acción no se puede deshacer.
+                {t('events.deleteConfirm', { name: deleteTarget.title })}
               </p>
               <div className="d-flex justify-content-center gap-2">
                 <button
@@ -426,14 +428,14 @@ function GestionEventos({ user }) {
                   onClick={() => setDeleteTarget(null)}
                   disabled={deleteLoading}
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
                 <button
                   className="btn btn-danger rounded-pill px-4"
                   onClick={handleDeleteEvent}
                   disabled={deleteLoading}
                 >
-                  {deleteLoading ? 'Eliminando...' : 'Eliminar'}
+                  {deleteLoading ? t('events.deleting') : t('events.delete')}
                 </button>
               </div>
           </div>

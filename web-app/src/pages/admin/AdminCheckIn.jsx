@@ -3,9 +3,11 @@ import { Link, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { eventService } from '../../services/eventService'
 import { asistenciaService } from '../../services/asistenciaService'
+import { useTranslation } from '../../i18n/I18nContext'
 
 function AdminCheckIn() {
   const { id } = useParams()
+  const { t } = useTranslation()
   const [evento, setEvento] = useState(null)
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -32,11 +34,11 @@ function AdminCheckIn() {
   useEffect(() => { fetchData() }, [id])
 
   const handleManualCheckin = async () => {
-    if (!matricula.trim()) return toast.error('Ingresa una matrícula')
+    if (!matricula.trim()) return toast.error(t('checkin.studentId'))
     setManualLoading(true)
     try {
       await asistenciaService.registrarManual(matricula.trim(), parseInt(id))
-      toast.success('Asistencia registrada exitosamente')
+      toast.success(t('checkin.successMsg'))
       setMatricula('')
       fetchData()
     } catch (err) {
@@ -58,7 +60,7 @@ function AdminCheckIn() {
             : s
         )
       )
-      toast.success(newEstado === 'ASISTIDO' ? 'Marcado como asistido' : 'Marcado como pendiente')
+      toast.success(newEstado === 'ASISTIDO' ? t('checkin.markedAttended') : t('checkin.markedPending'))
     } catch (err) {
       toast.error(err.message)
     } finally {
@@ -90,9 +92,9 @@ function AdminCheckIn() {
       </div>
 
       <div className="mb-4">
-        <h2 className="fw-bold mb-1">Lista de Asistencia (Check-in)</h2>
+        <h2 className="fw-bold mb-1">{t('checkin.title')}</h2>
         <div className="text-secondary small">
-          Gestiona y verifica la asistencia de los alumnos registrados para este evento.
+          {t('checkin.subtitle')}
         </div>
       </div>
 
@@ -101,7 +103,7 @@ function AdminCheckIn() {
         <div className="col-6 col-md-3">
           <div className="card border-0 shadow-sm rounded-3">
             <div className="card-body p-3 text-center">
-              <div className="text-secondary small text-uppercase fw-bold mb-1">Total</div>
+              <div className="text-secondary small text-uppercase fw-bold mb-1">{t('checkin.total')}</div>
               <div className="fw-bold fs-4">{students.length}</div>
             </div>
           </div>
@@ -109,7 +111,7 @@ function AdminCheckIn() {
         <div className="col-6 col-md-3">
           <div className="card border-0 shadow-sm rounded-3">
             <div className="card-body p-3 text-center">
-              <div className="text-success small text-uppercase fw-bold mb-1">Asistidos</div>
+              <div className="text-success small text-uppercase fw-bold mb-1">{t('checkin.attended')}</div>
               <div className="fw-bold fs-4 text-success">{asistidosCount}</div>
             </div>
           </div>
@@ -117,7 +119,7 @@ function AdminCheckIn() {
         <div className="col-6 col-md-3">
           <div className="card border-0 shadow-sm rounded-3">
             <div className="card-body p-3 text-center">
-              <div className="text-warning small text-uppercase fw-bold mb-1">Pendientes</div>
+              <div className="text-warning small text-uppercase fw-bold mb-1">{t('checkin.pending')}</div>
               <div className="fw-bold fs-4 text-warning">{pendientesCount}</div>
             </div>
           </div>
@@ -127,19 +129,19 @@ function AdminCheckIn() {
       {/* Manual check-in */}
       <div className="card border-0 shadow-sm rounded-4 mb-4">
         <div className="card-body p-4">
-          <h6 className="fw-bold mb-2">Ingreso Manual</h6>
+          <h6 className="fw-bold mb-2">{t('checkin.manualEntry')}</h6>
           <div className="d-flex gap-2">
             <input
               type="text"
               className="form-control"
-              placeholder="Matrícula del estudiante..."
+              placeholder={t('checkin.studentId')}
               value={matricula}
               onChange={(e) => setMatricula(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleManualCheckin()}
               style={{ maxWidth: '300px' }}
             />
             <button className="btn btn-primary rounded-pill px-4" onClick={handleManualCheckin} disabled={manualLoading}>
-              {manualLoading ? 'Registrando...' : 'Registrar'}
+              {manualLoading ? t('checkin.registering') : t('checkin.register')}
             </button>
           </div>
         </div>
@@ -155,7 +157,7 @@ function AdminCheckIn() {
               <input
                 type="text"
                 className="form-control bg-transparent border-0 shadow-none small"
-                placeholder="Buscar por nombre o correo..."
+                placeholder={t('checkin.searchPlaceholder')}
                 style={{ fontSize: '13px' }}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -175,11 +177,11 @@ function AdminCheckIn() {
                 <thead className="border-bottom">
                   <tr>
                     <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 ps-3" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Nombre Completo</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Cuatrimestre</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>{t('checkin.quarter')}</th>
                     <th className="text-uppercase text-secondary small fw-bold pb-3 border-0" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Correo</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Método</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 text-center" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Estado</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 text-center pe-3" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Asistido</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>{t('checkin.method')}</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 text-center" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>{t('checkin.status')}</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 text-center pe-3" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>{t('checkin.attendedStatus')}</th>
                   </tr>
                 </thead>
                 <tbody className="border-top-0">
@@ -195,7 +197,7 @@ function AdminCheckIn() {
                       </td>
                       <td className="py-3 border-light text-center">
                         <span className={`badge rounded-pill px-3 py-2 fw-semibold ${student.estado === 'ASISTIDO' ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning'}`} style={{ fontSize: '11px' }}>
-                          {student.estado === 'ASISTIDO' ? 'Asistido' : 'Pendiente'}
+                          {student.estado === 'ASISTIDO' ? t('checkin.attendedStatus') : t('checkin.pending')}
                         </span>
                       </td>
                       <td className="py-3 border-light text-center pe-3">
@@ -217,16 +219,16 @@ function AdminCheckIn() {
             </div>
           ) : (
             <div className="text-center py-4">
-              <p className="text-secondary small mb-0">No hay asistencias registradas para este evento.</p>
+              <p className="text-secondary small mb-0">{t('checkin.noAttendance')}</p>
             </div>
           )}
         </div>
         <div className="card-footer bg-transparent border-top p-3 d-flex justify-content-between align-items-center">
           <span className="text-secondary small">
-            Mostrando {filtered.length} de {students.length} asistencias
+            {t('checkin.attendedCount', { count: asistidosCount })}
           </span>
           <span className="text-success small fw-semibold">
-            {asistidosCount} asistido(s)
+            {t('checkin.attendedCount', { count: asistidosCount })}
           </span>
         </div>
       </div>

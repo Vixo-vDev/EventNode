@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
+import { useTranslation } from '../../i18n/I18nContext'
 import { userService } from '../../services/userService'
+import { closeModal } from '../../services/apiHelper'
 import EditarEstudianteModal from '../../components/modals/EditarEstudianteModal'
 import CrearAdministradorModal from '../../components/modals/CrearAdministradorModal'
 
@@ -13,9 +15,11 @@ const INITIAL_ADMIN_FORM = {
 }
 
 function AdminEstudiantes({ user }) {
+  const { t } = useTranslation()
   const [students, setStudents] = useState([])
   const [admins, setAdmins] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
 
   // Estado para crear administrador
   const [adminForm, setAdminForm] = useState(INITIAL_ADMIN_FORM)
@@ -84,14 +88,10 @@ function AdminEstudiantes({ user }) {
         ...adminForm,
         idSolicitante: user?.id,
       })
-      toast.success('Administrador creado exitosamente')
+      toast.success(t('students.adminCreatedSuccess'))
       setAdminForm(INITIAL_ADMIN_FORM)
       // Cerrar modal programáticamente usando Bootstrap JS
-      const modalEl = document.getElementById('crearAdminModal')
-      if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
-      }
+      closeModal('crearAdminModal')
       // Refrescar lista
       setLoading(true)
       fetchUsers()
@@ -107,9 +107,9 @@ function AdminEstudiantes({ user }) {
     <div>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
-          <h2 className="fw-bold mb-1">Estudiantes</h2>
+          <h2 className="fw-bold mb-1">{t('students.title')}</h2>
           <p className="text-secondary small mb-0">
-            Administrar y supervisar las cuentas, roles y estados de los estudiantes.
+            {t('students.subtitle')}
           </p>
         </div>
       </div>
@@ -124,8 +124,10 @@ function AdminEstudiantes({ user }) {
               <input
                 type="text"
                 className="form-control bg-transparent border-0 shadow-none small"
-                placeholder="Buscar por nombre, matrícula o correo..."
+                placeholder={t('students.searchPlaceholder')}
                 style={{ fontSize: '13px' }}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
@@ -135,7 +137,7 @@ function AdminEstudiantes({ user }) {
           {loading ? (
             <div className="text-center py-5">
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Cargando...</span>
+                <span className="visually-hidden">{t('common.loading')}</span>
               </div>
             </div>
           ) : students.length > 0 ? (
@@ -143,15 +145,21 @@ function AdminEstudiantes({ user }) {
               <table className="table align-middle mb-0">
                 <thead>
                   <tr>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom ps-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>Nombre Completo</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Matrícula</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Email</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>Estado</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom text-end pe-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>Acciones</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom ps-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>{t('students.fullName')}</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>{t('students.matricula')}</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>{t('students.email')}</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom" style={{ fontSize: '10px', letterSpacing: '1px' }}>{t('students.status')}</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom text-end pe-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>{t('students.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="border-top-0">
-                  {students.map(student => (
+                  {students
+                    .filter(student =>
+                      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      student.matricula.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      student.email.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map(student => (
                     <tr key={student.id}>
                       <td className="py-3 border-light ps-4">
                         <div className="d-flex align-items-center gap-3">
@@ -166,7 +174,7 @@ function AdminEstudiantes({ user }) {
                       <td className="py-3 border-light">
                         <div className={`d-flex align-items-center gap-1 fw-bold ${student.active ? 'text-success' : 'text-secondary'}`} style={{ fontSize: '11px' }}>
                           <span style={{ fontSize: '14px', lineHeight: '1' }}>{student.active ? '•' : '○'}</span>
-                          {student.active ? 'Activo' : 'Inactivo'}
+                          {student.active ? t('students.active') : t('students.inactive')}
                         </div>
                       </td>
                       <td className="py-3 border-light text-end pe-4">
@@ -192,9 +200,9 @@ function AdminEstudiantes({ user }) {
               <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
                 <i className="bi bi-people text-primary fs-4"></i>
               </div>
-              <h6 className="fw-bold mb-1">No hay estudiantes registrados</h6>
+              <h6 className="fw-bold mb-1">{t('students.noStudents')}</h6>
               <p className="text-secondary small mb-0">
-                Los estudiantes aparecerán aquí cuando se registren en la plataforma.
+                {t('students.studentsComingSoon')}
               </p>
             </div>
           )}
@@ -205,7 +213,7 @@ function AdminEstudiantes({ user }) {
       <div className="card border-0 shadow-sm rounded-4 mb-4">
         <div className="card-header bg-white border-bottom-0 p-4">
           <div className="d-flex align-items-center justify-content-between">
-            <h5 className="fw-bold mb-0 text-dark">Administradores</h5>
+            <h5 className="fw-bold mb-0 text-dark">{t('students.administrators')}</h5>
             {isSuperAdmin && (
               <button
                 className="btn btn-primary btn-sm d-flex align-items-center gap-2 rounded-3 px-3"
@@ -214,7 +222,7 @@ function AdminEstudiantes({ user }) {
                 style={{ fontSize: '13px' }}
               >
                 <i className="bi bi-plus-lg"></i>
-                Nuevo Admin
+                {t('students.newAdmin')}
               </button>
             )}
           </div>
@@ -239,7 +247,7 @@ function AdminEstudiantes({ user }) {
               ))}
             </div>
           ) : (
-            <p className="text-secondary small mb-0">No hay administradores adicionales.</p>
+            <p className="text-secondary small mb-0">{t('students.noAdmins')}</p>
           )}
         </div>
       </div>

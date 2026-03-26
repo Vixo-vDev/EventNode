@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { useTranslation } from '../../i18n/I18nContext'
 import { diplomaService } from '../../services/diplomaService'
 
 function StudentDiplomaDetail({ user }) {
+  const { t } = useTranslation()
   const { id } = useParams()
   const [diploma, setDiploma] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -71,7 +73,7 @@ function StudentDiplomaDetail({ user }) {
     return (
       <div className="text-center py-5">
         <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Cargando...</span>
+          <span className="visually-hidden">{t('eventDetail.loading')}</span>
         </div>
       </div>
     )
@@ -81,7 +83,7 @@ function StudentDiplomaDetail({ user }) {
     return (
       <div className="text-center py-5">
         <h5>Diploma no encontrado</h5>
-        <Link to="/estudiante/diplomas" className="btn btn-primary btn-sm rounded-pill px-4 mt-2">Volver</Link>
+        <Link to="/estudiante/diplomas" className="btn btn-primary btn-sm rounded-pill px-4 mt-2">{t('eventDetail.back')}</Link>
       </div>
     )
   }
@@ -96,10 +98,10 @@ function StudentDiplomaDetail({ user }) {
         className="text-secondary text-decoration-none small d-flex align-items-center gap-1 mb-3"
       >
         <i className="bi bi-arrow-left"></i>
-        Volver a Mis Diplomas
+        {t('studentDiplomaDetail.backToDiplomas')}
       </Link>
 
-      <h4 className="fw-bold mb-4">Detalles de Diploma</h4>
+      <h4 className="fw-bold mb-4">{t('studentDiplomaDetail.title')}</h4>
 
       <div className="row g-4">
         {/* PDF Preview */}
@@ -109,9 +111,9 @@ function StudentDiplomaDetail({ user }) {
               {pdfLoading ? (
                 <div className="text-center py-5">
                   <div className="spinner-border text-primary mb-3" role="status">
-                    <span className="visually-hidden">Cargando vista previa...</span>
+                    <span className="visually-hidden">{t('eventDetail.loading')}</span>
                   </div>
-                  <p className="text-secondary small">Cargando vista previa del diploma...</p>
+                  <p className="text-secondary small">{t('eventDetail.loading')}</p>
                 </div>
               ) : pdfUrl ? (
                 <div style={{ width: '100%', minHeight: '500px' }}>
@@ -136,15 +138,15 @@ function StudentDiplomaDetail({ user }) {
                   <div className="mb-3">
                     <i className="bi bi-file-earmark-pdf text-primary" style={{ fontSize: '3rem' }}></i>
                   </div>
-                  <h5 className="fw-bold mb-1">Diploma de Asistencia</h5>
+                  <h5 className="fw-bold mb-1">{t('studentDiplomaDetail.attendanceDiploma')}</h5>
                   <p className="text-uppercase text-secondary small mb-3">
-                    Se otorga con orgullo a
+                    {t('studentDiplomaDetail.awardedTo')}
                   </p>
                   <h3 className="fw-bold mb-3" style={{ fontSize: '1.8rem', color: '#1a56db' }}>
                     {myEmitido?.nombre || user?.nombre || 'Estudiante'}
                   </h3>
                   <p className="text-secondary small mb-2">
-                    Por haber asistido al evento
+                    {t('studentDiplomaDetail.forAttending')}
                   </p>
                   <p className="text-primary fw-semibold">{diploma.nombreEvento}</p>
                   <p className="text-secondary small mt-3">
@@ -162,9 +164,9 @@ function StudentDiplomaDetail({ user }) {
               <i className="bi bi-check-lg text-white small"></i>
             </div>
             <div>
-              <div className="fw-semibold small">Certificado Verificado</div>
+              <div className="fw-semibold small">{t('studentDiplomaDetail.verifiedCert')}</div>
               <div className="text-secondary small">
-                Este diploma es auténtico y verificado oficialmente por la UTEZ
+                {t('studentDiplomaDetail.verifiedMsg')}
               </div>
             </div>
           </div>
@@ -179,7 +181,7 @@ function StudentDiplomaDetail({ user }) {
               <div className="d-flex align-items-start gap-2 mb-3">
                 <i className="bi bi-person-check text-primary small mt-1"></i>
                 <div>
-                  <div className="text-secondary small text-uppercase">Firmado por</div>
+                  <div className="text-secondary small text-uppercase">{t('studentDiplomaDetail.signedBy')}</div>
                   <div className="fw-semibold small">{diploma.firma || 'Administrador'}</div>
                 </div>
               </div>
@@ -187,7 +189,7 @@ function StudentDiplomaDetail({ user }) {
               <div className="d-flex align-items-start gap-2 mb-3">
                 <i className="bi bi-calendar-check text-primary small mt-1"></i>
                 <div>
-                  <div className="text-secondary small text-uppercase">Fecha de emisión</div>
+                  <div className="text-secondary small text-uppercase">{t('studentDiplomaDetail.issueDate')}</div>
                   <div className="fw-semibold small">
                     {myEmitido?.fechaEnvio
                       ? new Date(myEmitido.fechaEnvio).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -201,10 +203,10 @@ function StudentDiplomaDetail({ user }) {
               <div className="d-flex align-items-start gap-2 mb-3">
                 <i className="bi bi-patch-check text-primary small mt-1"></i>
                 <div>
-                  <div className="text-secondary small text-uppercase">Estado</div>
+                  <div className="text-secondary small text-uppercase">{t('eventDetail.scheduleDetails')}</div>
                   <div className="fw-semibold small">
                     <span className={`badge rounded-pill px-2 py-1 ${myEmitido?.estadoEnvio === 'ENVIADO' ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning'}`}>
-                      {myEmitido?.estadoEnvio === 'ENVIADO' ? 'Entregado' : 'Pendiente'}
+                      {myEmitido?.estadoEnvio === 'ENVIADO' ? t('studentDiplomaDetail.delivered') : t('studentDiplomaDetail.pending')}
                     </span>
                   </div>
                 </div>
@@ -214,7 +216,7 @@ function StudentDiplomaDetail({ user }) {
                 <div className="d-flex align-items-start gap-2 mb-4">
                   <i className="bi bi-palette text-primary small mt-1"></i>
                   <div>
-                    <div className="text-secondary small text-uppercase">Diseño</div>
+                    <div className="text-secondary small text-uppercase">{t('studentDiplomaDetail.design')}</div>
                     <div className="fw-semibold small">{diploma.diseno}</div>
                   </div>
                 </div>
@@ -226,7 +228,7 @@ function StudentDiplomaDetail({ user }) {
                 disabled={downloading}
               >
                 <i className="bi bi-download"></i>
-                {downloading ? 'Descargando...' : 'Descargar PDF'}
+                {downloading ? 'Descargando...' : t('studentDiplomaDetail.downloadPdf')}
               </button>
             </div>
           </div>
@@ -234,14 +236,14 @@ function StudentDiplomaDetail({ user }) {
           <div className="card border-0 rounded-4 text-white"
             style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}>
             <div className="card-body p-4">
-              <h6 className="fw-bold mb-2">Siguiente Paso</h6>
-              <p className="small opacity-75 mb-1">Has completado el evento.</p>
-              <p className="small opacity-75 mb-3">¿Quieres asistir a otro evento?</p>
+              <h6 className="fw-bold mb-2">{t('studentDiplomaDetail.nextStep')}</h6>
+              <p className="small opacity-75 mb-1">{t('studentDiplomaDetail.eventCompleted')}</p>
+              <p className="small opacity-75 mb-3">{t('studentDiplomaDetail.anotherEvent')}</p>
               <Link
                 to="/estudiante/eventos"
                 className="btn btn-light btn-sm rounded-pill fw-semibold w-100"
               >
-                Explorar Eventos
+                {t('studentDiplomaDetail.exploreEvents')}
               </Link>
             </div>
           </div>

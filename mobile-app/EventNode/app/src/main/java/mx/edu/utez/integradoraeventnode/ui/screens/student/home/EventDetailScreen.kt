@@ -45,25 +45,114 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.student.profile.ProfileBottomNav
+import mx.edu.utez.integradoraeventnode.utils.PreferencesHelper
+import mx.edu.utez.integradoraeventnode.utils.AppColors
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import android.util.Base64
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import mx.edu.utez.integradoraeventnode.data.network.ApiClient
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun EventDetailScreen(
+    eventId: Int = -1,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
     onAgenda: () -> Unit = {},
     onDiplomas: () -> Unit = {},
     onProfile: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val userId = PreferencesHelper.getUserId(context)
+    val bearerToken = PreferencesHelper.getBearerToken(context)
+
     var showRegisterModal by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var evento by remember { mutableStateOf<Map<String, Any>?>(null) }
+    var isRegistering by remember { mutableStateOf(false) }
+
+    LaunchedEffect(eventId) {
+        if (eventId == -1) {
+            errorMessage = "ID de evento no válido"
+            isLoading = false
+            return@LaunchedEffect
+        }
+        scope.launch {
+            try {
+                isLoading = true
+                val response = ApiClient.apiService.getEvento(eventId)
+                if (response.isSuccessful) {
+                    val eventoData = response.body()
+                    if (eventoData != null) {
+                        evento = mapOf(
+                            "nombre" to eventoData.nombre,
+                            "nombreCategoria" to eventoData.nombreCategoria,
+                            "ubicacion" to eventoData.ubicacion,
+                            "descripcion" to eventoData.descripcion,
+                            "banner" to eventoData.banner,
+                            "fechaInicio" to eventoData.fechaInicio,
+                            "fechaFin" to eventoData.fechaFin
+                        )
+                    }
+                }
+                isLoading = false
+            } catch (e: Exception) {
+                errorMessage = "Error al cargar evento: ${e.message}"
+                isLoading = false
+            }
+        }
+    }
 
     Surface(modifier = modifier.fillMaxSize(), color = Color.White) {
         Box(modifier = Modifier.fillMaxSize()) {
+            if (isLoading) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = AppColors.Primary,
+                        modifier = Modifier.size(50.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Cargando evento...")
+                }
+            } else if (errorMessage != null) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text("Error", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(errorMessage ?: "Desconocido", textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onBack,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
+                    ) {
+                        Text("Volver")
+                    }
+                }
+            } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -75,12 +164,30 @@ fun EventDetailScreen(
                         .fillMaxWidth()
                         .height(300.dp)
                 ) {
-                    Image(
-                        bitmap = assetImageBitmap("Gemini_Generated_Image_j7p5usj7p5usj7p5.png"),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
+                    val bannerBitmap = (evento?.get("banner") as? String)?.let { base64String ->
+                        try {
+                            val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
+                            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+
+                    if (bannerBitmap != null) {
+                        Image(
+                            bitmap = bannerBitmap,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Image(
+                            bitmap = assetImageBitmap("Gemini_Generated_Image_j7p5usj7p5usj7p5.png"),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                     
                     IconButton(
                         onClick = onBack,
@@ -115,7 +222,7 @@ fun EventDetailScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Festival en el\ncampus",
+                                text = evento?.get("nombre") as? String ?: "Evento",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1A1C1E),
@@ -127,65 +234,89 @@ fun EventDetailScreen(
                                 modifier = Modifier.padding(start = 16.dp)
                             ) {
                                 Text(
-                                    text = "CULTURA",
+                                    text = (evento?.get("nombreCategoria") as? String ?: "EVENTO").uppercase(),
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF2F6FED)
+                                    color = AppColors.Primary
                                 )
                             }
                         }
-                        
+
                         Spacer(modifier = Modifier.height(24.dp))
-                        
+
+                        val startDate = (evento?.get("fechaInicio") as? String)?.let { formatDateTime(it) } ?: "N/A"
+                        val endDate = (evento?.get("fechaFin") as? String)?.let { formatDateTime(it) } ?: "N/A"
+
                         DetailRow(
                             label = "FECHA Y HORA",
-                            value = "Viernes, 24 Octubre - 16:00 - 20:00",
+                            value = "$startDate - $endDate",
                             icon = "book-open-reader.png"
                         )
-                        
+
                         Spacer(modifier = Modifier.height(20.dp))
-                        
+
                         DetailRow(
                             label = "UBICACIÓN",
-                            value = "Auditorio Principal,\nEdificio Central",
+                            value = evento?.get("ubicacion") as? String ?: "N/A",
                             icon = "home.png"
                         )
-                        
+
                         Spacer(modifier = Modifier.height(32.dp))
-                        
+
                         Text(
                             text = "Información del Evento",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1A1C1E)
                         )
-                        
+
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+
                         Text(
-                            text = "Únete a nosotros en la celebración anual del campus. Disfrutaremos de música en vivo, stands de comida local y presentaciones de los clubes universitarios. Un espacio perfecto para conectar con otros estudiantes y disfrutar de la vida universitaria fuera de las aulas.",
+                            text = evento?.get("descripcion") as? String ?: "Sin descripción",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color(0xFF44474E),
                             lineHeight = 22.sp
                         )
-                        
+
                         Spacer(modifier = Modifier.height(40.dp))
-                        
+
                         Button(
-                            onClick = { showRegisterModal = true },
+                            onClick = {
+                                isRegistering = true
+                                scope.launch {
+                                    try {
+                                        if (userId != -1 && bearerToken.isNotEmpty()) {
+                                            val response = ApiClient.apiService.inscribirse(
+                                                bearerToken,
+                                                mapOf("idUsuario" to userId, "idEvento" to eventId)
+                                            )
+                                            if (response.isSuccessful) {
+                                                showRegisterModal = true
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        errorMessage = "Error al registrarse: ${e.message}"
+                                    } finally {
+                                        isRegistering = false
+                                    }
+                                }
+                            },
+                            enabled = !isRegistering,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                            colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
                         ) {
                             Text("Registrarse al Evento", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
                     }
                 }
             }
-            
+            }
+
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -245,7 +376,7 @@ fun EventDetailScreen(
                             Spacer(modifier = Modifier.height(12.dp))
                             
                             Text(
-                                text = "Todo listo para asistir al 'Innovation Summit 2024'. Prepárate para una experiencia inspiradora.",
+                                text = "Todo listo para asistir al '${evento?.get("nombre") ?: "evento"}'. Prepárate para una experiencia inspiradora.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color(0xFF666666),
                                 textAlign = TextAlign.Center
@@ -262,7 +393,7 @@ fun EventDetailScreen(
                                     .fillMaxWidth()
                                     .height(50.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                                colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
                             ) {
                                 Text("Ver en agenda", fontWeight = FontWeight.Bold)
                             }
@@ -285,6 +416,17 @@ fun EventDetailScreen(
                 }
             }
         }
+    }
+}
+
+private fun formatDateTime(dateTimeString: String): String {
+    return try {
+        val formatter = DateTimeFormatter.ISO_DATE_TIME
+        val dateTime = LocalDateTime.parse(dateTimeString, formatter)
+        val outputFormatter = DateTimeFormatter.ofPattern("EEEE, d MMMM - HH:mm", Locale("es", "ES"))
+        dateTime.format(outputFormatter)
+    } catch (e: Exception) {
+        dateTimeString
     }
 }
 
@@ -351,7 +493,7 @@ private fun DetailBottomNav(onBack: () -> Unit, onAgenda: () -> Unit, onDiplomas
 
 @Composable
 private fun BottomNavItem(label: String, icon: String, selected: Boolean, onClick: () -> Unit) {
-    val color = if (selected) Color(0xFF2F6FED) else Color(0xFF8B8B8B)
+    val color = if (selected) AppColors.Primary else Color(0xFF8B8B8B)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable { onClick() }

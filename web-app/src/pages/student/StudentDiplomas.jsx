@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { useTranslation } from '../../i18n/I18nContext'
 import { diplomaService } from '../../services/diplomaService'
 
 function StudentDiplomas({ user }) {
+  const { t } = useTranslation()
   const [diplomas, setDiplomas] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -42,9 +44,9 @@ function StudentDiplomas({ user }) {
     <div>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
         <div>
-          <h2 className="fw-bold mb-1">Diplomas</h2>
+          <h2 className="fw-bold mb-1">{t('studentDiplomas.title')}</h2>
           <p className="text-secondary small mb-0">
-            Aquí puedes encontrar todos los diplomas de los cursos y talleres a los que has asistido.
+            {t('studentDiplomas.subtitle')}
           </p>
         </div>
       </div>
@@ -69,7 +71,7 @@ function StudentDiplomas({ user }) {
                     {d.fechaEnvio ? new Date(d.fechaEnvio).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
                   </p>
                   <span className={`badge rounded-pill px-3 py-1 mb-3 ${d.estadoEnvio === 'ENVIADO' ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`}>
-                    {d.estadoEnvio === 'ENVIADO' ? 'Recibido' : 'Error'}
+                    {d.estadoEnvio === 'ENVIADO' ? t('studentDiplomas.received') : t('studentDiplomas.error')}
                   </span>
 
                   <div className="d-flex gap-2 justify-content-center mt-2">
@@ -78,7 +80,7 @@ function StudentDiplomas({ user }) {
                       className="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
                     >
                       <i className="bi bi-eye"></i>
-                      Ver
+                      {t('studentDiplomas.view')}
                     </Link>
                     {d.estadoEnvio === 'ENVIADO' && (
                       <button
@@ -86,7 +88,7 @@ function StudentDiplomas({ user }) {
                         onClick={() => handleDownload(d)}
                       >
                         <i className="bi bi-download"></i>
-                        Descargar
+                        {t('studentDiplomas.download')}
                       </button>
                     )}
                   </div>
@@ -101,9 +103,9 @@ function StudentDiplomas({ user }) {
             <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '64px', height: '64px' }}>
               <i className="bi bi-award text-primary fs-3"></i>
             </div>
-            <h6 className="fw-bold mb-1">Aún no tienes diplomas</h6>
+            <h6 className="fw-bold mb-1">{t('studentDiplomas.noDiplomas')}</h6>
             <p className="text-secondary small mb-0">
-              Asiste a eventos y completa tu participación para recibir diplomas y certificaciones.
+              {t('studentDiplomas.noDiplomasMsg')}
             </p>
           </div>
         </div>

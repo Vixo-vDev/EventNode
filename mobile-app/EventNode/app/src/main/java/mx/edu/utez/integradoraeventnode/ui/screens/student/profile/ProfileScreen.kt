@@ -1,5 +1,6 @@
 package mx.edu.utez.integradoraeventnode.ui.screens.student.profile
 
+import android.app.Activity
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -55,9 +56,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import mx.edu.utez.integradoraeventnode.R
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
+import mx.edu.utez.integradoraeventnode.utils.LocaleHelper
 import org.json.JSONObject
 
 @Composable
@@ -249,7 +253,51 @@ fun ProfileScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Language Selector
+                Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                    Text(text = stringResource(R.string.language_title), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val currentLang = LocaleHelper.getCurrentLanguage(context)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF5F6FA), RoundedCornerShape(12.dp))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        listOf("es" to stringResource(R.string.language_spanish), "en" to stringResource(R.string.language_english)).forEach { (code, label) ->
+                            val isSelected = currentLang == code
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        if (!isSelected) {
+                                            LocaleHelper.setLocale(context, code)
+                                            (context as? Activity)?.recreate()
+                                        }
+                                    },
+                                color = if (isSelected) Color(0xFF2F6FED) else Color.Transparent,
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text(
+                                    text = label,
+                                    modifier = Modifier
+                                        .padding(vertical = 10.dp)
+                                        .fillMaxWidth(),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) Color.White else Color.Gray,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Logout Button
                 Button(
@@ -261,9 +309,9 @@ fun ProfileScreen(
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350))
                 ) {
-                    Text("Cerrar Sesion", style = MaterialTheme.typography.titleMedium, color = Color.White)
+                    Text(stringResource(R.string.profile_logout), style = MaterialTheme.typography.titleMedium, color = Color.White)
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
@@ -324,10 +372,10 @@ private fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     )
                 }
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(text = "¿Cerrar sesión?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(R.string.profile_logout_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "¿Estás seguro de que deseas salir de tu cuenta en EventNode? Tendrás que volver a ingresar tus credenciales para acceder.",
+                    text = stringResource(R.string.profile_logout_msg),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
@@ -339,7 +387,7 @@ private fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = "Sí, cerrar sesión", fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(R.string.profile_logout_confirm), fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
@@ -348,7 +396,7 @@ private fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F6FA)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = "Mantener sesión", color = Color.Black, fontWeight = FontWeight.Medium)
+                    Text(text = stringResource(R.string.profile_keep_session), color = Color.Black, fontWeight = FontWeight.Medium)
                 }
             }
         }

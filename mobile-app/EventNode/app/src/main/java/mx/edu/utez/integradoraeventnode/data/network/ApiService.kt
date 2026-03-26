@@ -242,4 +242,11 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<Map<String, String>>
+
+    @PUT("/api/usuarios/{id}/perfil")
+    suspend fun actualizarPerfil(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body request: Map<String, @JvmSuppressWildcards Any>
+    ): Response<Map<String, @JvmSuppressWildcards Any>>
 }

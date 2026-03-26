@@ -56,6 +56,19 @@ public class UsuarioController {
         }
     }
 
+    @PutMapping("/{id}/perfil")
+    public ResponseEntity<?> actualizarPerfil(@PathVariable("id") Integer id,
+                                               @RequestBody Map<String, Object> datos) {
+        try {
+            PerfilResponse perfil = usuarioService.actualizarPerfil(id, datos);
+            return ResponseEntity.ok(perfil);
+        } catch (IllegalArgumentException ex) {
+            Map<String, String> body = new HashMap<>();
+            body.put("mensaje", ex.getMessage());
+            return ResponseEntity.badRequest().body(body);
+        }
+    }
+
     @PatchMapping("/{id}/estado")
     public ResponseEntity<?> cambiarEstado(@PathVariable("id") Integer id) {
         try {

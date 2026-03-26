@@ -162,9 +162,7 @@ public class PreCheckinService {
                 map.put("estado", evento.getEstado());
                 map.put("banner", evento.getBanner());
 
-                if (evento.getCategoria() != null) {
-                    map.put("categoriaNombre", evento.getCategoria().getNombre());
-                }
+                map.put("categoriaNombre", evento.getCategoria() != null ? evento.getCategoria().getNombre() : "Sin categoría");
             }
 
             map.put("inscripcionEstado", pc.getEstado());

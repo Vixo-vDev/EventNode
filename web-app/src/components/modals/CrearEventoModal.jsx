@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { eventService } from '../../services/eventService'
+import { useTranslation } from '../../i18n/I18nContext'
 
 function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
+  const { t } = useTranslation()
   const fileInputRef = useRef(null)
   const formRef = useRef(null)
   const [bannerPreview, setBannerPreview] = useState(null)
@@ -171,15 +173,15 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
         <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <form ref={formRef} noValidate className="modal-content border-0 rounded-4 shadow">
           <div className="modal-header border-0 px-4 pt-4 pb-0">
-            <h5 className="fw-bold">Crear Nuevo Evento</h5>
-            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            <h5 className="fw-bold">{t('createEvent.title')}</h5>
+            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('common.close')}></button>
           </div>
 
           <div className="modal-body px-4 py-3">
 
             {/* Banner upload */}
             <div className="mb-4">
-              <label className="form-label fw-semibold small">Banner del evento</label>
+              <label className="form-label fw-semibold small">{t('createEvent.banner')}</label>
               <input type="file" ref={fileInputRef} accept="image/*" className="d-none" onChange={handleBannerChange} />
               <div
                 className="d-flex flex-column align-items-center justify-content-center text-center p-4 rounded-3"
@@ -191,8 +193,8 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 ) : (
                   <>
                     <i className="bi bi-image text-secondary fs-3 mb-2"></i>
-                    <div className="text-secondary small">Haz clic para abrir el explorador y selecciona una imagen</div>
-                    <div className="text-secondary small" style={{ fontSize: '11px' }}>Recomendado: 1200×480px (PNG, JPG)</div>
+                    <div className="text-secondary small">{t('createEvent.bannerInstruction')}</div>
+                    <div className="text-secondary small" style={{ fontSize: '11px' }}>{t('createEvent.bannerRecommended')}</div>
                   </>
                 )}
               </div>
@@ -201,23 +203,23 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
             {/* Nombre + Ubicación */}
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Nombre del evento *</label>
+                <label className="form-label fw-semibold small">{t('createEvent.eventName')}</label>
                 <input
                   type="text"
                   name="nombre"
                   className="form-control"
-                  placeholder="Ej: Workshop de IA Generativa"
+                  placeholder={t('createEvent.eventNamePlaceholder')}
                   value={formData.nombre}
                   onChange={handleChange}
                 />
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Ubicación *</label>
+                <label className="form-label fw-semibold small">{t('createEvent.location')}</label>
                 <input
                   type="text"
                   name="ubicacion"
                   className="form-control"
-                  placeholder="Ej: Auditorio Central, Aula 101 o Link de Zoom"
+                  placeholder={t('createEvent.locationPlaceholder')}
                   value={formData.ubicacion}
                   onChange={handleChange}
                 />
@@ -226,12 +228,12 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
 
             {/* Descripción */}
             <div className="mb-3">
-              <label className="form-label fw-semibold small">Descripción *</label>
+              <label className="form-label fw-semibold small">{t('createEvent.description')}</label>
               <textarea
                 name="descripcion"
                 className="form-control"
                 rows="3"
-                placeholder="Describe de qué trata el evento..."
+                placeholder={t('createEvent.descriptionPlaceholder')}
                 value={formData.descripcion}
                 onChange={handleChange}
               ></textarea>
@@ -240,7 +242,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
             {/* Fechas */}
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Fecha y Hora Inicio *</label>
+                <label className="form-label fw-semibold small">{t('createEvent.startDateTime')}</label>
                 <input
                   type="datetime-local"
                   name="fechaInicio"
@@ -248,10 +250,10 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   value={formData.fechaInicio}
                   onChange={handleChange}
                 />
-                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>Debe ser una fecha futura.</div>
+                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.futureDate')}</div>
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Fecha y Hora Fin *</label>
+                <label className="form-label fw-semibold small">{t('createEvent.endDateTime')}</label>
                 <input
                   type="datetime-local"
                   name="fechaFin"
@@ -259,21 +261,21 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   value={formData.fechaFin}
                   onChange={handleChange}
                 />
-                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>Posterior al inicio.</div>
+                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.afterStart')}</div>
               </div>
             </div>
 
             {/* Categoría + Capacidad */}
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Categoría *</label>
+                <label className="form-label fw-semibold small">{t('createEvent.category')}</label>
                 <select
                   name="idCategoria"
                   className="form-select"
                   value={formData.idCategoria}
                   onChange={handleChange}
                 >
-                  <option value="">Seleccionar...</option>
+                  <option value="">{t('createEvent.selectCategory')}</option>
                   {categorias.map(cat => (
                     <option key={cat.idCategoria} value={cat.idCategoria}>
                       {cat.nombre}
@@ -282,12 +284,12 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 </select>
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Capacidad Máxima *</label>
+                <label className="form-label fw-semibold small">{t('createEvent.maxCapacity')}</label>
                 <input
                   type="number"
                   name="capacidadMaxima"
                   className="form-control"
-                  placeholder="Ej: 100"
+                  placeholder={t('createEvent.capacityPlaceholder')}
                   min="1"
                   value={formData.capacidadMaxima}
                   onChange={handleChange}
@@ -298,36 +300,36 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
             {/* Cancelación + Tolerancia */}
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Tiempo Cancelación (hrs) *</label>
+                <label className="form-label fw-semibold small">{t('createEvent.cancellationTime')}</label>
                 <input
                   type="number"
                   name="tiempoCancelacionHoras"
                   className="form-control"
-                  placeholder="Ej: 24"
+                  placeholder={t('createEvent.cancellationPlaceholder')}
                   min="1"
                   value={formData.tiempoCancelacionHoras}
                   onChange={handleChange}
                 />
-                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>Horas antes del evento para cancelar inscripción.</div>
+                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.cancellationHelp')}</div>
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">Tolerancia de entrada (min) *</label>
+                <label className="form-label fw-semibold small">{t('createEvent.toleranceTime')}</label>
                 <input
                   type="number"
                   name="tiempoToleranciaMinutos"
                   className="form-control"
-                  placeholder="Ej: 15"
+                  placeholder={t('createEvent.tolerancePlaceholder')}
                   min="0"
                   value={formData.tiempoToleranciaMinutos}
                   onChange={handleChange}
                 />
-                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>Minutos de tolerancia para el check-in.</div>
+                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.toleranceHelp')}</div>
               </div>
             </div>
 
             {/* Organizador con búsqueda y etiquetas */}
             <div className="mb-2" ref={orgContainerRef} style={{ position: 'relative' }}>
-              <label className="form-label fw-semibold small">Organizador (opcional)</label>
+              <label className="form-label fw-semibold small">{t('createEvent.organizer')}</label>
               <div
                 className="d-flex flex-wrap align-items-center gap-2 form-control p-2"
                 style={{ minHeight: '38px', cursor: 'text' }}
@@ -352,7 +354,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                   ref={orgInputRef}
                   type="text"
                   className="border-0 flex-grow-1 small"
-                  placeholder={selectedOrgs.length === 0 ? 'Escribe un nombre y presiona Enter...' : 'Agregar otro...'}
+                  placeholder={selectedOrgs.length === 0 ? t('createEvent.organizerPlaceholder') : t('createEvent.addAnother')}
                   style={{ outline: 'none', minWidth: '120px', fontSize: '13px' }}
                   value={orgQuery}
                   onChange={(e) => setOrgQuery(e.target.value)}
@@ -395,7 +397,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 </div>
               )}
               <div className="text-secondary mt-1" style={{ fontSize: '11px' }}>
-                Busca un organizador existente y presiona Enter para agregarlo como etiqueta.
+                {t('createEvent.organizerHelp')}
               </div>
             </div>
 
@@ -403,7 +405,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
 
           <div className="modal-footer border-top px-4 py-3">
             <button type="button" className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -414,10 +416,10 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
               {isLoading ? (
                 <>
                   <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Creando...
+                  {t('createEvent.creating')}
                 </>
               ) : (
-                'Guardar Evento'
+                t('createEvent.saveEvent')
               )}
             </button>
           </div>
@@ -430,8 +432,8 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
               <div className="mb-3">
                 <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '3rem' }}></i>
               </div>
-              <h5>¡Evento Creado con Éxito!</h5>
-              <p className="text-secondary small">Su evento ha sido guardado correctamente.</p>
+              <h5>{t('createEvent.eventCreated')}</h5>
+              <p className="text-secondary small">{t('createEvent.eventSaved')}</p>
               <button className="btn btn-primary rounded-pill px-4 mt-2 mx-auto" onClick={() => {
                 setShowSuccess(false)
                 const modalEl = document.getElementById('crearEventoModal')
@@ -441,7 +443,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 }
                 resetForm()
               }}>
-                Aceptar
+                {t('createEvent.accept')}
               </button>
           </div>
         </div>
@@ -454,10 +456,10 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
               <div className="mb-3">
                 <i className="bi bi-x-circle-fill text-danger" style={{ fontSize: '3rem' }}></i>
               </div>
-              <h5>Revisa los datos</h5>
-              <p className="text-secondary small">Por favor, asegúrate de completar todos los campos obligatorios (*) antes de continuar.</p>
+              <h5>{t('createEvent.reviewData')}</h5>
+              <p className="text-secondary small">{t('createEvent.requiredFields')}</p>
               <button className="btn btn-danger rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowError(false)}>
-                Entendido
+                {t('createEvent.understood')}
               </button>
           </div>
         </div>

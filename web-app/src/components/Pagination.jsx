@@ -1,11 +1,14 @@
+import { useTranslation } from '../i18n/I18nContext'
+
 function Pagination() {
+  const { t } = useTranslation()
   return (
     <nav className="d-flex justify-content-center mt-4">
       <ul className="pagination pagination-sm mb-0">
         <li className="page-item">
           <button className="page-link rounded-start-pill px-3">
             <i className="bi bi-chevron-left me-1"></i>
-            Anterior
+            {t('common.previous')}
           </button>
         </li>
         <li className="page-item active">
@@ -25,7 +28,7 @@ function Pagination() {
         </li>
         <li className="page-item">
           <button className="page-link rounded-end-pill px-3">
-            Siguiente
+            {t('common.next')}
             <i className="bi bi-chevron-right ms-1"></i>
           </button>
         </li>

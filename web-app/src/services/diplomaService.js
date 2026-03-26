@@ -1,104 +1,33 @@
-import { authService } from './authService';
-
-const API_URL = '/api';
+import { apiGet, apiPost, apiPut, apiDelete, apiFetch } from './apiHelper'
 
 export const diplomaService = {
-  crearDiploma: async (datos) => {
-    const response = await fetch(`${API_URL}/diplomas/crear`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...authService.getAuthHeader()
-      },
-      body: JSON.stringify(datos),
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || 'Error al crear diploma');
-    }
-    return response.json();
-  },
+  crearDiploma: (datos) =>
+    apiPost('/diplomas/crear', datos),
 
-  listarDiplomas: async () => {
-    const response = await fetch(`${API_URL}/diplomas/`, {
-      headers: { ...authService.getAuthHeader() }
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || 'Error al listar diplomas');
-    }
-    return response.json();
-  },
+  listarDiplomas: () =>
+    apiGet('/diplomas/'),
 
-  obtenerDiploma: async (idDiploma) => {
-    const response = await fetch(`${API_URL}/diplomas/${idDiploma}`, {
-      headers: { ...authService.getAuthHeader() }
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || 'Error al obtener diploma');
-    }
-    return response.json();
-  },
+  obtenerDiploma: (idDiploma) =>
+    apiGet(`/diplomas/${idDiploma}`),
 
   emitirDiplomas: async (idDiploma) => {
-    const response = await fetch(`${API_URL}/diplomas/${idDiploma}/emitir`, {
-      method: 'POST',
-      headers: { ...authService.getAuthHeader() }
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || 'Error al emitir diplomas');
-    }
-    return response.json();
+    const res = await apiFetch(`/diplomas/${idDiploma}/emitir`, { method: 'POST' })
+    return res.json()
   },
 
   descargarDiploma: async (idDiploma, idUsuario) => {
-    const response = await fetch(`${API_URL}/diplomas/${idDiploma}/descargar/${idUsuario}`, {
-      headers: { ...authService.getAuthHeader() }
-    });
-    if (!response.ok) {
-      throw new Error('Error al descargar diploma');
-    }
-    return response.blob();
+    const res = await apiFetch(`/diplomas/${idDiploma}/descargar/${idUsuario}`, {
+      errorMsg: 'Error al descargar diploma',
+    })
+    return res.blob()
   },
 
-  actualizarDiploma: async (idDiploma, datos) => {
-    const response = await fetch(`${API_URL}/diplomas/${idDiploma}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...authService.getAuthHeader()
-      },
-      body: JSON.stringify(datos),
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || 'Error al actualizar diploma');
-    }
-    return response.json();
-  },
+  actualizarDiploma: (idDiploma, datos) =>
+    apiPut(`/diplomas/${idDiploma}`, datos),
 
-  eliminarDiploma: async (idDiploma) => {
-    const response = await fetch(`${API_URL}/diplomas/${idDiploma}`, {
-      method: 'DELETE',
-      headers: { ...authService.getAuthHeader() }
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || 'Error al eliminar diploma');
-    }
-    return response.json();
-  },
+  eliminarDiploma: (idDiploma) =>
+    apiDelete(`/diplomas/${idDiploma}`),
 
-  listarDiplomasEstudiante: async (idUsuario) => {
-    const response = await fetch(`${API_URL}/diplomas/estudiante/${idUsuario}`, {
-      headers: { ...authService.getAuthHeader() }
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || 'Error al listar diplomas');
-    }
-    return response.json();
-  },
-};
+  listarDiplomasEstudiante: (idUsuario) =>
+    apiGet(`/diplomas/estudiante/${idUsuario}`),
+}

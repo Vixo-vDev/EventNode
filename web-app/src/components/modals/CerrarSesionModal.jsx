@@ -1,4 +1,7 @@
+import { useTranslation } from '../../i18n/I18nContext'
+
 function CerrarSesionModal({ onLogout }) {
+  const { t } = useTranslation()
   return (
     <div className="modal fade" id="logoutModal" tabIndex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered modal-sm">
@@ -8,9 +11,9 @@ function CerrarSesionModal({ onLogout }) {
               style={{ width: '48px', height: '48px' }}>
               <i className="bi bi-box-arrow-right text-primary fs-4"></i>
             </div>
-            <h5 className="fw-bold mb-2">¿Cerrar sesión?</h5>
+            <h5 className="fw-bold mb-2">{t('logoutModal.title')}</h5>
             <p className="text-secondary small mb-4">
-              ¿Estás seguro de que deseas salir de la plataforma?
+              {t('logoutModal.message')}
             </p>
 
             <div className="d-flex gap-2">
@@ -19,7 +22,7 @@ function CerrarSesionModal({ onLogout }) {
                 className="btn btn-outline-secondary rounded-pill w-50"
                 data-bs-dismiss="modal"
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -27,7 +30,7 @@ function CerrarSesionModal({ onLogout }) {
                 data-bs-dismiss="modal"
                 onClick={onLogout}
               >
-                Cerrar sesión
+                {t('logoutModal.logout')}
               </button>
             </div>
           </div>

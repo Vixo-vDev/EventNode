@@ -1,66 +1,24 @@
-import { authService } from './authService';
-
-const API_URL = '/api';
+import { apiGet, apiPost } from './apiHelper'
 
 export const precheckinService = {
-  inscribirse: async (idUsuario, idEvento) => {
-    const response = await fetch(`${API_URL}/precheckin/inscribirse`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        ...authService.getAuthHeader()
-      },
-      body: JSON.stringify({ idUsuario, idEvento }),
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || 'Error al inscribirse');
-    }
-    return response.json();
-  },
+  inscribirse: (idUsuario, idEvento) =>
+    apiPost('/precheckin/inscribirse', { idUsuario, idEvento }),
 
-  cancelarInscripcion: async (idUsuario, idEvento) => {
-    const response = await fetch(`${API_URL}/precheckin/cancelar`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        ...authService.getAuthHeader()
-      },
-      body: JSON.stringify({ idUsuario, idEvento }),
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || 'Error al cancelar inscripción');
-    }
-    return response.json();
-  },
+  cancelarInscripcion: (idUsuario, idEvento) =>
+    apiPost('/precheckin/cancelar', { idUsuario, idEvento }),
 
-  listarInscritos: async (idEvento) => {
-    const response = await fetch(`${API_URL}/precheckin/evento/${idEvento}`, {
-      headers: { ...authService.getAuthHeader() }
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || 'Error al listar inscritos');
-    }
-    return response.json();
-  },
+  listarInscritos: (idEvento) =>
+    apiGet(`/precheckin/evento/${idEvento}`),
 
-  listarMisEventos: async (idUsuario) => {
-    const response = await fetch(`${API_URL}/precheckin/usuario/${idUsuario}`, {
-      headers: { ...authService.getAuthHeader() }
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.mensaje || 'Error al listar eventos');
-    }
-    return response.json();
-  },
+  listarMisEventos: (idUsuario) =>
+    apiGet(`/precheckin/usuario/${idUsuario}`),
 
   contarInscritos: async (idEvento) => {
-    const response = await fetch(`${API_URL}/precheckin/evento/${idEvento}/count`);
-    if (!response.ok) return 0;
-    const data = await response.json();
-    return data.count || 0;
+    try {
+      const data = await apiGet(`/precheckin/evento/${idEvento}/count`)
+      return data.count || 0
+    } catch {
+      return 0
+    }
   },
-};
+}

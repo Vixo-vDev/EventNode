@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
+import { useTranslation } from '../../i18n/I18nContext'
 
 function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
+  const { t } = useTranslation()
   const [formData, setFormData] = useState({
     firma: '',
     diseno: 'Personalizado',
@@ -88,12 +90,12 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
         <div className="modal-content border-0 rounded-4 shadow bg-light">
           <div className="modal-header border-0 bg-white px-4 pt-4 pb-3 rounded-top-4">
             <div>
-              <h5 className="fw-bold mb-1 text-dark" id="editarDiplomaModalLabel">Editar Diploma</h5>
+              <h5 className="fw-bold mb-1 text-dark" id="editarDiplomaModalLabel">{t('editDiploma.title')}</h5>
               <p className="text-secondary small mb-0" style={{ fontSize: '13px' }}>
-                Modifica los datos del diploma. Los destinatarios existentes recibirán la versión actualizada por correo.
+                {t('editDiploma.subtitle')}
               </p>
             </div>
-            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label={t('common.close')}></button>
           </div>
 
           <div className="modal-body p-4 bg-light">
@@ -101,11 +103,11 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
             <div className="bg-white rounded-3 p-4 mb-3 shadow-sm border-0">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <i className="bi bi-info-circle text-primary"></i>
-                <h6 className="fw-bold mb-0 text-dark fs-6">Información del evento</h6>
+                <h6 className="fw-bold mb-0 text-dark fs-6">{t('editDiploma.eventInfo')}</h6>
               </div>
               <div className="row g-3">
                 <div className="col-12">
-                  <label className="form-label text-dark fw-semibold small mb-2" style={{ fontSize: '12px' }}>Evento</label>
+                  <label className="form-label text-dark fw-semibold small mb-2" style={{ fontSize: '12px' }}>{t('editDiploma.event')}</label>
                   <input
                     type="text"
                     className="form-control bg-light text-dark small"
@@ -121,12 +123,12 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
             <div className="bg-white rounded-3 p-4 mb-3 shadow-sm border-0">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <i className="bi bi-pen text-primary"></i>
-                <h6 className="fw-bold mb-0 text-dark fs-6">Nombre del firmante</h6>
+                <h6 className="fw-bold mb-0 text-dark fs-6">{t('editDiploma.signerName')}</h6>
               </div>
               <input
                 type="text"
                 className="form-control text-dark small"
-                placeholder="Nombre de quien firma el diploma"
+                placeholder={t('editDiploma.signerPlaceholder')}
                 value={formData.firma}
                 onChange={(e) => setFormData(prev => ({ ...prev, firma: e.target.value }))}
                 style={{ fontSize: '13px' }}
@@ -137,7 +139,7 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
             <div className="bg-white rounded-3 p-4 mb-3 shadow-sm border-0">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <i className="bi bi-file-pdf text-primary"></i>
-                <h6 className="fw-bold mb-0 text-dark fs-6">Plantilla PDF</h6>
+                <h6 className="fw-bold mb-0 text-dark fs-6">{t('editDiploma.pdfTemplate')}</h6>
               </div>
               <div
                 className="border border-primary border-opacity-25 rounded-3 d-flex flex-column py-3 px-3 text-center"
@@ -152,7 +154,7 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
                       </div>
                       <div className="text-start lh-sm">
                         <div className="fw-semibold text-dark mb-1" style={{ fontSize: '12px' }}>{pdfFileName}</div>
-                        <div className="text-secondary" style={{ fontSize: '10px' }}>Nueva plantilla seleccionada</div>
+                        <div className="text-secondary" style={{ fontSize: '10px' }}>{t('editDiploma.newTemplate')}</div>
                       </div>
                     </div>
                     <button
@@ -160,7 +162,7 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
                       style={{ fontSize: '11px' }}
                       onClick={(e) => { e.stopPropagation(); setFormData(prev => ({ ...prev, plantillaPdf: '' })); setPdfFileName('') }}
                     >
-                      Quitar
+                      {t('editDiploma.remove')}
                     </button>
                   </div>
                 ) : (
@@ -168,9 +170,9 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
                     <i className="bi bi-cloud-arrow-up text-primary fs-3 mb-2"></i>
                     <div className="text-secondary" style={{ fontSize: '11px', lineHeight: '1.5' }}>
                       {diploma?.tienePlantilla
-                        ? 'Haga clic para reemplazar la plantilla PDF actual'
-                        : 'Haga clic para subir una plantilla PDF'}
-                      <br />(PDF, max. 5 MB)
+                        ? t('editDiploma.replacePdf')
+                        : t('editDiploma.uploadPdf')}
+                      <br />{t('editDiploma.pdfLimit')}
                     </div>
                   </>
                 )}
@@ -188,7 +190,7 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
             <div className="bg-white rounded-3 p-4 shadow-sm border-0">
               <div className="d-flex align-items-center gap-2 mb-3">
                 <i className="bi bi-image text-primary"></i>
-                <h6 className="fw-bold mb-0 text-dark fs-6">Imagen de firma</h6>
+                <h6 className="fw-bold mb-0 text-dark fs-6">{t('editDiploma.signatureImage')}</h6>
               </div>
               <div
                 className="border border-primary border-opacity-25 rounded-3 d-flex flex-column py-3 px-3 text-center"
@@ -203,7 +205,7 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
                       </div>
                       <div className="text-start lh-sm">
                         <div className="fw-semibold text-dark mb-1" style={{ fontSize: '12px' }}>{firmaFileName}</div>
-                        <div className="text-secondary" style={{ fontSize: '10px' }}>Nueva firma seleccionada</div>
+                        <div className="text-secondary" style={{ fontSize: '10px' }}>{t('editDiploma.newSignature')}</div>
                       </div>
                     </div>
                     <button
@@ -211,7 +213,7 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
                       style={{ fontSize: '11px' }}
                       onClick={(e) => { e.stopPropagation(); setFormData(prev => ({ ...prev, firmaImagen: '' })); setFirmaFileName('') }}
                     >
-                      Quitar
+                      {t('editDiploma.remove')}
                     </button>
                   </div>
                 ) : (
@@ -219,9 +221,9 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
                     <i className="bi bi-cloud-arrow-up text-primary fs-3 mb-2"></i>
                     <div className="text-secondary" style={{ fontSize: '11px', lineHeight: '1.5' }}>
                       {diploma?.tieneFirma
-                        ? 'Haga clic para reemplazar la imagen de firma actual'
-                        : 'Haga clic para subir una imagen de firma'}
-                      <br />(PNG, JPG, max. 5 MB)
+                        ? t('editDiploma.replaceSignature')
+                        : t('editDiploma.uploadSignature')}
+                      <br />{t('editDiploma.signatureLimit')}
                     </div>
                   </>
                 )}
@@ -238,7 +240,7 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
             {diploma && (diploma.totalEmitidos > 0) && (
               <div className="alert alert-warning mt-3 mb-0 d-flex align-items-center gap-2" style={{ fontSize: '13px' }}>
                 <i className="bi bi-exclamation-triangle"></i>
-                <span>Este diploma ya fue emitido a <strong>{diploma.totalEmitidos}</strong> persona(s). Al guardar, se les enviará un correo con la versión actualizada.</span>
+                <span>{t('editDiploma.emissionWarning', { count: diploma.totalEmitidos })}</span>
               </div>
             )}
           </div>
@@ -250,7 +252,7 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
               data-bs-dismiss="modal"
               style={{ fontSize: '13px' }}
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -260,9 +262,9 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
               disabled={isLoading}
             >
               {isLoading ? (
-                <><span className="spinner-border spinner-border-sm me-1" role="status"></span>Guardando...</>
+                <><span className="spinner-border spinner-border-sm me-1" role="status"></span>{t('editDiploma.saving')}</>
               ) : (
-                <><i className="bi bi-check2 border border-white rounded-circle px-1" style={{ fontSize: '10px' }}></i>Guardar Cambios</>
+                <><i className="bi bi-check2 border border-white rounded-circle px-1" style={{ fontSize: '10px' }}></i>{t('common.save')}</>
               )}
             </button>
           </div>

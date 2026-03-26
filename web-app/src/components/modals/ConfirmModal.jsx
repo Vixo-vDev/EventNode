@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
+import { useTranslation } from '../../i18n/I18nContext'
 
 function ConfirmModal({ id = 'confirmModal', title, message, confirmText = 'Confirmar', cancelText = 'Cancelar', onConfirm, isLoading = false, variant = 'danger' }) {
+  const { t } = useTranslation()
   const btnClass = variant === 'danger' ? 'btn-danger' : variant === 'warning' ? 'btn-warning' : 'btn-primary'
   const iconClass = variant === 'danger' ? 'bi-exclamation-triangle text-danger' : variant === 'warning' ? 'bi-exclamation-circle text-warning' : 'bi-question-circle text-primary'
 
@@ -50,7 +52,7 @@ function ConfirmModal({ id = 'confirmModal', title, message, confirmText = 'Conf
               style={{ fontSize: '13px' }}
             >
               {isLoading ? (
-                <><span className="spinner-border spinner-border-sm me-1" role="status"></span>Procesando...</>
+                <><span className="spinner-border spinner-border-sm me-1" role="status"></span>{t('common.processing')}</>
               ) : confirmText}
             </button>
           </div>

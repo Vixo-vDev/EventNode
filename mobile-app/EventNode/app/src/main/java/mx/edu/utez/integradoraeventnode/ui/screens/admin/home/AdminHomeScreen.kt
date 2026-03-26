@@ -157,14 +157,17 @@ fun AdminHomeScreen(
 
                     // Eventos Próximos
                     if (activeEvents.isNotEmpty()) {
-                        SectionHeader(title = "Eventos Próximos", action = "Ver todos")
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            activeEvents.take(3).forEach { event ->
+                        val filteredEvents = if (searchText.isBlank()) activeEvents else activeEvents.filter { it.nombre.contains(searchText, ignoreCase = true) }
+
+                        if (filteredEvents.isNotEmpty()) {
+                            SectionHeader(title = "Eventos Próximos", action = "Ver todos")
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                filteredEvents.take(3).forEach { event ->
                                 val (day, month) = extractDateParts(event.fechaInicio)
                                 val statusColor = getStatusColor(event.estado)
                                 AdminEventCard(
@@ -180,7 +183,8 @@ fun AdminHomeScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
                     }
 
                     // Certificaciones Recientes

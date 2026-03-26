@@ -1,7 +1,9 @@
 import { NavLink, useLocation } from 'react-router-dom'
+import { useTranslation } from '../i18n/I18nContext'
 
 function AdminSidebar() {
   const location = useLocation()
+  const { t } = useTranslation()
 
   return (
     <nav className="d-flex flex-column h-100 bg-white border-end py-3">
@@ -12,7 +14,7 @@ function AdminSidebar() {
         </div>
         <div className="text-truncate">
           <div className="fw-semibold small text-truncate text-dark">Sophia</div>
-          <div className="text-secondary small text-truncate">Administrador</div>
+          <div className="text-secondary small text-truncate">{t('nav.admin')}</div>
         </div>
       </div>
 
@@ -24,7 +26,7 @@ function AdminSidebar() {
         }
       >
         <i className="bi bi-house"></i>
-        Inicio
+        {t('nav.home')}
       </NavLink>
 
       <NavLink
@@ -34,7 +36,7 @@ function AdminSidebar() {
         }
       >
         <i className="bi bi-calendar-event"></i>
-        Eventos
+        {t('nav.events')}
       </NavLink>
 
       <NavLink
@@ -44,7 +46,7 @@ function AdminSidebar() {
         }
       >
         <i className="bi bi-award"></i>
-        Diplomas
+        {t('nav.diplomas')}
       </NavLink>
 
       <NavLink
@@ -54,7 +56,7 @@ function AdminSidebar() {
         }
       >
         <i className="bi bi-people"></i>
-        Estudiantes
+        {t('nav.students')}
       </NavLink>
 
       <NavLink
@@ -64,7 +66,7 @@ function AdminSidebar() {
         }
       >
         <i className="bi bi-person"></i>
-        Perfil
+        {t('nav.profile')}
       </NavLink>
 
       <div className="mt-auto px-3 py-2">
@@ -75,7 +77,7 @@ function AdminSidebar() {
           data-bs-target="#logoutModal"
         >
           <i className="bi bi-box-arrow-left"></i>
-          Cerrar sesión
+          {t('nav.logout')}
         </button>
       </div>
     </nav>

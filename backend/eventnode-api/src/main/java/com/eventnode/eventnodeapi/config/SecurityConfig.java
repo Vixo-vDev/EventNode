@@ -64,6 +64,7 @@ public class SecurityConfig {
                 // Endpoints de Usuarios
                 .requestMatchers(HttpMethod.GET, "/api/usuarios").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/usuarios/*/perfil").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/usuarios/*/perfil").authenticated()
                 .requestMatchers("/api/usuarios/admin").hasRole("SUPERADMIN")
                 
                 // Cualquier otra petición necesita autenticación

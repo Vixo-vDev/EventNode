@@ -1,5 +1,6 @@
 package mx.edu.utez.integradoraeventnode.ui.screens.admin.profile
 
+import android.content.Context
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,9 +27,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.launch
+import mx.edu.utez.integradoraeventnode.R
+import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.admin.common.AdminBottomNav
+import mx.edu.utez.integradoraeventnode.utils.LocaleHelper
 
 @Composable
 fun AdminProfileScreen(
@@ -43,6 +49,77 @@ fun AdminProfileScreen(
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
 
+    // State for user data from SharedPreferences
+    var nombre by remember { mutableStateOf("") }
+    var apellidoPaterno by remember { mutableStateOf("") }
+    var apellidoMaterno by remember { mutableStateOf("") }
+    var correo by remember { mutableStateOf("") }
+    var matricula by remember { mutableStateOf("") }
+    var sexo by remember { mutableStateOf("") }
+    var cuatrimestre by remember { mutableStateOf("") }
+    var rol by remember { mutableStateOf("") }
+    var token by remember { mutableStateOf("") }
+    var userId by remember { mutableStateOf(0) }
+
+    // State for diplomas from API
+    var diplomas by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var isLoadingDiplomas by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Load user data from SharedPreferences
+    LaunchedEffect(Unit) {
+        val sharedPrefs = context.getSharedPreferences("EventNodePrefs", Context.MODE_PRIVATE)
+        nombre = sharedPrefs.getString("nombre", "") ?: ""
+        apellidoPaterno = sharedPrefs.getString("apellidoPaterno", "") ?: ""
+        apellidoMaterno = sharedPrefs.getString("apellidoMaterno", "") ?: ""
+        correo = sharedPrefs.getString("correo", "") ?: ""
+        matricula = sharedPrefs.getString("matricula", "") ?: ""
+        sexo = sharedPrefs.getString("sexo", "") ?: ""
+        cuatrimestre = sharedPrefs.getString("cuatrimestre", "") ?: ""
+        rol = sharedPrefs.getString("rol", "") ?: ""
+        token = sharedPrefs.getString("token", "") ?: ""
+        userId = sharedPrefs.getInt("id", 0)
+
+        // Load diplomas managed by admin
+        if (token.isNotEmpty()) {
+            isLoadingDiplomas = true
+            coroutineScope.launch {
+                try {
+                    val response = ApiClient.apiService.listarDiplomas("Bearer $token")
+                    if (response.isSuccessful) {
+                        diplomas = response.body() ?: emptyList()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    isLoadingDiplomas = false
+                }
+            }
+        }
+    }
+
+    // Map gender code to Spanish text
+    val generoTexto = when (sexo) {
+        "M" -> "Masculino"
+        "F" -> "Femenino"
+        else -> sexo
+    }
+
+    // Get initials for avatar
+    val initials = (nombre.firstOrNull()?.uppercase() ?: "") + (apellidoPaterno.firstOrNull()?.uppercase() ?: "")
+
+    // Build full name
+    val nombreCompleto = "$nombre $apellidoPaterno $apellidoMaterno".trim()
+
+    // Map role to display text
+    val rolTexto = when (rol.uppercase()) {
+        "ADMIN", "ADMINISTRADOR" -> "ADMINISTRADOR"
+        "SUPERADMIN" -> "SUPERADMIN"
+        else -> rol.uppercase()
+    }
+
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -53,25 +130,29 @@ fun AdminProfileScreen(
             ) {
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Profile Section (Synchronized with Student)
+                // Profile Section
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(modifier = Modifier.size(100.dp)) {
-                        Image(
-                            bitmap = assetImageBitmap("user.png"),
-                            contentDescription = "Foto de perfil",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                                .background(Color(0xFFD9D9D9)),
-                            contentScale = ContentScale.Crop
+                    // Avatar with initials
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF2F6FED)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = initials,
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
@@ -88,54 +169,132 @@ fun AdminProfileScreen(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Editar Perfil", color = Color.Black, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                        Text(text = stringResource(R.string.profile_edit), color = Color.Black, fontWeight = FontWeight.Medium, fontSize = 14.sp)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     Text(
-                        text = "Panfila Portillo",
+                        text = nombreCompleto,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "20243ds088@utez.edu.mx",
+                        text = correo,
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF2F6FED)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Desarrollo de Software",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-                    Text(
-                        text = "Matrícula: 20243ds088",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
+
+                    // Role badge
+                    Surface(
+                        modifier = Modifier
+                            .background(Color(0xFFF0F7FF), shape = RoundedCornerShape(8.dp))
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        color = Color(0xFFF0F7FF),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = rolTexto,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF2F6FED),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Datos del Alumno Section
+                // Datos del Administrador Section
                 Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                    Text(text = "Datos del Administrador", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(text = stringResource(R.string.profile_admin_data), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(16.dp))
-                    
-                    ProfileInfoItem(label = "Nacionalidad:", value = "Mexicana", icon = "user.png")
-                    ProfileInfoItem(label = "Idioma:", value = "Español", icon = "user.png")
-                    ProfileInfoItem(label = "Correo:", value = "20243ds088@utez.edu.mx", icon = "correo.png")
-                    ProfileInfoItem(label = "Género:", value = "Femenino", icon = "user.png")
+
+                    ProfileInfoItem(label = stringResource(R.string.profile_full_name), value = nombreCompleto, icon = "user.png")
+                    ProfileInfoItem(label = stringResource(R.string.profile_email), value = correo, icon = "correo.png")
+                    ProfileInfoItem(label = stringResource(R.string.profile_matricula), value = matricula, icon = "user.png")
+                    ProfileInfoItem(label = stringResource(R.string.profile_gender), value = generoTexto, icon = "user.png")
+                    if (cuatrimestre.isNotEmpty()) {
+                        ProfileInfoItem(label = stringResource(R.string.profile_quarter), value = cuatrimestre, icon = "user.png")
+                    }
+                    ProfileInfoItem(label = stringResource(R.string.profile_role), value = rolTexto, icon = "user.png")
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    Text(text = "Certificados emitidos", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(text = stringResource(R.string.profile_certs_issued), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(16.dp))
-                    
-                    CertificadoItem(date = "15-05-2023", title = "Festival en el Campus")
-                    Spacer(modifier = Modifier.height(12.dp))
-                    CertificadoItem(date = "20-10-2023", title = "charla tecnológica")
+
+                    if (isLoadingDiplomas) {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(40.dp),
+                                color = Color(0xFF2F6FED)
+                            )
+                        }
+                    } else if (diplomas.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.profile_no_certs),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    } else {
+                        diplomas.forEachIndexed { index, diploma ->
+                            val fechaRaw = (diploma["fechaCreacion"] ?: diploma["fechaEnvio"])?.toString() ?: ""
+                            val fecha = if (fechaRaw.length >= 10) fechaRaw.substring(0, 10) else fechaRaw
+                            val titulo = (diploma["nombreEvento"] ?: "Certificado").toString()
+
+                            CertificadoItem(date = fecha, title = titulo)
+                            if (index < diplomas.size - 1) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Language Selector
+                    Text(text = stringResource(R.string.language_title), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    val currentLang = LocaleHelper.getCurrentLanguage(context)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFF5F6FA))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        listOf("es" to stringResource(R.string.language_spanish), "en" to stringResource(R.string.language_english)).forEach { (code, label) ->
+                            val isSelected = currentLang == code
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        if (!isSelected) {
+                                            LocaleHelper.setLocale(context, code)
+                                            (context as? android.app.Activity)?.recreate()
+                                        }
+                                    },
+                                color = if (isSelected) Color(0xFF2F6FED) else Color.Transparent,
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text(
+                                    text = label,
+                                    modifier = Modifier
+                                        .padding(vertical = 10.dp)
+                                        .fillMaxWidth(),
+                                    textAlign = TextAlign.Center,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) Color.White else Color.Gray,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(32.dp))
 
@@ -147,9 +306,9 @@ fun AdminProfileScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF1744)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(text = "Cerrar Sesión", fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(text = stringResource(R.string.profile_logout), fontWeight = FontWeight.Bold, color = Color.White)
                     }
-                    
+
                     Spacer(modifier = Modifier.height(20.dp))
                 }
             }
@@ -265,10 +424,10 @@ private fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     )
                 }
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(text = "¿Cerrar sesión?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(R.string.profile_logout_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "¿Estás seguro de que deseas salir de tu cuenta en EventNode? Tendrás que volver a ingresar tus credenciales para acceder.",
+                    text = stringResource(R.string.profile_logout_msg),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
@@ -280,7 +439,7 @@ private fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = "Sí, cerrar sesión", fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(R.string.profile_logout_confirm), fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
@@ -289,7 +448,7 @@ private fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F6FA)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = "Mantener sesión", color = Color.Black, fontWeight = FontWeight.Medium)
+                    Text(text = stringResource(R.string.profile_keep_session), color = Color.Black, fontWeight = FontWeight.Medium)
                 }
             }
         }

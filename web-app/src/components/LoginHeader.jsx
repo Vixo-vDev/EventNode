@@ -1,4 +1,7 @@
+import { useTranslation } from '../i18n/I18nContext'
+
 function LoginHeader() {
+  const { t } = useTranslation()
   return (
     <div className="text-center mb-4">
       <div className="d-inline-flex align-items-center gap-1 mb-1">
@@ -7,9 +10,9 @@ function LoginHeader() {
         <span className="fw-bold fs-4 font-monospace">{`}`}</span>
       </div>
       <div className="fw-semibold mb-2">EventNode</div>
-      <h1 className="fs-3 fw-bold">Iniciar Sesión</h1>
+      <h1 className="fs-3 fw-bold">{t('auth.login')}</h1>
       <p className="text-primary small mt-1">
-        Disfrutre los eventos que tenemos preparados para ti
+        {t('auth.loginSubtitle')}
       </p>
     </div>
   )
