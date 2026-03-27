@@ -16,7 +16,7 @@ export const asistenciaService = {
   contarAsistencias: async (idEvento) => {
     try {
       const data = await apiGet(`/asistencias/evento/${idEvento}/count`)
-      return data.count || 0
+      return data.totalAsistencias || 0
     } catch {
       return 0
     }

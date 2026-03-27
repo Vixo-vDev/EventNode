@@ -249,6 +249,20 @@ public class EventoController {
         return ResponseEntity.ok(body);
     }
 
+    @PostMapping("/{idEvento}/reactivar")
+    public ResponseEntity<Map<String, String>> reactivarEvento(@PathVariable Integer idEvento) {
+        try {
+            eventoService.reactivarEvento(idEvento);
+            Map<String, String> body = new HashMap<>();
+            body.put("mensaje", "Evento reactivado con éxito");
+            return ResponseEntity.ok(body);
+        } catch (IllegalArgumentException ex) {
+            Map<String, String> body = new HashMap<>();
+            body.put("mensaje", ex.getMessage());
+            return ResponseEntity.badRequest().body(body);
+        }
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
         String mensaje = ex.getBindingResult().getFieldErrors().stream()

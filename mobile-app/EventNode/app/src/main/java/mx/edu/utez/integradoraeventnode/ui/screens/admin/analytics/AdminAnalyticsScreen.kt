@@ -83,7 +83,9 @@ fun AdminAnalyticsScreen(
                     var totalInscritos = 0
                     val attendanceList = mutableListOf<EventAttendanceData>()
 
-                    events.forEach { event ->
+                    // Only count attendance for active events
+                    val activeEvents = events.filter { it.estado == "ACTIVO" }
+                    activeEvents.forEach { event ->
                         val eventId = event.idEvento
                         val eventName = event.nombre
 
@@ -130,10 +132,10 @@ fun AdminAnalyticsScreen(
                     totalDiplomasPending = diplomas.sumOf { (it["totalPendientes"] as? Number)?.toInt() ?: 0 }
                 }
 
-                // Count events by category using EventoResponse.nombreCategoria
+                // Count events by category using EventoResponse.categoriaNombre
                 val categoryMap = mutableMapOf<String, Int>()
                 eventsResponse.body()?.forEach { event ->
-                    val categoryName = event.nombreCategoria ?: "Sin categoría"
+                    val categoryName = event.categoriaNombre ?: "Sin categoría"
                     categoryMap[categoryName] = (categoryMap[categoryName] ?: 0) + 1
                 }
                 val totalEventsCount = totalEvents

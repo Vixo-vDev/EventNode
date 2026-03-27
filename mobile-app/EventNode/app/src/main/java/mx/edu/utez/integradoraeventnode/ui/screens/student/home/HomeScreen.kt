@@ -81,7 +81,7 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         isLoading = true
         try {
-            val response = ApiClient.apiService.getEventos()
+            val response = ApiClient.apiService.getEventos(estado = "ACTIVO")
             if (response.isSuccessful) {
                 eventos = response.body() ?: emptyList()
             } else {
@@ -181,7 +181,7 @@ fun HomeScreen(
                             )
                         } else {
                             filteredEventos.forEach { evento ->
-                            val cat = evento.nombreCategoria ?: "EVENTO"
+                            val cat = evento.categoriaNombre ?: "EVENTO"
                             val mainTextLength = if (evento.nombre.length > 15) 15 else evento.nombre.length
                             val main = evento.nombre.substring(0, mainTextLength).uppercase()
                             

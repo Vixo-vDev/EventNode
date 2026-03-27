@@ -41,6 +41,11 @@ export const eventService = {
     return res.json()
   },
 
+  reactivarEvento: async (idEvento) => {
+    const res = await apiFetch(`/eventos/${idEvento}/reactivar`, { method: 'POST' })
+    return res.json()
+  },
+
   eliminarEvento: (idEvento) =>
     apiDelete(`/eventos/${idEvento}`),
 

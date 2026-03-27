@@ -200,7 +200,7 @@ fun AdminHomeScreen(
                             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                 diplomas.take(2).forEachIndexed { index, diploma ->
                                     if (index > 0) {
-                                        Divider(color = Color(0xFFF0F0F0))
+                                        HorizontalDivider(color = Color(0xFFF0F0F0))
                                     }
                                     RecentCertItem(
                                         title = diploma["nombre"]?.toString() ?: "Sin nombre",

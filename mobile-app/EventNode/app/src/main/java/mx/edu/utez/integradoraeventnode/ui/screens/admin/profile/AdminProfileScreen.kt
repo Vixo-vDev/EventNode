@@ -85,17 +85,15 @@ fun AdminProfileScreen(
         // Load diplomas managed by admin
         if (token.isNotEmpty()) {
             isLoadingDiplomas = true
-            coroutineScope.launch {
-                try {
-                    val response = ApiClient.apiService.listarDiplomas("Bearer $token")
-                    if (response.isSuccessful) {
-                        diplomas = response.body() ?: emptyList()
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    isLoadingDiplomas = false
+            try {
+                val response = ApiClient.apiService.listarDiplomas("Bearer $token")
+                if (response.isSuccessful) {
+                    diplomas = response.body() ?: emptyList()
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isLoadingDiplomas = false
             }
         }
     }

@@ -206,7 +206,7 @@ fun StudentEventDetailScreen(
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.weight(1f)
                             )
-                            if (ev.nombreCategoria != null) {
+                            if (ev.categoriaNombre != null) {
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
@@ -214,7 +214,7 @@ fun StudentEventDetailScreen(
                                         .padding(horizontal = 10.dp, vertical = 4.dp)
                                 ) {
                                     Text(
-                                        text = ev.nombreCategoria.uppercase(),
+                                        text = ev.categoriaNombre.uppercase(),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = Color(0xFF2F6FED),
                                         fontWeight = FontWeight.Bold

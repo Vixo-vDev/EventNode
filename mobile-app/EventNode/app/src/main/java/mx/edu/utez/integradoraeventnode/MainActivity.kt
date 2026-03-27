@@ -164,13 +164,6 @@ class MainActivity : ComponentActivity() {
                             onDiplomas = { currentScreen = AppScreen.AdminDiplomas },
                             onAnalitica = { currentScreen = AppScreen.AdminAnalytics },
                             onProfile = { currentScreen = AppScreen.AdminProfile },
-                            onEditEvent = { currentScreen = AppScreen.AdminEditEvent }
-                        )
-                        AppScreen.AdminEditEvent -> AdminEditEventScreen(
-                            eventId = adminSelectedEventId ?: -1,
-                            modifier = Modifier.padding(innerPadding),
-                            onBack = { currentScreen = AppScreen.AdminEventDetail },
-                            onSave = { currentScreen = AppScreen.AdminEventDetail }
                         )
                         AppScreen.Agenda -> AgendaScreen(
                             modifier = Modifier.padding(innerPadding),
@@ -253,7 +246,6 @@ private enum class AppScreen {
     AdminAnalytics,
     AdminProfile,
     AdminEditProfile,
-    AdminEditEvent,
     AdminEventDetail,
     Agenda,
     CheckinQr,

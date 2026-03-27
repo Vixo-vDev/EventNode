@@ -19,7 +19,8 @@ function StudentMyEvents({ user }) {
     const fetchMisEventos = async () => {
       try {
         const data = await precheckinService.listarMisEventos(user.id)
-        const mapped = data.map((e, index) => ({
+        const activeData = data.filter(e => e.estado !== 'CANCELADO' && e.estado !== 'FINALIZADO')
+        const mapped = activeData.map((e, index) => ({
           id: e.idEvento,
           image: e.banner && e.banner.startsWith('data:image/') ? e.banner : fallbackImages[index % fallbackImages.length],
           title: e.nombre,

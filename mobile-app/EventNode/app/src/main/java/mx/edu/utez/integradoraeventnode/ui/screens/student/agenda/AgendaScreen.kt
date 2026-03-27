@@ -85,8 +85,10 @@ fun AgendaScreen(
                 val response = ApiClient.apiService.listarMisEventos(bearerToken, usuarioId)
                 if (response.isSuccessful) {
                     val allEvents = response.body() ?: emptyList()
-                    // Filter only those where inscripcionEstado == "ACTIVO" to be safe
-                    enrolledEvents = allEvents.filter { it["inscripcionEstado"] == "ACTIVO" }
+                    // Filter only active enrollments with active events
+                    enrolledEvents = allEvents.filter {
+                        it["inscripcionEstado"] == "ACTIVO" && it["eventoEstado"] != "CANCELADO" && it["eventoEstado"] != "FINALIZADO"
+                    }
                 } else {
                     errorMessage = "Error al cargar tu agenda"
                 }

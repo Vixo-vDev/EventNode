@@ -228,12 +228,12 @@ fun EditProfileScreen(
                                 val token = PreferencesHelper.getBearerToken(context)
                                 val userId = PreferencesHelper.getUserId(context)
                                 val lastNameParts = lastName.trim().split(Regex("\\s+"))
-                                val body = mapOf(
+                                val body: Map<String, Any> = mapOf(
                                     "nombre" to name,
                                     "apellidoPaterno" to lastNameParts.getOrElse(0) { lastName },
                                     "apellidoMaterno" to lastNameParts.getOrElse(1) { "" },
                                     "sexo" to if (gender == "Masculino") "M" else if (gender == "Femenino") "F" else "",
-                                    "cuatrimestre" to quarter.replace("°", "").toIntOrNull()
+                                    "cuatrimestre" to (quarter.replace("°", "").toIntOrNull() ?: 0)
                                 )
                                 val response = ApiClient.apiService.actualizarAlumno(token, userId, body)
                                 if (response.isSuccessful) {

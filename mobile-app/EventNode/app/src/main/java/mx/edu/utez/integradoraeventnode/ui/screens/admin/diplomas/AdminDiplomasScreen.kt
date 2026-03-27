@@ -310,47 +310,7 @@ private fun DiplomaAdminCard(
                 StatItem(label = "Pendientes", value = diploma.totalPendientes.toString())
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    scope.launch {
-                        try {
-                            isEmitting = true
-                            val response = ApiClient.apiService.emitirDiplomas(
-                                "Bearer $token",
-                                diploma.idDiploma
-                            )
-                            if (response.isSuccessful && response.body() != null) {
-                                val count = (response.body()!!["enviados"] as? Number)?.toInt() ?: 0
-                                onEmitSuccess(count)
-                            } else {
-                                Toast.makeText(context, "Error al emitir diplomas", Toast.LENGTH_SHORT).show()
-                            }
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                        } finally {
-                            isEmitting = false
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED)),
-                enabled = !isEmitting
-            ) {
-                if (isEmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text("Emitir Diplomas", fontWeight = FontWeight.Bold)
-                }
-            }
+            // Diploma emission is web-only
         }
     }
 }
