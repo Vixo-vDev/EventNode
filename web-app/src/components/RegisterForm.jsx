@@ -146,7 +146,7 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
             name="fechaNacimiento"
             value={formData.fechaNacimiento}
             onChange={onBirthDateChange}
-            min="2008-01-01"
+            min={`${new Date().getFullYear() - 99}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`}
             required
           />
         </div>

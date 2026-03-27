@@ -21,7 +21,7 @@ function Register() {
     matricula: '',
     correo: '',
     password: '',
-    fechaNacimiento: '',
+    fechaNacimiento: '2008-01-01',
     sexo: '',
     cuatrimestre: ''
   })
