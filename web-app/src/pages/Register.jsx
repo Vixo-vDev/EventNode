@@ -12,6 +12,8 @@ function Register() {
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
+  const [confirmPassword, setConfirmPassword] = useState('')
+
   const [formData, setFormData] = useState({
     nombre: '',
     apellidoPaterno: '',
@@ -47,6 +49,12 @@ function Register() {
     e.preventDefault()
     setError(null)
     setSuccess(false)
+
+    if (formData.password !== confirmPassword) {
+      setError('Las contraseñas no coinciden')
+      return
+    }
+
     setIsLoading(true)
 
     const submitData = {
@@ -75,6 +83,8 @@ function Register() {
             <RegisterHeader />
             <RegisterForm
               formData={formData}
+              confirmPassword={confirmPassword}
+              onConfirmPasswordChange={(e) => setConfirmPassword(e.target.value)}
               age={age}
               error={error}
               success={success}

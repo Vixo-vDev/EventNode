@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n/I18nContext'
 
-function RegisterForm({ formData, age, error, success, isLoading, onChange, onBirthDateChange, onSubmit }) {
+function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age, error, success, isLoading, onChange, onBirthDateChange, onSubmit }) {
   const { t } = useTranslation()
   return (
     <form onSubmit={onSubmit}>
@@ -89,29 +89,50 @@ function RegisterForm({ formData, age, error, success, isLoading, onChange, onBi
         </div>
       </div>
 
-      <div className="mb-3">
-        <label className="form-label small fw-semibold" htmlFor="regPassword">
-          {t('auth.passwordLabel')}*
-        </label>
-        <div className="input-group">
-          <input
-            type="password"
-            className="form-control border-end-0"
-            id="regPassword"
-            name="password"
-            value={formData.password}
-            onChange={onChange}
-            placeholder="••••••••"
-            required
-          />
-          <span className="input-group-text bg-white border-start-0" role="button">
-            <i className="bi bi-eye text-secondary"></i>
-          </span>
+      <div className="row mb-3">
+        <div className="col-12 col-md-6 mb-3 mb-md-0">
+          <label className="form-label small fw-semibold" htmlFor="regPassword">
+            {t('auth.passwordLabel')}*
+          </label>
+          <div className="input-group">
+            <input
+              type="password"
+              className="form-control border-end-0"
+              id="regPassword"
+              name="password"
+              value={formData.password}
+              onChange={onChange}
+              placeholder="••••••••"
+              required
+            />
+            <span className="input-group-text bg-white border-start-0" role="button">
+              <i className="bi bi-eye text-secondary"></i>
+            </span>
+          </div>
         </div>
-        <small className="text-primary d-block mt-1">
-          {t('auth.passwordRequirements')}
-        </small>
+        <div className="col-12 col-md-6">
+          <label className="form-label small fw-semibold" htmlFor="regConfirmPassword">
+            {t('auth.confirmPasswordLabel')}*
+          </label>
+          <div className="input-group">
+            <input
+              type="password"
+              className="form-control border-end-0"
+              id="regConfirmPassword"
+              value={confirmPassword}
+              onChange={onConfirmPasswordChange}
+              placeholder="••••••••"
+              required
+            />
+            <span className="input-group-text bg-white border-start-0" role="button">
+              <i className="bi bi-eye text-secondary"></i>
+            </span>
+          </div>
+        </div>
       </div>
+      <small className="text-primary d-block mb-3 mt-1">
+        {t('auth.passwordRequirements')}
+      </small>
 
       <div className="row mb-3">
         <div className="col-12 col-md-4 mb-3 mb-md-0">
@@ -125,6 +146,7 @@ function RegisterForm({ formData, age, error, success, isLoading, onChange, onBi
             name="fechaNacimiento"
             value={formData.fechaNacimiento}
             onChange={onBirthDateChange}
+            min="2008-01-01"
             required
           />
         </div>

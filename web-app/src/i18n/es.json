@@ -34,6 +34,8 @@
     "institutionalEmail": "Correo institucional",
     "emailPlaceholder": "matricula@utez.edu.mx",
     "passwordLabel": "Contraseña",
+    "confirmPasswordLabel": "Confirmar contraseña",
+    "passwordMismatch": "Las contraseñas no coinciden",
     "passwordRequirements": "Requisitos: mínimo 8 caracteres, mayúsculas, minúsculas, números y símbolos.",
     "birthDate": "Fecha de nacimiento",
     "age": "Edad",
