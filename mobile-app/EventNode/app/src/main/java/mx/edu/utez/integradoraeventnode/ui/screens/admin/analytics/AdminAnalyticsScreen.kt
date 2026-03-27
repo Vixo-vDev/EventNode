@@ -84,8 +84,8 @@ fun AdminAnalyticsScreen(
                     val attendanceList = mutableListOf<EventAttendanceData>()
 
                     // Only count attendance for active events
-                    val activeEvents = events.filter { it.estado == "ACTIVO" }
-                    activeEvents.forEach { event ->
+                    val activeEventsList = events.filter { it.estado.equals("ACTIVO", ignoreCase = true) }
+                    activeEventsList.forEach { event ->
                         val eventId = event.idEvento
                         val eventName = event.nombre
 
@@ -153,8 +153,8 @@ fun AdminAnalyticsScreen(
                     usuarios.forEach { user ->
                         val sexo = user["sexo"] as? String ?: ""
                         when (sexo.uppercase()) {
-                            "M" -> maleCount++
-                            "F" -> femaleCount++
+                            "M", "HOMBRE", "MASCULINO" -> maleCount++
+                            "F", "MUJER", "FEMENINO" -> femaleCount++
                         }
                     }
 

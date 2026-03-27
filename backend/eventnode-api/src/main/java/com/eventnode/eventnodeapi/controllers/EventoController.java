@@ -70,11 +70,7 @@ public class EventoController {
             @RequestParam(required = false) String estado
     ) {
         List<Evento> eventos = eventoService.consultarEventosDisponibles(nombre, mes, categoriaId, estado);
-        if (eventos.isEmpty()) {
-            Map<String, String> body = new HashMap<>();
-            body.put("mensaje", "No se encontraron resultados");
-            return ResponseEntity.status(HttpStatus.OK).body(body);
-        }
+
         List<EventoResponse> response = eventos.stream()
                 .map(e -> new EventoResponse(
                         e.getIdEvento(),

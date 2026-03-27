@@ -41,8 +41,8 @@ object PreferencesHelper {
     fun getSexo(context: Context): String =
         prefs(context).getString(Constants.KEY_SEXO, "") ?: ""
 
-    fun getCuatrimestre(context: Context): String =
-        prefs(context).getString(Constants.KEY_CUATRIMESTRE, "") ?: ""
+    fun getCuatrimestre(context: Context): Int =
+        prefs(context).getInt(Constants.KEY_CUATRIMESTRE, 0)
 
     fun getRol(context: Context): String =
         prefs(context).getString(Constants.KEY_ROL, "") ?: ""

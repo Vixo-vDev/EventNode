@@ -50,11 +50,11 @@ class MainActivity : ComponentActivity() {
                     AppScreen.Login
                 }
 
-                var currentScreen by remember { mutableStateOf(startScreen) }
-                var selectedEventId by remember { mutableStateOf<Int?>(null) }
-                var adminSelectedEventId by remember { mutableStateOf<Int?>(null) }
-                var selectedCheckinEventId by remember { mutableStateOf<Int?>(null) }
-                var selectedCheckinEventName by remember { mutableStateOf("") }
+                var currentScreen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(startScreen) }
+                var selectedEventId by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<Int?>(null) }
+                var adminSelectedEventId by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<Int?>(null) }
+                var selectedCheckinEventId by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<Int?>(null) }
+                var selectedCheckinEventName by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {

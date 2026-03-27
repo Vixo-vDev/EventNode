@@ -56,7 +56,7 @@ fun AdminProfileScreen(
     var correo by remember { mutableStateOf("") }
     var matricula by remember { mutableStateOf("") }
     var sexo by remember { mutableStateOf("") }
-    var cuatrimestre by remember { mutableStateOf("") }
+    var cuatrimestre by remember { mutableStateOf(0) }
     var rol by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
     var userId by remember { mutableStateOf(0) }
@@ -77,7 +77,7 @@ fun AdminProfileScreen(
         correo = sharedPrefs.getString("correo", "") ?: ""
         matricula = sharedPrefs.getString("matricula", "") ?: ""
         sexo = sharedPrefs.getString("sexo", "") ?: ""
-        cuatrimestre = sharedPrefs.getString("cuatrimestre", "") ?: ""
+        cuatrimestre = sharedPrefs.getInt("cuatrimestre", 0)
         rol = sharedPrefs.getString("rol", "") ?: ""
         token = sharedPrefs.getString("token", "") ?: ""
         userId = sharedPrefs.getInt("id", 0)
@@ -213,8 +213,8 @@ fun AdminProfileScreen(
                     ProfileInfoItem(label = stringResource(R.string.profile_email), value = correo, icon = "correo.png")
                     ProfileInfoItem(label = stringResource(R.string.profile_matricula), value = matricula, icon = "user.png")
                     ProfileInfoItem(label = stringResource(R.string.profile_gender), value = generoTexto, icon = "user.png")
-                    if (cuatrimestre.isNotEmpty()) {
-                        ProfileInfoItem(label = stringResource(R.string.profile_quarter), value = cuatrimestre, icon = "user.png")
+                    if (cuatrimestre > 0) {
+                        ProfileInfoItem(label = stringResource(R.string.profile_quarter), value = cuatrimestre.toString(), icon = "user.png")
                     }
                     ProfileInfoItem(label = stringResource(R.string.profile_role), value = rolTexto, icon = "user.png")
 
