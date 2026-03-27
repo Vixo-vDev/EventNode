@@ -51,6 +51,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/eventos/**").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/eventos/**").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/eventos/*/cancelar").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/eventos/*/reactivar").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 
                 // Endpoints de Asistencias
                 .requestMatchers(HttpMethod.PATCH, "/api/asistencias/*/estado").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")

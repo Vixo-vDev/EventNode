@@ -17,6 +17,7 @@ function AdminEventDetail() {
   const [asistencias, setAsistencias] = useState(0)
   const [cancelling, setCancelling] = useState(false)
   const [emitting, setEmitting] = useState(false)
+  const [reactivating, setReactivating] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,6 +45,19 @@ function AdminEventDetail() {
       toast.error(err.message)
     } finally {
       setCancelling(false)
+    }
+  }
+
+  const handleReactivateEvent = async () => {
+    setReactivating(true)
+    try {
+      await eventService.reactivarEvento(id)
+      toast.success(t('eventDetail.eventReactivated') || 'Evento reactivado')
+      setEvento(prev => ({ ...prev, estado: 'ACTIVO' }))
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setReactivating(false)
     }
   }
 
@@ -164,6 +178,18 @@ function AdminEventDetail() {
                 </p>
                 <button className="btn btn-danger rounded-pill w-100 btn-sm" onClick={handleCancelEvent} disabled={cancelling}>
                   {cancelling ? t('common.processing') : t('eventDetail.cancelEvent')}
+                </button>
+              </div>
+            </div>
+          ) : evento.estado === 'CANCELADO' ? (
+            <div className="card border-0 rounded-3 h-100 bg-success bg-opacity-10 border border-success border-opacity-25">
+              <div className="card-body p-3">
+                <div className="text-uppercase text-success small fw-bold mb-1">{t('eventDetail.reactivateEvent') || 'Reactivar evento'}</div>
+                <p className="text-secondary small mb-2" style={{ fontSize: '11px' }}>
+                  {t('eventDetail.reactivateNotice') || 'El evento será visible nuevamente para los estudiantes.'}
+                </p>
+                <button className="btn btn-success rounded-pill w-100 btn-sm" onClick={handleReactivateEvent} disabled={reactivating}>
+                  {reactivating ? (t('common.processing') || 'Procesando...') : (t('eventDetail.reactivateEvent') || 'Reactivar evento')}
                 </button>
               </div>
             </div>

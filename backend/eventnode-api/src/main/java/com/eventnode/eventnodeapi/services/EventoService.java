@@ -188,6 +188,19 @@ public class EventoService {
     }
 
     @Transactional
+    public void reactivarEvento(Integer idEvento) {
+        Evento evento = eventoRepository.findById(idEvento)
+                .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado"));
+
+        if (!"CANCELADO".equals(evento.getEstado())) {
+            throw new IllegalArgumentException("Solo se pueden reactivar eventos cancelados");
+        }
+
+        evento.setEstado("ACTIVO");
+        eventoRepository.save(evento);
+    }
+
+    @Transactional
     public void actualizarEvento(Integer idEvento, EventoUpdateRequest request) {
         Evento evento = eventoRepository.findById(idEvento)
                 .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado"));

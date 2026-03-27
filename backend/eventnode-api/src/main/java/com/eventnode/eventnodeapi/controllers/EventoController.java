@@ -70,11 +70,7 @@ public class EventoController {
             @RequestParam(required = false) String estado
     ) {
         List<Evento> eventos = eventoService.consultarEventosDisponibles(nombre, mes, categoriaId, estado);
-        if (eventos.isEmpty()) {
-            Map<String, String> body = new HashMap<>();
-            body.put("mensaje", "No se encontraron resultados");
-            return ResponseEntity.status(HttpStatus.OK).body(body);
-        }
+
         List<EventoResponse> response = eventos.stream()
                 .map(e -> new EventoResponse(
                         e.getIdEvento(),
@@ -247,6 +243,20 @@ public class EventoController {
         Map<String, String> body = new HashMap<>();
         body.put("mensaje", "Evento cancelado con éxito");
         return ResponseEntity.ok(body);
+    }
+
+    @PostMapping("/{idEvento}/reactivar")
+    public ResponseEntity<Map<String, String>> reactivarEvento(@PathVariable Integer idEvento) {
+        try {
+            eventoService.reactivarEvento(idEvento);
+            Map<String, String> body = new HashMap<>();
+            body.put("mensaje", "Evento reactivado con éxito");
+            return ResponseEntity.ok(body);
+        } catch (IllegalArgumentException ex) {
+            Map<String, String> body = new HashMap<>();
+            body.put("mensaje", ex.getMessage());
+            return ResponseEntity.badRequest().body(body);
+        }
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -12,6 +12,6 @@ data class EventoResponse(
     val tiempoToleranciaMinutos: Int?,
     val descripcion: String,
     val estado: String,
-    val idCategoria: Int?,
-    val nombreCategoria: String?
+    val categoriaId: Int?,
+    val categoriaNombre: String?
 )

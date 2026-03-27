@@ -61,6 +61,7 @@ import android.util.Base64
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
+    import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -82,7 +83,7 @@ fun EventDetailScreen(
     var showRegisterModal by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var evento by remember { mutableStateOf<Map<String, Any>?>(null) }
+    var evento by remember { mutableStateOf<EventoResponse?>(null) }
     var isRegistering by remember { mutableStateOf(false) }
 
     LaunchedEffect(eventId) {
@@ -96,18 +97,7 @@ fun EventDetailScreen(
                 isLoading = true
                 val response = ApiClient.apiService.getEvento(eventId)
                 if (response.isSuccessful) {
-                    val eventoData = response.body()
-                    if (eventoData != null) {
-                        evento = mapOf(
-                            "nombre" to eventoData.nombre,
-                            "nombreCategoria" to eventoData.nombreCategoria,
-                            "ubicacion" to eventoData.ubicacion,
-                            "descripcion" to eventoData.descripcion,
-                            "banner" to eventoData.banner,
-                            "fechaInicio" to eventoData.fechaInicio,
-                            "fechaFin" to eventoData.fechaFin
-                        )
-                    }
+                    evento = response.body()
                 }
                 isLoading = false
             } catch (e: Exception) {
@@ -164,7 +154,7 @@ fun EventDetailScreen(
                         .fillMaxWidth()
                         .height(300.dp)
                 ) {
-                    val bannerBitmap = (evento?.get("banner") as? String)?.let { base64String ->
+                    val bannerBitmap = evento?.banner?.let { base64String ->
                         try {
                             val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
                             BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
@@ -222,7 +212,7 @@ fun EventDetailScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = evento?.get("nombre") as? String ?: "Evento",
+                                text = evento?.nombre ?: "Evento",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1A1C1E),
@@ -234,7 +224,7 @@ fun EventDetailScreen(
                                 modifier = Modifier.padding(start = 16.dp)
                             ) {
                                 Text(
-                                    text = (evento?.get("nombreCategoria") as? String ?: "EVENTO").uppercase(),
+                                    text = (evento?.categoriaNombre ?: "EVENTO").uppercase(),
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
@@ -245,8 +235,8 @@ fun EventDetailScreen(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        val startDate = (evento?.get("fechaInicio") as? String)?.let { formatDateTime(it) } ?: "N/A"
-                        val endDate = (evento?.get("fechaFin") as? String)?.let { formatDateTime(it) } ?: "N/A"
+                        val startDate = evento?.fechaInicio?.let { formatDateTime(it) } ?: "N/A"
+                        val endDate = evento?.fechaFin?.let { formatDateTime(it) } ?: "N/A"
 
                         DetailRow(
                             label = "FECHA Y HORA",
@@ -258,7 +248,7 @@ fun EventDetailScreen(
 
                         DetailRow(
                             label = "UBICACIÓN",
-                            value = evento?.get("ubicacion") as? String ?: "N/A",
+                            value = evento?.ubicacion ?: "N/A",
                             icon = "home.png"
                         )
 
@@ -274,7 +264,7 @@ fun EventDetailScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
-                            text = evento?.get("descripcion") as? String ?: "Sin descripción",
+                            text = evento?.descripcion ?: "Sin descripción",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color(0xFF44474E),
                             lineHeight = 22.sp
@@ -376,7 +366,7 @@ fun EventDetailScreen(
                             Spacer(modifier = Modifier.height(12.dp))
                             
                             Text(
-                                text = "Todo listo para asistir al '${evento?.get("nombre") ?: "evento"}'. Prepárate para una experiencia inspiradora.",
+                                text = "Todo listo para asistir al '${evento?.nombre ?: "evento"}'. Prepárate para una experiencia inspiradora.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color(0xFF666666),
                                 textAlign = TextAlign.Center

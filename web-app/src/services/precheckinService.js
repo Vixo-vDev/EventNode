@@ -16,7 +16,7 @@ export const precheckinService = {
   contarInscritos: async (idEvento) => {
     try {
       const data = await apiGet(`/precheckin/evento/${idEvento}/count`)
-      return data.count || 0
+      return data.totalInscritos || 0
     } catch {
       return 0
     }

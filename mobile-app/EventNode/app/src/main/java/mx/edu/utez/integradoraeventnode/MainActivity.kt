@@ -50,11 +50,11 @@ class MainActivity : ComponentActivity() {
                     AppScreen.Login
                 }
 
-                var currentScreen by remember { mutableStateOf(startScreen) }
-                var selectedEventId by remember { mutableStateOf<Int?>(null) }
-                var adminSelectedEventId by remember { mutableStateOf<Int?>(null) }
-                var selectedCheckinEventId by remember { mutableStateOf<Int?>(null) }
-                var selectedCheckinEventName by remember { mutableStateOf("") }
+                var currentScreen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(startScreen) }
+                var selectedEventId by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<Int?>(null) }
+                var adminSelectedEventId by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<Int?>(null) }
+                var selectedCheckinEventId by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<Int?>(null) }
+                var selectedCheckinEventName by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
@@ -164,13 +164,6 @@ class MainActivity : ComponentActivity() {
                             onDiplomas = { currentScreen = AppScreen.AdminDiplomas },
                             onAnalitica = { currentScreen = AppScreen.AdminAnalytics },
                             onProfile = { currentScreen = AppScreen.AdminProfile },
-                            onEditEvent = { currentScreen = AppScreen.AdminEditEvent }
-                        )
-                        AppScreen.AdminEditEvent -> AdminEditEventScreen(
-                            eventId = adminSelectedEventId ?: -1,
-                            modifier = Modifier.padding(innerPadding),
-                            onBack = { currentScreen = AppScreen.AdminEventDetail },
-                            onSave = { currentScreen = AppScreen.AdminEventDetail }
                         )
                         AppScreen.Agenda -> AgendaScreen(
                             modifier = Modifier.padding(innerPadding),
@@ -253,7 +246,6 @@ private enum class AppScreen {
     AdminAnalytics,
     AdminProfile,
     AdminEditProfile,
-    AdminEditEvent,
     AdminEventDetail,
     Agenda,
     CheckinQr,

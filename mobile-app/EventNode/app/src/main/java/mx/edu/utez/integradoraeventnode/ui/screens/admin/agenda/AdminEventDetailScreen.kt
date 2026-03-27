@@ -189,21 +189,7 @@ fun AdminEventDetailScreen(
                         )
                     }
 
-                    // Edit button (Moved to Top Right)
-                    IconButton(
-                        onClick = { onEditEvent() },
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .align(Alignment.TopEnd)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.8f))
-                    ) {
-                        Image(
-                            bitmap = assetImageBitmap("vista.png"),
-                            contentDescription = "Editar",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                    // View-only mode — CRUD is handled on web portal
                     }
 
                     // Overlapping Card (Design from Image 1)
@@ -235,7 +221,7 @@ fun AdminEventDetailScreen(
                                         shape = RoundedCornerShape(4.dp)
                                     ) {
                                         Text(
-                                            text = eventData?.nombreCategoria?.uppercase() ?: "EVENTO",
+                                            text = eventData?.categoriaNombre?.uppercase() ?: "EVENTO",
                                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                             color = Color(0xFF2196F3),
                                             fontSize = 10.sp,
@@ -368,28 +354,34 @@ fun AdminEventDetailScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Button(
-                            onClick = {
-                                scope.launch {
-                                    try {
-                                        val sharedPref = context.getSharedPreferences("EventNodePrefs", Context.MODE_PRIVATE)
-                                        val token = sharedPref.getString("token", "") ?: ""
-                                        val cancelResponse = ApiClient.apiService.cancelarEvento("Bearer $token", eventId)
-                                        if (cancelResponse.isSuccessful) {
-                                            onBack()
-                                        } else {
-                                            errorMessage = "Error al cancelar evento"
-                                        }
-                                    } catch (e: Exception) {
-                                        errorMessage = "Error: ${e.message}"
-                                    }
-                                }
-                            },
+                        // Event status badge (view only — CRUD is web-only)
+                        Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                            color = when (eventData?.estado) {
+                                "ACTIVO" -> Color(0xFFE8F5E9)
+                                "CANCELADO" -> Color(0xFFFFEBEE)
+                                "FINALIZADO" -> Color(0xFFF5F5F5)
+                                else -> Color(0xFFF5F5F5)
+                            }
                         ) {
-                            Text("Cancelar Evento", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "Estado: ${eventData?.estado ?: "N/A"}",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = when (eventData?.estado) {
+                                        "ACTIVO" -> Color(0xFF4CAF50)
+                                        "CANCELADO" -> Color(0xFFD32F2F)
+                                        "FINALIZADO" -> Color.Gray
+                                        else -> Color.Gray
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -491,7 +483,7 @@ private fun AttendeesListDialog(
                                     Text(text = matricula, fontSize = 12.sp, color = Color.Gray)
                                 }
                             }
-                            Divider(color = Color(0xFFF5F6FA))
+                            HorizontalDivider(color = Color(0xFFF5F6FA))
                         }
                     }
                 }

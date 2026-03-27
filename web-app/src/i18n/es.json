@@ -179,6 +179,9 @@
     "organizers": "Organizadores",
     "cancelEvent": "Cancelar Evento",
     "cancelNotice": "La cancelación notificará a todos los estudiantes registrados.",
+    "reactivateEvent": "Reactivar Evento",
+    "reactivateNotice": "El evento será visible nuevamente para los estudiantes.",
+    "eventReactivated": "Evento reactivado con éxito",
     "qrCode": "Código QR de Asistencia",
     "qrInstruction": "Los estudiantes pueden escanear este código QR para registrar su asistencia al evento.",
     "preCheckin": "Pre Check-In",
@@ -248,7 +251,9 @@
     "download": "Descargar",
     "downloading": "Descargando...",
     "noRecipients": "No hay receptores registrados",
-    "noRecipientsMsg": "Este diploma aún no tiene receptores asignados."
+    "noRecipientsMsg": "Este diploma aún no tiene receptores asignados.",
+    "emitted": "Emitidos",
+    "pendingStat": "Pendientes"
   },
   "createDiploma": {
     "title": "Crear Nuevo Diploma",
@@ -371,6 +376,8 @@
     "studentsStat": "estudiantes",
     "adminsStat": "admins",
     "attendanceByEvent": "Asistencia por Evento",
+    "preCheckinByEvent": "Pre Check-In por Evento",
+    "checkinByEvent": "Check-In por Evento",
     "enrolled": "inscritos",
     "eventStatus": "Estado de Eventos",
     "total": "TOTAL",
@@ -393,7 +400,16 @@
     "noEventsRegistered": "Sin eventos registrados",
     "noAttendanceData": "No hay datos de asistencia disponibles",
     "noEventsToShow": "No hay eventos para mostrar",
-    "loadingAnalytics": "Cargando analíticas..."
+    "loadingAnalytics": "Cargando analíticas...",
+    "filters": "Filtros",
+    "filterAll": "Todos",
+    "filterRecent": "Más recientes",
+    "filterLast": "El último",
+    "filterMonth": "Mes",
+    "filterYear": "Año",
+    "filterQuarter": "Cuatrimestre",
+    "quarterPrefix": "Cuatrimestre",
+    "clearFilters": "Limpiar filtros"
   },
   "profile": {
     "title": "Perfil",

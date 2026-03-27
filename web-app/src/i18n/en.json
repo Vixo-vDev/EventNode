@@ -179,6 +179,9 @@
     "organizers": "Organizers",
     "cancelEvent": "Cancel Event",
     "cancelNotice": "Cancellation will notify all registered students.",
+    "reactivateEvent": "Reactivate Event",
+    "reactivateNotice": "The event will be visible to students again.",
+    "eventReactivated": "Event reactivated successfully",
     "qrCode": "Attendance QR Code",
     "qrInstruction": "Students can scan this QR code to register their attendance at the event.",
     "preCheckin": "Pre Check-In",
@@ -248,7 +251,9 @@
     "download": "Download",
     "downloading": "Downloading...",
     "noRecipients": "No recipients registered",
-    "noRecipientsMsg": "This diploma does not yet have assigned recipients."
+    "noRecipientsMsg": "This diploma does not yet have assigned recipients.",
+    "emitted": "Emitted",
+    "pendingStat": "Pending"
   },
   "createDiploma": {
     "title": "Create New Diploma",
@@ -371,6 +376,8 @@
     "studentsStat": "students",
     "adminsStat": "admins",
     "attendanceByEvent": "Attendance by Event",
+    "preCheckinByEvent": "Pre Check-In by Event",
+    "checkinByEvent": "Check-In by Event",
     "enrolled": "enrolled",
     "eventStatus": "Event Status",
     "total": "TOTAL",
@@ -393,7 +400,16 @@
     "noEventsRegistered": "No events registered",
     "noAttendanceData": "No attendance data available",
     "noEventsToShow": "No events to show",
-    "loadingAnalytics": "Loading analytics..."
+    "loadingAnalytics": "Loading analytics...",
+    "filters": "Filters",
+    "filterAll": "All",
+    "filterRecent": "Most recent",
+    "filterLast": "The last one",
+    "filterMonth": "Month",
+    "filterYear": "Year",
+    "filterQuarter": "Quarter",
+    "quarterPrefix": "Quarter",
+    "clearFilters": "Clear filters"
   },
   "profile": {
     "title": "Profile",

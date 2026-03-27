@@ -35,7 +35,9 @@ interface ApiService {
 
     // ── Eventos ──
     @GET("/api/eventos")
-    suspend fun getEventos(): Response<List<EventoResponse>>
+    suspend fun getEventos(
+        @Query("estado") estado: String? = null
+    ): Response<List<EventoResponse>>
 
     @GET("/api/eventos")
     suspend fun getEventosFiltrados(
@@ -75,6 +77,12 @@ interface ApiService {
 
     @POST("/api/eventos/{id}/cancelar")
     suspend fun cancelarEvento(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<Map<String, String>>
+
+    @POST("/api/eventos/{id}/reactivar")
+    suspend fun reactivarEvento(
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<Map<String, String>>
