@@ -1,13 +1,22 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n/I18nContext'
 
 function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age, error, success, isLoading, onChange, onBirthDateChange, onSubmit }) {
   const { t } = useTranslation()
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const v = (value) => value && value.trim() ? 'is-valid' : ''
+  const vEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'is-valid' : ''
+  const vPassword = (pwd) => pwd && pwd.length >= 8 ? 'is-valid' : ''
+  const vConfirm = () => confirmPassword && confirmPassword === formData.password ? 'is-valid' : ''
+
   return (
     <form onSubmit={onSubmit}>
       {error && <div className="alert alert-danger mb-3 p-2 small text-center">{error}</div>}
       {success && <div className="alert alert-success mb-3 p-2 small text-center">{t('auth.accountCreated')}</div>}
-      
+
       <div className="row mb-3">
         <div className="col-12 col-md-4 mb-3 mb-md-0">
           <label className="form-label small fw-semibold" htmlFor="regName">
@@ -15,7 +24,7 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
           </label>
           <input
             type="text"
-            className="form-control"
+            className={`form-control ${v(formData.nombre)}`}
             id="regName"
             name="nombre"
             value={formData.nombre}
@@ -30,7 +39,7 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
           </label>
           <input
             type="text"
-            className="form-control"
+            className={`form-control ${v(formData.apellidoPaterno)}`}
             id="regLastNameP"
             name="apellidoPaterno"
             value={formData.apellidoPaterno}
@@ -45,7 +54,7 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
           </label>
           <input
             type="text"
-            className="form-control"
+            className={`form-control ${v(formData.apellidoMaterno)}`}
             id="regLastNameM"
             name="apellidoMaterno"
             value={formData.apellidoMaterno}
@@ -63,7 +72,7 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
           </label>
           <input
             type="text"
-            className="form-control"
+            className={`form-control ${v(formData.matricula)}`}
             id="regMatricula"
             name="matricula"
             value={formData.matricula}
@@ -78,7 +87,7 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
           </label>
           <input
             type="email"
-            className="form-control"
+            className={`form-control ${vEmail(formData.correo)}`}
             id="regEmail"
             name="correo"
             value={formData.correo}
@@ -96,8 +105,8 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
           </label>
           <div className="input-group">
             <input
-              type="password"
-              className="form-control border-end-0"
+              type={showPassword ? 'text' : 'password'}
+              className={`form-control border-end-0 ${vPassword(formData.password)}`}
               id="regPassword"
               name="password"
               value={formData.password}
@@ -105,8 +114,12 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
               placeholder="••••••••"
               required
             />
-            <span className="input-group-text bg-white border-start-0" role="button">
-              <i className="bi bi-eye text-secondary"></i>
+            <span
+              className={`input-group-text bg-white border-start-0 ${vPassword(formData.password) ? 'border-success' : ''}`}
+              role="button"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'} text-secondary`}></i>
             </span>
           </div>
         </div>
@@ -116,16 +129,20 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
           </label>
           <div className="input-group">
             <input
-              type="password"
-              className="form-control border-end-0"
+              type={showConfirmPassword ? 'text' : 'password'}
+              className={`form-control border-end-0 ${vConfirm()}`}
               id="regConfirmPassword"
               value={confirmPassword}
               onChange={onConfirmPasswordChange}
               placeholder="••••••••"
               required
             />
-            <span className="input-group-text bg-white border-start-0" role="button">
-              <i className="bi bi-eye text-secondary"></i>
+            <span
+              className={`input-group-text bg-white border-start-0 ${vConfirm() ? 'border-success' : ''}`}
+              role="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              <i className={`bi ${showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'} text-secondary`}></i>
             </span>
           </div>
         </div>
@@ -141,7 +158,7 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
           </label>
           <input
             type="date"
-            className="form-control"
+            className={`form-control ${v(formData.fechaNacimiento)}`}
             id="regBirthDate"
             name="fechaNacimiento"
             value={formData.fechaNacimiento}
@@ -168,7 +185,7 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
             {t('auth.gender')}*
           </label>
           <select
-            className="form-select"
+            className={`form-select ${v(formData.sexo)}`}
             id="regSex"
             name="sexo"
             value={formData.sexo}
@@ -185,7 +202,7 @@ function RegisterForm({ formData, confirmPassword, onConfirmPasswordChange, age,
             {t('auth.quarter')}*
           </label>
           <select
-            className="form-select"
+            className={`form-select ${v(formData.cuatrimestre)}`}
             id="regQuarter"
             name="cuatrimestre"
             value={formData.cuatrimestre}

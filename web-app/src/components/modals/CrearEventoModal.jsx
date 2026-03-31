@@ -6,6 +6,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
   const { t } = useTranslation()
   const fileInputRef = useRef(null)
   const formRef = useRef(null)
+  const closeBtnRef = useRef(null)
   const [bannerPreview, setBannerPreview] = useState(null)
   const [showSuccess, setShowSuccess] = useState(false)
   const [showError, setShowError] = useState(false)
@@ -123,6 +124,9 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const v = (val) => val && String(val).trim() ? 'is-valid' : ''
+  const vTolerance = () => formData.tiempoToleranciaMinutos !== '' ? 'is-valid' : ''
+
   const handleBannerClick = () => fileInputRef.current?.click()
   const handleBannerChange = (e) => {
     const file = e.target.files[0]
@@ -159,6 +163,9 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
         organizadores: selectedOrgs.map(o => o.idOrganizador),
       }
       await onSubmit(dataToSubmit)
+      // Cerrar el modal haciendo click en su botón de cierre
+      closeBtnRef.current?.click()
+      resetForm()
       setShowSuccess(true)
       setShowError(false)
     } catch {
@@ -174,7 +181,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
         <form ref={formRef} noValidate className="modal-content border-0 rounded-4 shadow">
           <div className="modal-header border-0 px-4 pt-4 pb-0">
             <h5 className="fw-bold">{t('createEvent.title')}</h5>
-            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('common.close')}></button>
+            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('common.close')} ref={closeBtnRef}></button>
           </div>
 
           <div className="modal-body px-4 py-3">
@@ -185,7 +192,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
               <input type="file" ref={fileInputRef} accept="image/*" className="d-none" onChange={handleBannerChange} />
               <div
                 className="d-flex flex-column align-items-center justify-content-center text-center p-4 rounded-3"
-                style={{ border: '2px dashed #dee2e6', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
+                style={{ border: `2px dashed ${bannerPreview ? '#198754' : '#dee2e6'}`, cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
                 onClick={handleBannerClick}
               >
                 {bannerPreview ? (
@@ -207,10 +214,11 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <input
                   type="text"
                   name="nombre"
-                  className="form-control"
+                  className={`form-control ${v(formData.nombre)}`}
                   placeholder={t('createEvent.eventNamePlaceholder')}
                   value={formData.nombre}
                   onChange={handleChange}
+                  maxLength={100}
                 />
               </div>
               <div className="col-12 col-md-6">
@@ -218,10 +226,11 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <input
                   type="text"
                   name="ubicacion"
-                  className="form-control"
+                  className={`form-control ${v(formData.ubicacion)}`}
                   placeholder={t('createEvent.locationPlaceholder')}
                   value={formData.ubicacion}
                   onChange={handleChange}
+                  maxLength={150}
                 />
               </div>
             </div>
@@ -231,11 +240,12 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
               <label className="form-label fw-semibold small">{t('createEvent.description')}</label>
               <textarea
                 name="descripcion"
-                className="form-control"
+                className={`form-control ${v(formData.descripcion)}`}
                 rows="3"
                 placeholder={t('createEvent.descriptionPlaceholder')}
                 value={formData.descripcion}
                 onChange={handleChange}
+                maxLength={300}
               ></textarea>
             </div>
 
@@ -246,7 +256,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <input
                   type="datetime-local"
                   name="fechaInicio"
-                  className="form-control"
+                  className={`form-control ${v(formData.fechaInicio)}`}
                   value={formData.fechaInicio}
                   onChange={handleChange}
                 />
@@ -257,7 +267,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <input
                   type="datetime-local"
                   name="fechaFin"
-                  className="form-control"
+                  className={`form-control ${v(formData.fechaFin)}`}
                   value={formData.fechaFin}
                   onChange={handleChange}
                 />
@@ -271,7 +281,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <label className="form-label fw-semibold small">{t('createEvent.category')}</label>
                 <select
                   name="idCategoria"
-                  className="form-select"
+                  className={`form-select ${v(formData.idCategoria)}`}
                   value={formData.idCategoria}
                   onChange={handleChange}
                 >
@@ -288,9 +298,10 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <input
                   type="number"
                   name="capacidadMaxima"
-                  className="form-control"
+                  className={`form-control ${v(formData.capacidadMaxima)}`}
                   placeholder={t('createEvent.capacityPlaceholder')}
                   min="1"
+                  max="9999"
                   value={formData.capacidadMaxima}
                   onChange={handleChange}
                 />
@@ -304,9 +315,10 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <input
                   type="number"
                   name="tiempoCancelacionHoras"
-                  className="form-control"
+                  className={`form-control ${v(formData.tiempoCancelacionHoras)}`}
                   placeholder={t('createEvent.cancellationPlaceholder')}
                   min="1"
+                  max="720"
                   value={formData.tiempoCancelacionHoras}
                   onChange={handleChange}
                 />
@@ -317,9 +329,10 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <input
                   type="number"
                   name="tiempoToleranciaMinutos"
-                  className="form-control"
+                  className={`form-control ${vTolerance()}`}
                   placeholder={t('createEvent.tolerancePlaceholder')}
                   min="0"
+                  max="120"
                   value={formData.tiempoToleranciaMinutos}
                   onChange={handleChange}
                 />
@@ -331,7 +344,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
             <div className="mb-2" ref={orgContainerRef} style={{ position: 'relative' }}>
               <label className="form-label fw-semibold small">{t('createEvent.organizer')}</label>
               <div
-                className="d-flex flex-wrap align-items-center gap-2 form-control p-2"
+                className={`d-flex flex-wrap align-items-center gap-2 form-control p-2 ${selectedOrgs.length > 0 ? 'is-valid' : ''}`}
                 style={{ minHeight: '38px', cursor: 'text' }}
                 onClick={() => orgInputRef.current?.focus()}
               >
@@ -434,15 +447,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
               </div>
               <h5>{t('createEvent.eventCreated')}</h5>
               <p className="text-secondary small">{t('createEvent.eventSaved')}</p>
-              <button className="btn btn-primary rounded-pill px-4 mt-2 mx-auto" onClick={() => {
-                setShowSuccess(false)
-                const modalEl = document.getElementById('crearEventoModal')
-                if (modalEl && window.bootstrap) {
-                  const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-                  if (bsModal) bsModal.hide()
-                }
-                resetForm()
-              }}>
+              <button className="btn btn-primary rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowSuccess(false)}>
                 {t('createEvent.accept')}
               </button>
           </div>
