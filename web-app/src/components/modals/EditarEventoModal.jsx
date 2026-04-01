@@ -190,7 +190,7 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
             {/* Categoría + Capacidad */}
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">{t('editEvent.category')}</label>
+                <label className="form-label fw-semibold small">{t('Categoría')}</label>
                 <select name="idCategoria" className="form-select" value={formData.idCategoria} onChange={handleChange}>
                   <option value="">{t('editEvent.selectCategory')}</option>
                   {categorias.map(cat => (
@@ -201,7 +201,7 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
                 </select>
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold small">{t('editEvent.maxCapacity')}</label>
+                <label className="form-label fw-semibold small">{t('Capacidad Máxima')}</label>
                 <input type="number" name="capacidadMaxima" className="form-control" placeholder={t('editEvent.capacityPlaceholder')} min="1" value={formData.capacidadMaxima} onChange={handleChange} />
               </div>
             </div>
