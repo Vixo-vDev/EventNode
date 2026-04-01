@@ -24,16 +24,13 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
     banner: null,
   })
 
-  // Organizer state
-  const [orgQuery, setOrgQuery] = useState('')
-  const [orgSuggestions, setOrgSuggestions] = useState([])
+  const [allOrgs, setAllOrgs] = useState([])
   const [selectedOrgs, setSelectedOrgs] = useState([])
-  const [showOrgDropdown, setShowOrgDropdown] = useState(false)
-  const [orgError, setOrgError] = useState('')
-  const orgInputRef = useRef(null)
-  const orgContainerRef = useRef(null)
 
-  // Populate form when evento changes
+  useEffect(() => {
+    eventService.buscarOrganizadores('').then(setAllOrgs).catch(() => setAllOrgs([]))
+  }, [])
+
   useEffect(() => {
     if (evento) {
       const fmtDate = (dt) => {
@@ -48,7 +45,7 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
         descripcion: evento.descripcion || '',
         fechaInicio: fmtDate(evento.fechaInicio),
         fechaFin: fmtDate(evento.fechaFin),
-        idCategoria: evento.idCategoria ? String(evento.idCategoria) : '',
+        idCategoria: evento.categoriaId ? String(evento.categoriaId) : '',
         capacidadMaxima: evento.capacidadMaxima ? String(evento.capacidadMaxima) : '',
         tiempoCancelacionHoras: evento.tiempoCancelacionHoras ? String(evento.tiempoCancelacionHoras) : '',
         tiempoToleranciaMinutos: evento.tiempoToleranciaMinutos != null ? String(evento.tiempoToleranciaMinutos) : '',
@@ -58,97 +55,23 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
         evento.banner && evento.banner.startsWith('data:image/') ? evento.banner : null
       )
       setSelectedOrgs([])
-      setOrgQuery('')
-      setOrgError('')
       setShowSuccess(false)
       setShowError(false)
-
-      // Show modal
-      const modalEl = document.getElementById('editarEventoModal')
-      if (modalEl && window.bootstrap) {
-        // We rely on data-bs-toggle from the button to show the modal to prevent double backdrops.
-        // bsModal.show() is removed.
-      }
     }
   }, [evento])
 
-  // Organizer search with debounce
-  useEffect(() => {
-    if (orgQuery.trim().length < 1) {
-      setOrgSuggestions([])
-      setShowOrgDropdown(false)
-      return
+  const handleSelectOrg = (e) => {
+    const id = parseInt(e.target.value)
+    if (!id) return
+    const org = allOrgs.find(o => o.idOrganizador === id)
+    if (org && !selectedOrgs.some(s => s.idOrganizador === id)) {
+      setSelectedOrgs(prev => [...prev, org])
     }
-    const timer = setTimeout(async () => {
-      try {
-        const results = await eventService.buscarOrganizadores(orgQuery.trim())
-        const filtered = results.filter(
-          o => !selectedOrgs.some(s => s.idOrganizador === o.idOrganizador)
-        )
-        setOrgSuggestions(filtered)
-        setShowOrgDropdown(filtered.length > 0)
-      } catch {
-        setOrgSuggestions([])
-        setShowOrgDropdown(false)
-      }
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [orgQuery, selectedOrgs])
-
-  // Close dropdown on click outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (orgContainerRef.current && !orgContainerRef.current.contains(e.target)) {
-        setShowOrgDropdown(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const handleSelectOrg = (org) => {
-    setSelectedOrgs(prev => [...prev, org])
-    setOrgQuery('')
-    setShowOrgDropdown(false)
-    orgInputRef.current?.focus()
+    e.target.value = ''
   }
 
   const handleRemoveOrg = (idOrganizador) => {
     setSelectedOrgs(prev => prev.filter(o => o.idOrganizador !== idOrganizador))
-  }
-
-  const handleOrgKeyDown = async (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      const trimmed = orgQuery.trim()
-      if (!trimmed) return
-      try {
-        const results = await eventService.buscarOrganizadores(trimmed)
-        const available = results.filter(
-          o => !selectedOrgs.some(s => s.idOrganizador === o.idOrganizador)
-        )
-        if (available.length > 0) {
-          const exactMatch = available.find(
-            o => o.nombre.toLowerCase() === trimmed.toLowerCase()
-          )
-          handleSelectOrg(exactMatch || available[0])
-          setOrgError('')
-        } else if (results.length > 0) {
-          setOrgError(`"${trimmed}" ya fue agregado.`)
-        } else {
-          setOrgError(`"${trimmed}" no existe en la base de datos.`)
-        }
-      } catch {
-        setOrgError('Error al buscar en la base de datos.')
-      }
-      return
-    }
-    if (e.key === 'Backspace' && orgQuery === '' && selectedOrgs.length > 0) {
-      setSelectedOrgs(prev => prev.slice(0, -1))
-    }
-    if (e.key !== 'Enter' && e.key !== 'Backspace') {
-      setOrgError('')
-    }
   }
 
   const handleChange = (e) => {
@@ -187,6 +110,8 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
       setIsLoading(false)
     }
   }
+
+  const availableOrgs = allOrgs.filter(o => !selectedOrgs.some(s => s.idOrganizador === o.idOrganizador))
 
   return (
     <>
@@ -236,62 +161,29 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">{t('editEvent.eventName')}</label>
-                <input
-                  type="text"
-                  name="nombre"
-                  className="form-control"
-                  placeholder={t('editEvent.eventName')}
-                  value={formData.nombre}
-                  onChange={handleChange}
-                />
+                <input type="text" name="nombre" className="form-control" placeholder={t('editEvent.eventName')} value={formData.nombre} onChange={handleChange} />
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">{t('editEvent.location')}</label>
-                <input
-                  type="text"
-                  name="ubicacion"
-                  className="form-control"
-                  placeholder={t('editEvent.location')}
-                  value={formData.ubicacion}
-                  onChange={handleChange}
-                />
+                <input type="text" name="ubicacion" className="form-control" placeholder={t('editEvent.location')} value={formData.ubicacion} onChange={handleChange} />
               </div>
             </div>
 
             {/* Descripción */}
             <div className="mb-3">
               <label className="form-label fw-semibold small">{t('editEvent.description')}</label>
-              <textarea
-                name="descripcion"
-                className="form-control"
-                rows="3"
-                placeholder={t('editEvent.description')}
-                value={formData.descripcion}
-                onChange={handleChange}
-              ></textarea>
+              <textarea name="descripcion" className="form-control" rows="3" placeholder={t('editEvent.description')} value={formData.descripcion} onChange={handleChange}></textarea>
             </div>
 
             {/* Fechas */}
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">Fecha y Hora Inicio *</label>
-                <input
-                  type="datetime-local"
-                  name="fechaInicio"
-                  className="form-control"
-                  value={formData.fechaInicio}
-                  onChange={handleChange}
-                />
+                <input type="datetime-local" name="fechaInicio" className="form-control" value={formData.fechaInicio} onChange={handleChange} />
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">Fecha y Hora Fin *</label>
-                <input
-                  type="datetime-local"
-                  name="fechaFin"
-                  className="form-control"
-                  value={formData.fechaFin}
-                  onChange={handleChange}
-                />
+                <input type="datetime-local" name="fechaFin" className="form-control" value={formData.fechaFin} onChange={handleChange} />
               </div>
             </div>
 
@@ -299,15 +191,10 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">{t('editEvent.category')}</label>
-                <select
-                  name="idCategoria"
-                  className="form-select"
-                  value={formData.idCategoria}
-                  onChange={handleChange}
-                >
+                <select name="idCategoria" className="form-select" value={formData.idCategoria} onChange={handleChange}>
                   <option value="">{t('editEvent.selectCategory')}</option>
                   {categorias.map(cat => (
-                    <option key={cat.idCategoria} value={cat.idCategoria}>
+                    <option key={cat.idCategoria} value={String(cat.idCategoria)}>
                       {cat.nombre}
                     </option>
                   ))}
@@ -315,15 +202,7 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">{t('editEvent.maxCapacity')}</label>
-                <input
-                  type="number"
-                  name="capacidadMaxima"
-                  className="form-control"
-                  placeholder={t('editEvent.capacityPlaceholder')}
-                  min="1"
-                  value={formData.capacidadMaxima}
-                  onChange={handleChange}
-                />
+                <input type="number" name="capacidadMaxima" className="form-control" placeholder={t('editEvent.capacityPlaceholder')} min="1" value={formData.capacidadMaxima} onChange={handleChange} />
               </div>
             </div>
 
@@ -331,101 +210,44 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
             <div className="row g-3 mb-3">
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">Tiempo Cancelación (hrs) *</label>
-                <input
-                  type="number"
-                  name="tiempoCancelacionHoras"
-                  className="form-control"
-                  placeholder="Ej: 24"
-                  min="1"
-                  value={formData.tiempoCancelacionHoras}
-                  onChange={handleChange}
-                />
+                <input type="number" name="tiempoCancelacionHoras" className="form-control" placeholder="Ej: 24" min="1" value={formData.tiempoCancelacionHoras} onChange={handleChange} />
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">Tolerancia de entrada (min) *</label>
-                <input
-                  type="number"
-                  name="tiempoToleranciaMinutos"
-                  className="form-control"
-                  placeholder="Ej: 15"
-                  min="0"
-                  value={formData.tiempoToleranciaMinutos}
-                  onChange={handleChange}
-                />
+                <input type="number" name="tiempoToleranciaMinutos" className="form-control" placeholder="Ej: 15" min="0" value={formData.tiempoToleranciaMinutos} onChange={handleChange} />
               </div>
             </div>
 
-            {/* Organizador con búsqueda y etiquetas */}
-            <div className="mb-2" ref={orgContainerRef} style={{ position: 'relative' }}>
-              <label className="form-label fw-semibold small">{t('editEvent.organizer')}</label>
-              <div
-                className="d-flex flex-wrap align-items-center gap-2 form-control p-2"
-                style={{ minHeight: '38px', cursor: 'text' }}
-                onClick={() => orgInputRef.current?.focus()}
-              >
-                {selectedOrgs.map(org => (
-                  <span
-                    key={org.idOrganizador}
-                    className="badge bg-primary bg-opacity-10 text-primary d-flex align-items-center gap-1 px-2 py-1 rounded-pill"
-                    style={{ fontSize: '12px' }}
-                  >
-                    {org.nombre}
-                    <button
-                      type="button"
-                      className="btn-close btn-close-sm"
-                      style={{ fontSize: '7px', filter: 'none', opacity: 0.7 }}
-                      onClick={(e) => { e.stopPropagation(); handleRemoveOrg(org.idOrganizador) }}
-                    ></button>
-                  </span>
+            {/* Organizadores */}
+            <div className="mb-2">
+              <label className="form-label fw-semibold small">Organizadores</label>
+              <select className="form-select mb-2" onChange={handleSelectOrg} defaultValue="">
+                <option value="">Seleccionar organizador...</option>
+                {availableOrgs.map(org => (
+                  <option key={org.idOrganizador} value={org.idOrganizador}>
+                    {org.nombre}{org.correo ? ` — ${org.correo}` : ''}
+                  </option>
                 ))}
-                <input
-                  ref={orgInputRef}
-                  type="text"
-                  className="border-0 flex-grow-1 small"
-                  placeholder={selectedOrgs.length === 0 ? t('editEvent.organizerPlaceholder') : t('editEvent.addAnother')}
-                  style={{ outline: 'none', minWidth: '120px', fontSize: '13px' }}
-                  value={orgQuery}
-                  onChange={(e) => setOrgQuery(e.target.value)}
-                  onKeyDown={handleOrgKeyDown}
-                  onFocus={() => {
-                    if (orgQuery.trim().length > 0 && orgSuggestions.length > 0) {
-                      setShowOrgDropdown(true)
-                    }
-                  }}
-                />
-              </div>
-
-              {showOrgDropdown && (
-                <div
-                  className="list-group shadow-sm border rounded-3 mt-1"
-                  style={{ position: 'absolute', zIndex: 1050, width: '100%', maxHeight: '180px', overflowY: 'auto' }}
-                >
-                  {orgSuggestions.map(org => (
-                    <button
+              </select>
+              {selectedOrgs.length > 0 && (
+                <div className="d-flex flex-wrap gap-2 mt-1">
+                  {selectedOrgs.map(org => (
+                    <span
                       key={org.idOrganizador}
-                      type="button"
-                      className="list-group-item list-group-item-action py-2 px-3 d-flex align-items-center gap-2"
-                      style={{ fontSize: '13px' }}
-                      onClick={() => handleSelectOrg(org)}
+                      className="badge bg-primary bg-opacity-10 text-primary d-flex align-items-center gap-1 px-2 py-1 rounded-pill"
+                      style={{ fontSize: '12px' }}
                     >
-                      <i className="bi bi-person-fill text-secondary"></i>
-                      <div>
-                        <div className="fw-semibold">{org.nombre}</div>
-                        {org.correo && <div className="text-secondary" style={{ fontSize: '11px' }}>{org.correo}</div>}
-                      </div>
-                    </button>
+                      {org.nombre}
+                      <button
+                        type="button"
+                        className="btn-close btn-close-sm"
+                        style={{ fontSize: '7px', filter: 'none', opacity: 0.7 }}
+                        onClick={() => handleRemoveOrg(org.idOrganizador)}
+                      ></button>
+                    </span>
                   ))}
                 </div>
               )}
-
-              {orgError && (
-                <div className="text-danger mt-1" style={{ fontSize: '11px' }}>
-                  <i className="bi bi-exclamation-circle me-1"></i>{orgError}
-                </div>
-              )}
-              <div className="text-secondary mt-1" style={{ fontSize: '11px' }}>
-                {t('editEvent.organizerHelp')}
-              </div>
             </div>
           </div>
 
@@ -455,40 +277,41 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
         </form>
       </div>
     </div>
+
     {showSuccess && (
       <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
-          <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '400px', width: '90%' }}>
-              <div className="mb-3">
-                <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '3rem' }}></i>
-              </div>
-              <h5>{t('editEvent.eventUpdated')}</h5>
-              <p className="text-secondary small">{t('editEvent.changesSaved')}</p>
-              <button className="btn btn-primary rounded-pill px-4 mt-2 mx-auto" onClick={() => {
-                setShowSuccess(false)
-                const modalEl = document.getElementById('editarEventoModal')
-                if (modalEl && window.bootstrap) {
-                  const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-                  if (bsModal) bsModal.hide()
-                }
-              }}>
-                {t('common.accept')}
-              </button>
+        <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '400px', width: '90%' }}>
+          <div className="mb-3">
+            <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '3rem' }}></i>
           </div>
+          <h5>{t('editEvent.eventUpdated')}</h5>
+          <p className="text-secondary small">{t('editEvent.changesSaved')}</p>
+          <button className="btn btn-primary rounded-pill px-4 mt-2 mx-auto" onClick={() => {
+            setShowSuccess(false)
+            const modalEl = document.getElementById('editarEventoModal')
+            if (modalEl && window.bootstrap) {
+              const bsModal = window.bootstrap.Modal.getInstance(modalEl)
+              if (bsModal) bsModal.hide()
+            }
+          }}>
+            {t('common.accept')}
+          </button>
         </div>
-      )}
+      </div>
+    )}
 
-      {showError && (
-        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
-          <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '350px', width: '90%' }}>
-              <div className="mb-3">
-                <i className="bi bi-x-circle-fill text-danger" style={{ fontSize: '3rem' }}></i>
-              </div>
-              <h5>{t('editEvent.reviewData')}</h5>
-              <p className="text-secondary small">{t('editEvent.requiredFields')}</p>
-              <button className="btn btn-danger rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowError(false)}>{t('common.understood')}</button>
+    {showError && (
+      <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
+        <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '350px', width: '90%' }}>
+          <div className="mb-3">
+            <i className="bi bi-x-circle-fill text-danger" style={{ fontSize: '3rem' }}></i>
           </div>
+          <h5>{t('editEvent.reviewData')}</h5>
+          <p className="text-secondary small">{t('editEvent.requiredFields')}</p>
+          <button className="btn btn-danger rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowError(false)}>{t('common.understood')}</button>
         </div>
-      )}
+      </div>
+    )}
     </>
   )
 }

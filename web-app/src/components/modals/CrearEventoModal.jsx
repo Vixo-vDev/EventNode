@@ -23,100 +23,25 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
     banner: null,
   })
 
-  // Estado para organizadores
-  const [orgQuery, setOrgQuery] = useState('')
-  const [orgSuggestions, setOrgSuggestions] = useState([])
+  const [allOrgs, setAllOrgs] = useState([])
   const [selectedOrgs, setSelectedOrgs] = useState([])
-  const [showOrgDropdown, setShowOrgDropdown] = useState(false)
-  const orgInputRef = useRef(null)
-  const orgContainerRef = useRef(null)
 
-  // Buscar organizadores con debounce
   useEffect(() => {
-    if (orgQuery.trim().length < 1) {
-      setOrgSuggestions([])
-      setShowOrgDropdown(false)
-      return
-    }
-    const timer = setTimeout(async () => {
-      try {
-        const results = await eventService.buscarOrganizadores(orgQuery.trim())
-        const filtered = results.filter(
-          o => !selectedOrgs.some(s => s.idOrganizador === o.idOrganizador)
-        )
-        setOrgSuggestions(filtered)
-        setShowOrgDropdown(filtered.length > 0)
-      } catch {
-        setOrgSuggestions([])
-        setShowOrgDropdown(false)
-      }
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [orgQuery, selectedOrgs])
-
-  // Cerrar dropdown al hacer click fuera
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (orgContainerRef.current && !orgContainerRef.current.contains(e.target)) {
-        setShowOrgDropdown(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    eventService.buscarOrganizadores('').then(setAllOrgs).catch(() => setAllOrgs([]))
   }, [])
 
-  const handleSelectOrg = (org) => {
-    setSelectedOrgs(prev => [...prev, org])
-    setOrgQuery('')
-    setShowOrgDropdown(false)
-    orgInputRef.current?.focus()
+  const handleSelectOrg = (e) => {
+    const id = parseInt(e.target.value)
+    if (!id) return
+    const org = allOrgs.find(o => o.idOrganizador === id)
+    if (org && !selectedOrgs.some(s => s.idOrganizador === id)) {
+      setSelectedOrgs(prev => [...prev, org])
+    }
+    e.target.value = ''
   }
 
   const handleRemoveOrg = (idOrganizador) => {
     setSelectedOrgs(prev => prev.filter(o => o.idOrganizador !== idOrganizador))
-  }
-
-  const [orgError, setOrgError] = useState('')
-
-  const handleOrgKeyDown = async (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      const trimmed = orgQuery.trim()
-      if (!trimmed) return
-
-      // Siempre consultar la BD en tiempo real al presionar Enter
-      try {
-        const results = await eventService.buscarOrganizadores(trimmed)
-        // Filtrar los que ya están seleccionados
-        const available = results.filter(
-          o => !selectedOrgs.some(s => s.idOrganizador === o.idOrganizador)
-        )
-
-        if (available.length > 0) {
-          // Buscar coincidencia exacta primero
-          const exactMatch = available.find(
-            o => o.nombre.toLowerCase() === trimmed.toLowerCase()
-          )
-          handleSelectOrg(exactMatch || available[0])
-          setOrgError('')
-        } else if (results.length > 0) {
-          // Existe pero ya está seleccionado
-          setOrgError(`"${trimmed}" ya fue agregado.`)
-        } else {
-          // No existe en la BD
-          setOrgError(`"${trimmed}" no existe en la base de datos.`)
-        }
-      } catch {
-        setOrgError('Error al buscar en la base de datos.')
-      }
-      return
-    }
-    if (e.key === 'Backspace' && orgQuery === '' && selectedOrgs.length > 0) {
-      setSelectedOrgs(prev => prev.slice(0, -1))
-    }
-    if (e.key !== 'Enter' && e.key !== 'Backspace') {
-      setOrgError('')
-    }
   }
 
   const handleChange = (e) => {
@@ -144,8 +69,6 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
     })
     setBannerPreview(null)
     setSelectedOrgs([])
-    setOrgQuery('')
-    setOrgError('')
   }
 
   const handleSave = async () => {
@@ -340,78 +263,38 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
               </div>
             </div>
 
-            {/* Organizador con búsqueda y etiquetas */}
-            <div className="mb-2" ref={orgContainerRef} style={{ position: 'relative' }}>
+            {/* Organizadores */}
+            <div className="mb-2">
               <label className="form-label fw-semibold small">{t('createEvent.organizer')}</label>
-              <div
-                className={`d-flex flex-wrap align-items-center gap-2 form-control p-2 ${selectedOrgs.length > 0 ? 'is-valid' : ''}`}
-                style={{ minHeight: '38px', cursor: 'text' }}
-                onClick={() => orgInputRef.current?.focus()}
-              >
-                {selectedOrgs.map(org => (
-                  <span
-                    key={org.idOrganizador}
-                    className="badge bg-primary bg-opacity-10 text-primary d-flex align-items-center gap-1 px-2 py-1 rounded-pill"
-                    style={{ fontSize: '12px' }}
-                  >
-                    {org.nombre}
-                    <button
-                      type="button"
-                      className="btn-close btn-close-sm"
-                      style={{ fontSize: '7px', filter: 'none', opacity: 0.7 }}
-                      onClick={(e) => { e.stopPropagation(); handleRemoveOrg(org.idOrganizador) }}
-                    ></button>
-                  </span>
-                ))}
-                <input
-                  ref={orgInputRef}
-                  type="text"
-                  className="border-0 flex-grow-1 small"
-                  placeholder={selectedOrgs.length === 0 ? t('createEvent.organizerPlaceholder') : t('createEvent.addAnother')}
-                  style={{ outline: 'none', minWidth: '120px', fontSize: '13px' }}
-                  value={orgQuery}
-                  onChange={(e) => setOrgQuery(e.target.value)}
-                  onKeyDown={handleOrgKeyDown}
-                  onFocus={() => {
-                    if (orgQuery.trim().length > 0 && orgSuggestions.length > 0) {
-                      setShowOrgDropdown(true)
-                    }
-                  }}
-                />
-              </div>
-
-              {/* Dropdown de sugerencias */}
-              {showOrgDropdown && (
-                <div
-                  className="list-group shadow-sm border rounded-3 mt-1"
-                  style={{ position: 'absolute', zIndex: 1050, width: '100%', maxHeight: '180px', overflowY: 'auto' }}
-                >
-                  {orgSuggestions.map(org => (
-                    <button
+              <select className="form-select mb-2" onChange={handleSelectOrg} defaultValue="">
+                <option value="">Seleccionar organizador...</option>
+                {allOrgs
+                  .filter(o => !selectedOrgs.some(s => s.idOrganizador === o.idOrganizador))
+                  .map(org => (
+                    <option key={org.idOrganizador} value={org.idOrganizador}>
+                      {org.nombre}{org.correo ? ` — ${org.correo}` : ''}
+                    </option>
+                  ))}
+              </select>
+              {selectedOrgs.length > 0 && (
+                <div className="d-flex flex-wrap gap-2 mt-1">
+                  {selectedOrgs.map(org => (
+                    <span
                       key={org.idOrganizador}
-                      type="button"
-                      className="list-group-item list-group-item-action py-2 px-3 d-flex align-items-center gap-2"
-                      style={{ fontSize: '13px' }}
-                      onClick={() => handleSelectOrg(org)}
+                      className="badge bg-primary bg-opacity-10 text-primary d-flex align-items-center gap-1 px-2 py-1 rounded-pill"
+                      style={{ fontSize: '12px' }}
                     >
-                      <i className="bi bi-person-fill text-secondary"></i>
-                      <div>
-                        <div className="fw-semibold">{org.nombre}</div>
-                        {org.correo && <div className="text-secondary" style={{ fontSize: '11px' }}>{org.correo}</div>}
-                      </div>
-                    </button>
+                      {org.nombre}
+                      <button
+                        type="button"
+                        className="btn-close btn-close-sm"
+                        style={{ fontSize: '7px', filter: 'none', opacity: 0.7 }}
+                        onClick={() => handleRemoveOrg(org.idOrganizador)}
+                      ></button>
+                    </span>
                   ))}
                 </div>
               )}
-
-              {orgError && (
-                <div className="text-danger mt-1" style={{ fontSize: '11px' }}>
-                  <i className="bi bi-exclamation-circle me-1"></i>{orgError}
-                </div>
-              )}
-              <div className="text-secondary mt-1" style={{ fontSize: '11px' }}>
-                {t('createEvent.organizerHelp')}
-              </div>
             </div>
 
           </div>
