@@ -204,39 +204,22 @@ function AdminEventDetail() {
         </div>
       </div>
 
-      {/* QR Code for Attendance */}
+      {/* Check-in links */}
       <div className="card border-0 shadow-sm rounded-4 mb-4">
         <div className="card-body p-4">
-          <div className="row align-items-center">
-            <div className="col-12 col-md-8">
-              <h6 className="fw-bold mb-1">
-                <i className="bi bi-qr-code me-2 text-primary"></i>
-                {t('eventDetail.qrCode')}
-              </h6>
-              <p className="text-secondary small mb-3">
-                {t('eventDetail.qrInstruction')}
-              </p>
-              <div className="d-flex gap-3">
-                <Link to={`/admin/evento/${id}/pre-check-in`} className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none">
-                  <i className="bi bi-person-check"></i>
-                  {t('eventDetail.preCheckin')} ({inscritos})
-                </Link>
-                <Link to={`/admin/evento/${id}/check-in`} className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none">
-                  <i className="bi bi-person-check-fill"></i>
-                  {t('eventDetail.checkin')} ({asistencias})
-                </Link>
-              </div>
-            </div>
-            <div className="col-12 col-md-4 text-center mt-3 mt-md-0">
-              <div className="d-inline-block bg-white p-3 rounded-4 shadow-sm border">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`EVENTNODE_CHECKIN:${id}`)}`}
-                  alt="QR Code de Asistencia"
-                  style={{ width: '180px', height: '180px' }}
-                />
-                <div className="text-secondary small mt-2 fw-semibold">Evento #{id}</div>
-              </div>
-            </div>
+          <h6 className="fw-bold mb-3">
+            <i className="bi bi-person-check me-2 text-primary"></i>
+            {t('eventDetail.preCheckin')} / {t('eventDetail.checkin')}
+          </h6>
+          <div className="d-flex gap-3">
+            <Link to={`/admin/evento/${id}/pre-check-in`} className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none">
+              <i className="bi bi-person-check"></i>
+              {t('eventDetail.preCheckin')} ({inscritos})
+            </Link>
+            <Link to={`/admin/evento/${id}/check-in`} className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none">
+              <i className="bi bi-person-check-fill"></i>
+              {t('eventDetail.checkin')} ({asistencias})
+            </Link>
           </div>
         </div>
       </div>

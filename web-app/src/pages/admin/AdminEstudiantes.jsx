@@ -101,7 +101,6 @@ function AdminEstudiantes({ user }) {
     setAdminError('')
     setAdminLoading(true)
     const payload = { ...adminForm, idSolicitante: user?.id }
-    console.log('[crearAdmin] payload:', payload)
     try {
       await userService.crearAdmin(payload)
       toast.success(t('students.adminCreatedSuccess'))
@@ -172,7 +171,7 @@ function AdminEstudiantes({ user }) {
             Nuevo estudiante
           </button>
         )}
-        {activeTab === 'administradores' && (
+        {isSuperAdmin && activeTab === 'administradores' && (
           <button
             className="btn btn-primary rounded-pill d-flex align-items-center gap-2 flex-shrink-0"
             data-bs-toggle="modal"
@@ -194,14 +193,16 @@ function AdminEstudiantes({ user }) {
           <i className="bi bi-mortarboard me-2"></i>
           Estudiantes
         </button>
-        <button
-          className={`btn rounded-pill px-4 py-2 fw-semibold ${activeTab === 'administradores' ? 'btn-primary' : 'btn-outline-secondary'}`}
-          style={{ fontSize: '13px' }}
-          onClick={() => { setActiveTab('administradores'); setSearchTerm('') }}
-        >
-          <i className="bi bi-shield-person me-2"></i>
-          Administradores
-        </button>
+        {isSuperAdmin && (
+          <button
+            className={`btn rounded-pill px-4 py-2 fw-semibold ${activeTab === 'administradores' ? 'btn-primary' : 'btn-outline-secondary'}`}
+            style={{ fontSize: '13px' }}
+            onClick={() => { setActiveTab('administradores'); setSearchTerm('') }}
+          >
+            <i className="bi bi-shield-person me-2"></i>
+            Administradores
+          </button>
+        )}
       </div>
 
       {/* Tab: Estudiantes */}
@@ -321,7 +322,7 @@ function AdminEstudiantes({ user }) {
       )}
 
       {/* Tab: Administradores */}
-      {activeTab === 'administradores' && (
+      {isSuperAdmin && activeTab === 'administradores' && (
         <div className="card border-0 shadow-sm rounded-4 mb-4">
           <div className="card-header bg-white border-bottom-0 p-4">
             <div className="input-group bg-light rounded-3 overflow-hidden" style={{ maxWidth: '400px', border: 'none' }}>

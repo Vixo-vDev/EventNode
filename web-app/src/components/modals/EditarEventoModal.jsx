@@ -6,8 +6,8 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
   const { t } = useTranslation()
   const fileInputRef = useRef(null)
   const formRef = useRef(null)
+  const closeBtnRef = useRef(null)
   const [bannerPreview, setBannerPreview] = useState(null)
-  const [showSuccess, setShowSuccess] = useState(false)
   const [showError, setShowError] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -55,7 +55,6 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
         evento.banner && evento.banner.startsWith('data:image/') ? evento.banner : null
       )
       setSelectedOrgs([])
-      setShowSuccess(false)
       setShowError(false)
     }
   }, [evento])
@@ -101,11 +100,10 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
         ...formData,
         organizadores: selectedOrgs.map(o => o.idOrganizador),
       })
-      setShowSuccess(true)
+      closeBtnRef.current?.click()
       setShowError(false)
     } catch {
       setShowError(true)
-      setShowSuccess(false)
     } finally {
       setIsLoading(false)
     }
@@ -125,7 +123,7 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
                 {t('editEvent.subtitle')}
               </p>
             </div>
-            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('common.close')}></button>
+            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('common.close')} ref={closeBtnRef}></button>
           </div>
           <div className="modal-body px-4 py-3">
             {/* Banner */}
@@ -277,28 +275,6 @@ function EditarEventoModal({ evento, categorias = [], onSubmit }) {
         </form>
       </div>
     </div>
-
-    {showSuccess && (
-      <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
-        <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '400px', width: '90%' }}>
-          <div className="mb-3">
-            <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '3rem' }}></i>
-          </div>
-          <h5>{t('editEvent.eventUpdated')}</h5>
-          <p className="text-secondary small">{t('editEvent.changesSaved')}</p>
-          <button className="btn btn-primary rounded-pill px-4 mt-2 mx-auto" onClick={() => {
-            setShowSuccess(false)
-            const modalEl = document.getElementById('editarEventoModal')
-            if (modalEl && window.bootstrap) {
-              const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-              if (bsModal) bsModal.hide()
-            }
-          }}>
-            {t('common.accept')}
-          </button>
-        </div>
-      </div>
-    )}
 
     {showError && (
       <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>

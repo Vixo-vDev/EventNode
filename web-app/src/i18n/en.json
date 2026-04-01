@@ -421,6 +421,8 @@
     "matricula": "Student ID",
     "age": "Age",
     "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
     "quarter": "Quarter",
     "role": "Role",
     "superAdmin": "Super Administrator",

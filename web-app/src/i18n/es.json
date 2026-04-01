@@ -423,6 +423,8 @@
     "matricula": "Matrícula",
     "age": "Edad",
     "gender": "Sexo",
+    "male": "Masculino",
+    "female": "Femenino",
     "quarter": "Cuatrimestre",
     "role": "Rol",
     "superAdmin": "Super Administrador",
