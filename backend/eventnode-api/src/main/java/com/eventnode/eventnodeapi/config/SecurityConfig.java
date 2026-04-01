@@ -66,7 +66,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/usuarios").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/usuarios/*/perfil").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/usuarios/*/perfil").authenticated()
-                .requestMatchers("/api/usuarios/admin").hasRole("SUPERADMIN")
+                .requestMatchers("/api/usuarios/admin").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
                 
                 // Cualquier otra petición necesita autenticación
                 .anyRequest().authenticated()

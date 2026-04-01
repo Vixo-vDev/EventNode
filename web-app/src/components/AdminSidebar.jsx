@@ -50,7 +50,7 @@ function AdminSidebar() {
       </NavLink>
 
       <NavLink
-        to="/admin/estudiantes"
+        to="/admin/Usuarios"
         className={({ isActive }) =>
           `d-flex align-items-center gap-2 px-3 py-2 text-decoration-none ${isActive ? 'bg-primary bg-opacity-10 text-primary fw-semibold border-start border-3 border-primary' : 'text-secondary'}`
         }

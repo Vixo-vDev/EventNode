@@ -92,8 +92,8 @@ public class UsuarioService {
                 .orElseThrow(() -> new IllegalArgumentException("Solicitante no encontrado"));
 
         String rolSolicitante = solicitante.getRol() != null ? solicitante.getRol().getNombre() : null;
-        if (!"SUPERADMIN".equals(rolSolicitante)) {
-            throw new SecurityException("Solo el Super Administrador puede crear administradores");
+        if (!"SUPERADMIN".equals(rolSolicitante) && !"ADMINISTRADOR".equals(rolSolicitante)) {
+            throw new SecurityException("Solo un administrador puede crear administradores");
         }
 
         // 2. Verificar que no exista un correo duplicado
@@ -102,7 +102,7 @@ public class UsuarioService {
         }
 
         // 3. Validar formato de contraseña (mínimo 8 caracteres, al menos 1 mayúscula, 1 número, 1 especial)
-        if (!request.getPassword().matches("^(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")) {
+        if (!request.getPassword().matches("^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,}$")) {
             throw new IllegalArgumentException("La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial");
         }
 

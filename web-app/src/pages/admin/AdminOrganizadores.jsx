@@ -176,23 +176,21 @@ function AdminOrganizadores() {
                       </td>
                       <td className="small py-3 border-light text-secondary">{org.correo || '—'}</td>
                       <td className="small py-3 border-light text-secondary">
-                        {org.descripcion ? (
-                          org.descripcion.length > DESC_MAX_LENGTH ? (
-                            <span>{org.descripcion.substring(0, DESC_MAX_LENGTH)}...</span>
-                          ) : org.descripcion
-                        ) : '—'}
+                        {org.descripcion
+                          ? org.descripcion.length > DESC_MAX_LENGTH
+                            ? `${org.descripcion.substring(0, DESC_MAX_LENGTH)}...`
+                            : org.descripcion
+                          : '—'}
                       </td>
                       <td className="py-3 border-light text-end pe-4">
                         <div className="d-flex justify-content-end gap-2">
-                          {org.descripcion && org.descripcion.length > DESC_MAX_LENGTH && (
-                            <button
-                              className="btn btn-link text-primary p-0"
-                              title="Ver detalle"
-                              onClick={() => setDetailTarget(org)}
-                            >
-                              <i className="bi bi-eye" style={{ fontSize: '13px' }}></i>
-                            </button>
-                          )}
+                          <button
+                            className="btn btn-link text-primary p-0"
+                            title="Ver detalle"
+                            onClick={() => setDetailTarget(org)}
+                          >
+                            <i className="bi bi-eye" style={{ fontSize: '13px' }}></i>
+                          </button>
                           <button
                             className="btn btn-link text-secondary p-0"
                             title="Editar"

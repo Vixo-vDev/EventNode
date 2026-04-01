@@ -1,7 +1,25 @@
+import { useState } from 'react'
 import { useTranslation } from '../../i18n/I18nContext'
 
 function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmit }) {
   const { t } = useTranslation()
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [localError, setLocalError] = useState('')
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    setLocalError('')
+    if (formData.password !== confirmPassword) {
+      setLocalError('Las contraseñas no coinciden')
+      return
+    }
+    onSubmit(e)
+    setConfirmPassword('')
+  }
+
+  const displayError = localError || error
 
   return (
     <div className="modal fade" id="crearAdminModal" tabIndex="-1" aria-labelledby="crearAdminModalLabel" aria-hidden="true">
@@ -14,14 +32,14 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                 {t('createAdmin.subtitle')}
               </p>
             </div>
-            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label={t('common.close')}></button>
+            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label={t('common.close')} onClick={() => { setConfirmPassword(''); setLocalError('') }}></button>
           </div>
 
-          <form onSubmit={onSubmit}>
+          <form onSubmit={handleSubmit}>
             <div className="modal-body p-4 pt-4">
-              {error && (
+              {displayError && (
                 <div className="alert alert-danger py-2 small" role="alert">
-                  {error}
+                  {displayError}
                 </div>
               )}
               <div className="row g-3">
@@ -88,15 +106,51 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                       <i className="bi bi-lock"></i>
                     </span>
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       name="password"
-                      className="form-control border-start-0 ps-0 text-dark small"
-                      placeholder={t('createAdmin.passwordHelp')}
+                      className="form-control border-start-0 border-end-0 ps-0 text-dark small"
+                      placeholder="Ej: Admin123@"
                       value={formData.password}
                       onChange={onChange}
                       required
                       style={{ fontSize: '13px' }}
                     />
+                    <button
+                      type="button"
+                      className="input-group-text bg-white border-start-0 text-secondary"
+                      onClick={() => setShowPassword(v => !v)}
+                      tabIndex="-1"
+                    >
+                      <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                    </button>
+                  </div>
+                  <div className="text-secondary mt-1" style={{ fontSize: '11px' }}>
+                    Mínimo 8 caracteres, una mayúscula, un número y un carácter especial (@$!%*?&)
+                  </div>
+                </div>
+                <div className="col-12">
+                  <label className="form-label text-dark fw-bold small mb-2" style={{ fontSize: '12px' }}>Confirmar contraseña</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-white border-end-0 text-secondary pe-2">
+                      <i className="bi bi-lock-fill"></i>
+                    </span>
+                    <input
+                      type={showConfirm ? 'text' : 'password'}
+                      className="form-control border-start-0 border-end-0 ps-0 text-dark small"
+                      placeholder="Repite la contraseña"
+                      value={confirmPassword}
+                      onChange={(e) => { setConfirmPassword(e.target.value); setLocalError('') }}
+                      required
+                      style={{ fontSize: '13px' }}
+                    />
+                    <button
+                      type="button"
+                      className="input-group-text bg-white border-start-0 text-secondary"
+                      onClick={() => setShowConfirm(v => !v)}
+                      tabIndex="-1"
+                    >
+                      <i className={`bi ${showConfirm ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -108,6 +162,7 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                 className="btn btn-white border px-4 fw-semibold text-dark rounded-3"
                 data-bs-dismiss="modal"
                 style={{ fontSize: '13px' }}
+                onClick={() => { setConfirmPassword(''); setLocalError('') }}
               >
                 {t('common.cancel')}
               </button>

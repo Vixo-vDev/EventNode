@@ -27,7 +27,7 @@ function AdminDashboard({ loggedUser, onLogout }) {
     { path: '/admin/eventos', exact: false, label: 'Eventos', icon: 'bi bi-calendar-event' },
     { path: '/admin/diplomas', exact: false, label: 'Diplomas', icon: 'bi bi-award' },
     { path: '/admin/organizadores', exact: false, label: 'Organizadores', icon: 'bi bi-building' },
-    { path: '/admin/estudiantes', exact: false, label: 'Estudiantes', icon: 'bi bi-people' },
+    { path: '/admin/usuarios', exact: false, label: 'Usuarios', icon: 'bi bi-people' },
     { path: '/admin/analiticas', exact: false, label: 'Analíticas', icon: 'bi bi-graph-up' },
     { path: '/admin/perfil', exact: false, label: 'Perfil', icon: 'bi bi-person' }
   ]
@@ -45,7 +45,7 @@ function AdminDashboard({ loggedUser, onLogout }) {
         <Route path="/diplomas" element={<AdminDiplomas />} />
         <Route path="/diploma/:id" element={<AdminDiplomaDetail />} />
         <Route path="/organizadores" element={<AdminOrganizadores />} />
-        <Route path="/estudiantes" element={<AdminEstudiantes user={loggedUser} />} />
+        <Route path="/usuarios" element={<AdminEstudiantes user={loggedUser} />} />
         <Route path="/analiticas" element={<AdminAnalytics />} />
         <Route path="/perfil" element={<AdminPerfil user={loggedUser} />} />
       </Routes>
