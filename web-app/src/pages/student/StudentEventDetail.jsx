@@ -93,6 +93,14 @@ function StudentEventDetail({ user }) {
   const bannerSrc = evento.banner && evento.banner.startsWith('data:image/') ? evento.banner : eventDetailImg
   const capacityPercent = evento.capacidadMaxima > 0 ? Math.round((inscritos / evento.capacidadMaxima) * 100) : 0
 
+  const ahora = new Date()
+  const fechaInicio = new Date(evento.fechaInicio)
+  const cutoff = new Date(fechaInicio.getTime() - (evento.tiempoCancelacionHoras || 0) * 60 * 60 * 1000)
+  const dentroDelPlazo = ahora < cutoff
+
+  const puedeInscribirse = (evento.estado === 'ACTIVO' || evento.estado === 'PRÓXIMO') && capacityPercent < 100
+  const puedeCancelar = enrolled && dentroDelPlazo
+
   return (
     <div>
       <div className="d-flex align-items-center gap-2 mb-4">
@@ -197,17 +205,31 @@ function StudentEventDetail({ user }) {
                 </div>
               </div>
 
-              {enrolled ? (
+              {puedeCancelar ? (
                 <button className="btn btn-outline-danger w-100 rounded-pill fw-semibold" onClick={handleCancelar} disabled={enrolling}>
                   {enrolling ? 'Cancelando...' : t('eventDetail.cancelEnrollment')}
                 </button>
-              ) : evento.estado === 'ACTIVO' ? (
-                <button className="btn btn-primary w-100 rounded-pill fw-semibold" onClick={handleInscribirse} disabled={enrolling || capacityPercent >= 100}>
-                  {enrolling ? 'Inscribiendo...' : capacityPercent >= 100 ? t('eventDetail.eventFull') : t('eventDetail.enroll')}
+              ) : enrolled ? (
+                <>
+                  <button className="btn btn-secondary w-100 rounded-pill fw-semibold mb-2" disabled>
+                    {t('eventDetail.alreadyEnrolled')}
+                  </button>
+                  <p className="text-secondary small text-center mb-0" style={{ fontSize: '11px' }}>
+                    El plazo para cancelar venció el{' '}
+                    <strong>
+                      {cutoff.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {' a las '}
+                      {cutoff.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                    </strong>
+                  </p>
+                </>
+              ) : puedeInscribirse ? (
+                <button className="btn btn-primary w-100 rounded-pill fw-semibold" onClick={handleInscribirse} disabled={enrolling}>
+                  {enrolling ? 'Inscribiendo...' : t('eventDetail.enroll')}
                 </button>
               ) : (
                 <button className="btn btn-secondary w-100 rounded-pill fw-semibold" disabled>
-                  {t('eventDetail.scheduleDetails')} {evento.estado}
+                  {evento.estado.charAt(0).toUpperCase() + evento.estado.slice(1).toLowerCase()}
                 </button>
               )}
             </div>

@@ -2,6 +2,7 @@
 -- SEED: DATOS INICIALES
 -- =====================================================
 USE event_node;
+SET NAMES utf8mb4;
 
 -- Insertar roles base (si no existen ya desde init.sql)
 INSERT IGNORE INTO roles (nombre) VALUES ('ALUMNO'), ('ADMINISTRADOR'), ('SUPERADMIN');

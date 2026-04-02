@@ -88,7 +88,6 @@ export async function apiDelete(endpoint, options = {}) {
 export function closeModal(modalId) {
   const el = document.getElementById(modalId)
   if (el && window.bootstrap) {
-    const instance = window.bootstrap.Modal.getInstance(el)
-    if (instance) instance.hide()
+    window.bootstrap.Modal.getOrCreateInstance(el).hide()
   }
 }

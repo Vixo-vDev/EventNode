@@ -100,7 +100,7 @@ public class EventoService {
         evento.setTiempoCancelacionHoras(request.getTiempoCancelacionHoras());
         evento.setTiempoToleranciaMinutos(request.getTiempoToleranciaMinutos());
         evento.setBanner(banner != null && !banner.isBlank() ? banner : null);
-        evento.setEstado("ACTIVO");
+        evento.setEstado("PRÓXIMO");
         evento.setCategoria(categoria);
         evento.setCreadoPor(request.getIdCreador());
         evento.setFechaCreacion(LocalDateTime.now());
@@ -196,7 +196,7 @@ public class EventoService {
             throw new IllegalArgumentException("Solo se pueden reactivar eventos cancelados");
         }
 
-        evento.setEstado("ACTIVO");
+        evento.setEstado("PRÓXIMO");
         eventoRepository.save(evento);
     }
 

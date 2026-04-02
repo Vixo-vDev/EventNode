@@ -23,8 +23,9 @@ function StudentHome() {
   useEffect(() => {
     const fetchEventos = async () => {
       try {
-        const data = await eventService.getEventos(undefined, undefined, undefined, 'ACTIVO')
-        const mapped = data.slice(0, 3).map((e, index) => ({
+        const data = await eventService.getEventos(undefined, undefined, undefined, undefined)
+        const visibles = data.filter(e => e.estado === 'ACTIVO' || e.estado === 'PRÓXIMO')
+        const mapped = visibles.slice(0, 3).map((e, index) => ({
           id: e.idEvento,
           image: e.banner && e.banner.startsWith('data:image/') ? e.banner : (e.banner || fallbackImages[index % fallbackImages.length]),
           title: e.nombre,

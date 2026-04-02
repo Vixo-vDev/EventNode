@@ -1,8 +1,9 @@
 -- =====================================================
 -- CREAR BASE DE DATOS
 -- =====================================================
-CREATE DATABASE IF NOT EXISTS event_node;
+CREATE DATABASE IF NOT EXISTS event_node CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE event_node;
+SET NAMES utf8mb4;
 
 -- =====================================================
 -- TABLA: ROLES
@@ -112,7 +113,7 @@ CREATE TABLE eventos (
     
     banner LONGTEXT,
     
-    estado ENUM('ACTIVO','CANCELADO','FINALIZADO') DEFAULT 'ACTIVO',
+    estado ENUM( 'PRÓXIMO','ACTIVO','CANCELADO','FINALIZADO') DEFAULT 'PRÓXIMO',
     
     id_categoria INT NOT NULL,
     creado_por INT NOT NULL,

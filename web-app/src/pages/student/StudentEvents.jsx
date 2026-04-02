@@ -19,8 +19,9 @@ function StudentEvents() {
 
   const fetchEventos = async () => {
     try {
-      const data = await eventService.getEventos(undefined, undefined, undefined, 'ACTIVO')
-      const mapped = data.map((e, index) => ({
+      const data = await eventService.getEventos(undefined, undefined, undefined, undefined)
+      const visibles = data.filter(e => e.estado === 'ACTIVO' || e.estado === 'PRÓXIMO')
+      const mapped = visibles.map((e, index) => ({
         id: e.idEvento,
         image: e.banner && e.banner.startsWith('data:image/') ? e.banner : fallbackImages[index % fallbackImages.length],
         title: e.nombre,
@@ -54,7 +55,6 @@ function StudentEvents() {
     fetchCategorias()
   }, [])
 
-  // Filter by search text AND active category
   const filtered = eventos.filter(e => {
     const matchesSearch = !search || e.title.toLowerCase().includes(search.toLowerCase())
     const matchesCategory = !activeCategory || e.category === activeCategory

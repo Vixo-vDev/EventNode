@@ -165,7 +165,10 @@
     "updateEvent": "Update Event",
     "updating": "Updating...",
     "eventUpdated": "Event Updated!",
-    "changesSaved": "Changes have been saved successfully."
+    "changesSaved": "Changes have been saved successfully.",
+    "reviewData": "Review the data",
+    "requiredFields": "Please make sure to complete all required fields (*) before continuing.",
+    "selectCategory": "Select..."
   },
   "eventDetail": {
     "scheduleDetails": "Schedule Details",
@@ -193,7 +196,8 @@
     "backToEvents": "Back to Events",
     "loading": "Loading...",
     "back": "Back",
-    "alreadyEnrolled": "ALREADY ENROLLED"
+    "alreadyEnrolled": "ALREADY ENROLLED",
+    "capacity": "Capacity"
   },
   "checkin": {
     "title": "Attendance List (Check-in)",
@@ -240,6 +244,13 @@
     "createFirst": "Create First Certificate",
     "deleteTitle": "Delete Diploma",
     "deleteConfirm": "Are you sure you want to delete the diploma for the event \"{{name}}\"? This action cannot be undone.",
+    "diplomaCreated": "Diploma created successfully!",
+    "diplomaUpdatedSuccess": "Diploma updated successfully!",
+    "diplomaDeletedSuccess": "Diploma deleted successfully",
+    "diplomasEmittedAndSent": "diplomas emitted and sent",
+    "selectEvent": "Select an event",
+    "uploadPdfTemplate": "Upload the PDF template",
+    "uploadSignatureImage": "Upload the signature image",
     "diplomaTitle": "Diploma",
     "manageSubtitle": "Manage, verify and re-issue credentials for participants",
     "creationDate": "Creation Date",
@@ -325,7 +336,8 @@
     "quarter": "Quarter",
     "disable": "Disable",
     "enable": "Enable",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "adminCreatedSuccess": "Administrator created successfully"
   },
   "createAdmin": {
     "title": "Create Administrator",
@@ -358,7 +370,11 @@
     "close": "Close",
     "noOrganizers": "No organizers registered",
     "createMsg": "Create organizers to associate them with your events.",
-    "showing": "Showing {{current}} of {{total}} organizers"
+    "showing": "Showing {{current}} of {{total}} organizers",
+    "nameRequired": "Organizer name is required",
+    "organizerCreated": "Organizer created successfully",
+    "organizerUpdated": "Organizer updated successfully",
+    "organizerDeleted": "Organizer deleted successfully"
   },
   "analytics": {
     "title": "Analytics",
@@ -435,6 +451,8 @@
     "saveChanges": "Save Changes",
     "saving": "Saving...",
     "cancel": "Cancel",
+    "profileUpdated": "Profile updated successfully!",
+    "requiredFields": "Please complete the required fields",
     "language": "Language",
     "spanish": "Español",
     "english": "English"

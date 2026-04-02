@@ -167,7 +167,10 @@
     "updateEvent": "Actualizar Evento",
     "updating": "Actualizando...",
     "eventUpdated": "¡Evento Actualizado!",
-    "changesSaved": "Los cambios se han guardado exitosamente."
+    "changesSaved": "Los cambios se han guardado exitosamente.",
+    "reviewData": "Revisa los datos",
+    "requiredFields": "Por favor, asegúrate de completar todos los campos obligatorios (*) antes de continuar.",
+    "selectCategory": "Seleccionar..."
   },
   "eventDetail": {
     "scheduleDetails": "Detalles del Horario",
@@ -195,7 +198,8 @@
     "backToEvents": "Volver a Eventos",
     "loading": "Cargando...",
     "back": "Regresar",
-    "alreadyEnrolled": "YA ESTÁS INSCRITO"
+    "alreadyEnrolled": "YA ESTÁS INSCRITO",
+    "capacity": "Capacidad"
   },
   "checkin": {
     "title": "Lista de Asistencia (Check-in)",
@@ -242,6 +246,13 @@
     "createFirst": "Crear Primer Certificado",
     "deleteTitle": "Eliminar Diploma",
     "deleteConfirm": "¿Estás seguro de eliminar el diploma del evento \"{{name}}\"? Esta acción no se puede deshacer.",
+    "diplomaCreated": "¡Diploma creado exitosamente!",
+    "diplomaUpdatedSuccess": "¡Diploma actualizado correctamente!",
+    "diplomaDeletedSuccess": "Diploma eliminado correctamente",
+    "diplomasEmittedAndSent": "diplomas emitidos y enviados",
+    "selectEvent": "Selecciona un evento",
+    "uploadPdfTemplate": "Sube la plantilla PDF",
+    "uploadSignatureImage": "Sube la imagen de firma",
     "diplomaTitle": "Diploma",
     "manageSubtitle": "Gestionar, verificar y volver a emitir credenciales para los participantes",
     "creationDate": "Fecha de Creación",
@@ -327,7 +338,8 @@
     "quarter": "Cuatrimestre",
     "disable": "Deshabilitar",
     "enable": "Habilitar",
-    "saveChanges": "Guardar cambios"
+    "saveChanges": "Guardar cambios",
+    "adminCreatedSuccess": "Administrador creado correctamente"
   },
   "createAdmin": {
     "title": "Crear Administrador",
@@ -360,7 +372,11 @@
     "close": "Cerrar",
     "noOrganizers": "No hay organizadores registrados",
     "createMsg": "Crea organizadores para asociarlos a tus eventos.",
-    "showing": "Mostrando {{current}} de {{total}} organizadores"
+    "showing": "Mostrando {{current}} de {{total}} organizadores",
+    "nameRequired": "El nombre del organizador es requerido",
+    "organizerCreated": "Organizador creado exitosamente",
+    "organizerUpdated": "Organizador actualizado correctamente",
+    "organizerDeleted": "Organizador eliminado correctamente"
   },
   "analytics": {
     "title": "Analíticas",
@@ -437,6 +453,8 @@
     "saveChanges": "Guardar cambios",
     "saving": "Guardando...",
     "cancel": "Cancelar",
+    "profileUpdated": "¡Perfil actualizado correctamente!",
+    "requiredFields": "Por favor, completa los campos requeridos",
     "language": "Idioma",
     "spanish": "Español",
     "english": "English"

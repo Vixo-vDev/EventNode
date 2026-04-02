@@ -49,8 +49,8 @@ public class PreCheckinService {
         Evento evento = eventoRepository.findById(idEvento)
                 .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado"));
 
-        if (!"ACTIVO".equals(evento.getEstado())) {
-            throw new IllegalStateException("El evento no está activo");
+        if (!"ACTIVO".equals(evento.getEstado()) && !"PRÓXIMO".equals(evento.getEstado())) {
+            throw new IllegalStateException("El evento no está disponible para inscripción");
         }
 
         // Check if event has already started

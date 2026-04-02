@@ -119,6 +119,7 @@ public class EventoController {
             map.put("idOrganizador", o.getIdOrganizador());
             map.put("nombre", o.getNombre());
             map.put("correo", o.getCorreo());
+            map.put("descripcion", o.getDescripcion());
             return map;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(result);
@@ -142,6 +143,7 @@ public class EventoController {
         result.put("idOrganizador", saved.getIdOrganizador());
         result.put("nombre", saved.getNombre());
         result.put("correo", saved.getCorreo());
+        result.put("descripcion", saved.getDescripcion());
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
@@ -163,6 +165,7 @@ public class EventoController {
         result.put("idOrganizador", saved.getIdOrganizador());
         result.put("nombre", saved.getNombre());
         result.put("correo", saved.getCorreo());
+        result.put("descripcion", saved.getDescripcion());
         return ResponseEntity.ok(result);
     }
 

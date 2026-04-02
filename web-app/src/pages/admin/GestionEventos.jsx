@@ -15,6 +15,7 @@ function AdminEventCard({ id, image, title, location, date, status, capacityCurr
   const isActive = status === 'ACTIVO'
   const isCancelled = status === 'CANCELADO'
   const isTerminado = status === 'TERMINADO' || status === 'FINALIZADO'
+  const isProximo = status === 'PRÓXIMO'
   const percent = capacityMax > 0 ? Math.round((capacityCurrent / capacityMax) * 100) : 0
 
   return (
@@ -37,8 +38,9 @@ function AdminEventCard({ id, image, title, location, date, status, capacityCurr
           <span className={`badge position-absolute top-0 start-0 m-2 rounded-pill px-3 ${
             isActive ? 'bg-primary text-white' :
             isTerminado ? 'bg-secondary text-white' :
+            isProximo ? 'text-white' :
             'bg-danger text-white'
-          }`}>
+          }`} style={isProximo ? { backgroundColor: '#fd7e14' } : {}}>
             {status}
           </span>
         </div>
@@ -70,7 +72,7 @@ function AdminEventCard({ id, image, title, location, date, status, capacityCurr
         </div>
       </div>
       <div className="card-footer bg-white border-top d-flex justify-content-start gap-3 px-3 py-2">
-        {isActive && (
+        {(isActive || isProximo) && (
           <>
             <button
               className="btn btn-link text-secondary p-0"
@@ -110,6 +112,7 @@ function fileToBase64(file) {
 
 const STATUS_FILTERS = [
   { label: 'Todos', value: '' },
+  { label: 'PRÓXIMO', value: 'PRÓXIMO' },
   { label: 'ACTIVO', value: 'ACTIVO' },
   { label: 'CANCELADO', value: 'CANCELADO' },
   { label: 'FINALIZADO', value: 'FINALIZADO' },

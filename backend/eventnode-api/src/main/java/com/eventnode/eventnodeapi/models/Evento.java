@@ -41,7 +41,7 @@ public class Evento {
     @Column(name = "banner", columnDefinition = "LONGTEXT")
     private String banner;
 
-    @Column(name = "estado", nullable = false, columnDefinition = "ENUM('ACTIVO','CANCELADO','FINALIZADO')")
+    @Column(name = "estado", nullable = false, columnDefinition = "ENUM('PRÓXIMO', 'ACTIVO', 'CANCELADO','FINALIZADO')")
     private String estado;
 
     @ManyToOne(fetch = FetchType.LAZY)

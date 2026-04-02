@@ -6,6 +6,7 @@ function EventCard({ image, title, date, location, category, detailUrl, status, 
   const isActive = status === 'ACTIVO'
   const isCancelled = status === 'CANCELADO'
   const isFinished = status === 'FINALIZADO'
+  const isProximo = status === 'PRÓXIMO'
   const percent = capacityMax > 0 ? Math.round((capacityCurrent / capacityMax) * 100) : 0
   const isFull = capacityCurrent >= capacityMax && capacityMax > 0
 
@@ -30,8 +31,9 @@ function EventCard({ image, title, date, location, category, detailUrl, status, 
             <span className={`badge position-absolute top-0 start-0 m-2 rounded-pill px-3 ${
               isActive ? 'bg-primary text-white' :
               isFinished ? 'bg-secondary text-white' :
+              isProximo ? 'text-white' :
               'bg-danger text-white'
-            }`}>
+            }`} style={isProximo ? { backgroundColor: '#fd7e14' } : {}}>
               {status}
             </span>
           )}

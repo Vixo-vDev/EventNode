@@ -127,7 +127,7 @@ function AdminEventDetail() {
         <img src={bannerSrc} alt={evento.nombre} className="w-100 h-100" style={{ objectFit: 'cover', filter: !isActive ? 'grayscale(100%) brightness(0.4)' : 'brightness(0.4)' }} />
         <div className="position-absolute bottom-0 start-0 p-4 w-100" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.75) 100%)' }}>
           <div className="d-flex gap-2 mb-2">
-            <span className={`badge rounded-pill px-3 small ${isActive ? 'bg-success text-white' : 'bg-danger text-white'}`}>{evento.estado}</span>
+            <span className={`badge rounded-pill px-3 small ${isActive ? 'bg-success text-white' : 'bg-danger text-white'}`}>{evento.estado.charAt(0).toUpperCase() + evento.estado.slice(1).toLowerCase()}</span>
             <span className="badge rounded-pill px-3 small text-white" style={{ backgroundColor: '#7c3aed' }}>{evento.categoriaNombre || 'GENERAL'}</span>
           </div>
           <h2 className="text-white fw-bold mb-2">{evento.nombre}</h2>
@@ -197,7 +197,7 @@ function AdminEventDetail() {
             <div className="card border-0 rounded-3 h-100 bg-secondary bg-opacity-10">
               <div className="card-body p-3">
                 <div className="text-uppercase text-secondary small fw-bold mb-1">{t('events.status')}</div>
-                <div className="fw-bold fs-4">{evento.estado}</div>
+                <div className="fw-bold fs-4">{evento.estado.charAt(0).toUpperCase() + evento.estado.slice(1).toLowerCase()}</div>
               </div>
             </div>
           )}
