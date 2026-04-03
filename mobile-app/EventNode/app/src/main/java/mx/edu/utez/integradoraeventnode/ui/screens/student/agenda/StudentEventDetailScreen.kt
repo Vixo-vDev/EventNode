@@ -54,6 +54,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import android.util.Base64
+import org.json.JSONObject
+import androidx.compose.ui.window.Dialog
 
 @Composable
 fun StudentEventDetailScreen(
@@ -68,12 +70,16 @@ fun StudentEventDetailScreen(
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
     var showSuccessDialog by remember { mutableStateOf(false) }
+    var showInscribirseDialog by remember { mutableStateOf(false) }
+    var showInscripcionSuccess by remember { mutableStateOf(false) }
     var evento by remember { mutableStateOf<EventoResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var isCancelling by remember { mutableStateOf(false) }
     var isCheckingIn by remember { mutableStateOf(false) }
-    var isEnrolled by remember { mutableStateOf(true) } // Assume enrolled if coming from agenda initially, or check real status.
+    var isEnrolled by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var inscritosCount by remember { mutableStateOf<Int?>(null) }
+    var cancelErrorMsg by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
@@ -92,15 +98,28 @@ fun StudentEventDetailScreen(
             val response = ApiClient.apiService.getEvento(eventId)
             if (response.isSuccessful) {
                 evento = response.body()
-                
+
+                // Fetch enrolled count for capacity display
+                if (bearerToken.isNotEmpty()) {
+                    try {
+                        val countResponse = ApiClient.apiService.contarInscritos(bearerToken, eventId)
+                        if (countResponse.isSuccessful) {
+                            val countData = countResponse.body()
+                            inscritosCount = (countData?.get("total") as? Number)?.toInt()
+                                ?: (countData?.get("count") as? Number)?.toInt()
+                                ?: (countData?.get("inscritos") as? Number)?.toInt()
+                        }
+                    } catch (_: Exception) { /* Non-critical: capacity count failed */ }
+                }
+
                 // Fetch user's enrolled events to determine button state
                 if (usuarioId != -1 && bearerToken.isNotEmpty()) {
                     val enrollResponse = ApiClient.apiService.listarMisEventos(bearerToken, usuarioId)
                     if (enrollResponse.isSuccessful) {
                         val misEventos = enrollResponse.body() ?: emptyList()
-                        isEnrolled = misEventos.any { 
-                            (it["idEvento"] as? Double)?.toInt() == eventId && 
-                            it["inscripcionEstado"] == "ACTIVO" 
+                        isEnrolled = misEventos.any {
+                            (it["idEvento"] as? Double)?.toInt() == eventId &&
+                            it["inscripcionEstado"] == "ACTIVO"
                         }
                     }
                 }
@@ -178,7 +197,7 @@ fun StudentEventDetailScreen(
                     Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                         Text("Cargando detalles...")
                     }
-                } else if (errorMessage != null) {
+                } else if (evento == null && errorMessage != null) {
                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                         Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
                     }
@@ -262,11 +281,64 @@ fun StudentEventDetailScreen(
                             lineHeight = 20.sp
                         )
                         
+                        // Capacity display
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFFF0F7FF)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    bitmap = assetImageBitmap("user.png"),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    colorFilter = ColorFilter.tint(Color(0xFF2F6FED))
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    text = "CAPACIDAD",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color(0xFF999999),
+                                    fontWeight = FontWeight.Bold
+                                )
+                                val capacityText = if (inscritosCount != null) {
+                                    "${inscritosCount}/${ev.capacidadMaxima} lugares"
+                                } else {
+                                    "${ev.capacidadMaxima} lugares disponibles"
+                                }
+                                Text(
+                                    text = capacityText,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xFF333333)
+                                )
+                            }
+                        }
+
+                        // Error message display
+                        if (errorMessage != null && !isLoading) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = errorMessage!!,
+                                color = Color(0xFFEF5350),
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
                         Spacer(modifier = Modifier.height(32.dp))
-                        
+
                         if (isEnrolled) {
                             Button(
-                                onClick = { showCancelDialog = true },
+                                onClick = { cancelErrorMsg = null; showCancelDialog = true },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(56.dp),
@@ -282,25 +354,7 @@ fun StudentEventDetailScreen(
                             }
                         } else if (ev.estado == "ACTIVO") {
                             Button(
-                                onClick = {
-                                    scope.launch {
-                                        isCheckingIn = true
-                                        try {
-                                            val body = mapOf("idUsuario" to usuarioId, "idEvento" to ev.idEvento)
-                                            val res = ApiClient.apiService.inscribirse(bearerToken, body)
-                                            if (res.isSuccessful) {
-                                                isEnrolled = true
-                                                // Optional: Show success toast
-                                            } else {
-                                                // Handle full capacity or other errors here
-                                            }
-                                        } catch (e: Exception) {
-                                            // Handling error
-                                        } finally {
-                                            isCheckingIn = false
-                                        }
-                                    }
-                                },
+                                onClick = { errorMessage = null; showInscribirseDialog = true },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(56.dp),
@@ -346,14 +400,181 @@ fun StudentEventDetailScreen(
                 StudentBottomNav(selected = "Agenda", onHome = onHome, onAgenda = onAgenda, onDiplomas = onDiplomas, onProfile = onProfile)
             }
 
+            // Inscribirme Confirmation Dialog (DFR 3.1)
+            if (showInscribirseDialog && evento != null) {
+                val ev = evento!!
+                Dialog(onDismissRequest = { if (!isCheckingIn) showInscribirseDialog = false }) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp)
+                            .widthIn(max = 340.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(Color(0xFFF0F7FF)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    bitmap = assetImageBitmap("book-open-reader.png"),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(32.dp),
+                                    colorFilter = ColorFilter.tint(Color(0xFF2F6FED))
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "¿Confirmar inscripción?",
+                                style = MaterialTheme.typography.titleLarge,
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "¿Estás seguro de que deseas inscribirte al evento \"${ev.nombre}\"?",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFF666666),
+                                textAlign = TextAlign.Center,
+                                lineHeight = 20.sp
+                            )
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        isCheckingIn = true
+                                        errorMessage = null
+                                        try {
+                                            val body = mapOf("idUsuario" to usuarioId, "idEvento" to ev.idEvento)
+                                            val res = ApiClient.apiService.inscribirse(bearerToken, body)
+                                            if (res.isSuccessful) {
+                                                isEnrolled = true
+                                                showInscribirseDialog = false
+                                                showInscripcionSuccess = true
+                                                // Refresh inscribed count
+                                                try {
+                                                    val countRes = ApiClient.apiService.contarInscritos(bearerToken, eventId)
+                                                    if (countRes.isSuccessful) {
+                                                        val d = countRes.body()
+                                                        inscritosCount = (d?.get("total") as? Number)?.toInt()
+                                                            ?: (d?.get("count") as? Number)?.toInt()
+                                                            ?: (d?.get("inscritos") as? Number)?.toInt()
+                                                    }
+                                                } catch (_: Exception) {}
+                                            } else {
+                                                val errBody = res.errorBody()?.string()
+                                                val msg = try {
+                                                    JSONObject(errBody ?: "").optString("mensaje", "")
+                                                } catch (_: Exception) { "" }
+                                                errorMessage = msg.ifBlank {
+                                                    when (res.code()) {
+                                                        409 -> "Ya cuenta con un lugar en este evento"
+                                                        400 -> "El pre-check-in ya no está disponible"
+                                                        else -> "No se pudo completar la inscripción"
+                                                    }
+                                                }
+                                                showInscribirseDialog = false
+                                            }
+                                        } catch (e: Exception) {
+                                            errorMessage = "Error de conexión"
+                                            showInscribirseDialog = false
+                                        } finally {
+                                            isCheckingIn = false
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth().height(50.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED)),
+                                enabled = !isCheckingIn
+                            ) {
+                                Text(if (isCheckingIn) "Procesando..." else "Confirmar inscripción", fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Button(
+                                onClick = { showInscribirseDialog = false },
+                                modifier = Modifier.fillMaxWidth().height(50.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F6FA))
+                            ) {
+                                Text("Cancelar", color = Color(0xFF333333), fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Inscripción Success Dialog
+            if (showInscripcionSuccess) {
+                DialogOverlay {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp)
+                            .widthIn(max = 340.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF2F6FED)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("✓", fontSize = 40.sp, color = Color.White)
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "¡Inscripción exitosa!",
+                                style = MaterialTheme.typography.headlineSmall,
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Te has inscrito correctamente al evento. Recuerda asistir y hacer check-in el día del evento.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFF666666),
+                                textAlign = TextAlign.Center,
+                                lineHeight = 20.sp
+                            )
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Button(
+                                onClick = { showInscripcionSuccess = false },
+                                modifier = Modifier.fillMaxWidth().height(50.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                            ) {
+                                Text("Aceptar", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Cancel Dialog with proper error handling (DFR 3.2)
             if (showCancelDialog && evento != null) {
                 val ev = evento!!
                 DialogOverlay {
                     CancelDialog(
                         isCancelling = isCancelling,
+                        cancelError = cancelErrorMsg,
                         onConfirm = {
                             scope.launch {
                                 isCancelling = true
+                                cancelErrorMsg = null
                                 try {
                                     val body = mapOf("idUsuario" to usuarioId, "idEvento" to ev.idEvento)
                                     val res = ApiClient.apiService.cancelarInscripcion(bearerToken, body)
@@ -361,12 +582,25 @@ fun StudentEventDetailScreen(
                                         showCancelDialog = false
                                         showSuccessDialog = true
                                         isEnrolled = false
+                                        // Refresh inscribed count
+                                        try {
+                                            val countRes = ApiClient.apiService.contarInscritos(bearerToken, eventId)
+                                            if (countRes.isSuccessful) {
+                                                val d = countRes.body()
+                                                inscritosCount = (d?.get("total") as? Number)?.toInt()
+                                                    ?: (d?.get("count") as? Number)?.toInt()
+                                                    ?: (d?.get("inscritos") as? Number)?.toInt()
+                                            }
+                                        } catch (_: Exception) {}
                                     } else {
-                                        showCancelDialog = false // Or show error toast
+                                        val errBody = res.errorBody()?.string()
+                                        val msg = try {
+                                            JSONObject(errBody ?: "").optString("mensaje", "")
+                                        } catch (_: Exception) { "" }
+                                        cancelErrorMsg = msg.ifBlank { "Ya no es posible cancelar su asistencia" }
                                     }
                                 } catch(e: Exception) {
-                                    // Handle network error
-                                    showCancelDialog = false
+                                    cancelErrorMsg = "Error de conexión"
                                 } finally {
                                     isCancelling = false
                                 }
@@ -377,7 +611,7 @@ fun StudentEventDetailScreen(
                 }
             }
 
-            // Success Dialog
+            // Cancel Success Dialog
             if (showSuccessDialog) {
                 DialogOverlay {
                     SuccessDialog(
@@ -441,7 +675,7 @@ private fun DialogOverlay(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun CancelDialog(isCancelling: Boolean, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun CancelDialog(isCancelling: Boolean, cancelError: String? = null, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -468,28 +702,40 @@ private fun CancelDialog(isCancelling: Boolean, onConfirm: () -> Unit, onDismiss
                     colorFilter = ColorFilter.tint(Color(0xFF2F6FED))
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             Text(
                 text = "¿Estás seguro de que deseas cancelar tu registro?",
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Text(
-                text = "Esta acción eliminará lógicamente tu registro. Ten en cuenta que puedes cancelar tu registro dentro de los 30 minutos posteriores a haberte registrado.",
+                text = "Esta acción eliminará lógicamente tu registro. Ten en cuenta que puedes cancelar tu registro dentro del tiempo permitido.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF666666),
                 textAlign = TextAlign.Center,
                 lineHeight = 20.sp
             )
-            
+
+            // Show cancel error message (DFR 3.2)
+            if (cancelError != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = cancelError,
+                    color = Color(0xFFEF5350),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             Button(
                 onClick = onConfirm,
                 modifier = Modifier
@@ -501,9 +747,9 @@ private fun CancelDialog(isCancelling: Boolean, onConfirm: () -> Unit, onDismiss
             ) {
                 Text(if (isCancelling) "Procesando..." else "Confirmar cancelación", fontWeight = FontWeight.Bold)
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             Button(
                 onClick = onDismiss,
                 modifier = Modifier

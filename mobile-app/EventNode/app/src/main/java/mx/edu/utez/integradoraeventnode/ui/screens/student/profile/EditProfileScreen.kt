@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,7 +33,7 @@ import kotlinx.coroutines.launch
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
-import mx.edu.utez.integradoraeventnode.utils.PreferencesHelper
+import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,27 +44,42 @@ fun EditProfileScreen(
 ) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
+    val scope = rememberCoroutineScope()
 
     var name by remember { mutableStateOf(prefs.getString("nombre", "") ?: "") }
-    var lastName by remember { mutableStateOf(prefs.getString("apellidoPaterno", "") + " " + prefs.getString("apellidoMaterno", "")) }
+    var apellidoPaterno by remember { mutableStateOf(prefs.getString("apellidoPaterno", "") ?: "") }
+    var apellidoMaterno by remember { mutableStateOf(prefs.getString("apellidoMaterno", "") ?: "") }
     var email by remember { mutableStateOf(prefs.getString("correo", "") ?: "") }
     var enrollment by remember { mutableStateOf(prefs.getString("matricula", "") ?: "") }
     var gender by remember { mutableStateOf(prefs.getString("sexo", "") ?: "") }
-    var quarter by remember { mutableStateOf(prefs.getInt("cuatrimestre", 0).toString()) }
-    
-    var currentPassword by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-
-    var currentPasswordVisible by remember { mutableStateOf(false) }
-    var newPasswordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var quarter by remember { mutableStateOf(prefs.getInt("cuatrimestre", 0).let { if (it > 0) "${it}°" else "" }) }
+    var edad by remember { mutableStateOf(prefs.getInt("edad", 0).let { if (it > 0) it.toString() else "" }) }
 
     var showSuccessDialog by remember { mutableStateOf(false) }
-    var showErrorDialog by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
+    var isSaving by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val scope = rememberCoroutineScope()
+    val idUsuario = prefs.getInt("id", -1)
+    val token = prefs.getString("token", "") ?: ""
+    val bearerToken = if (token.isNotEmpty()) "Bearer $token" else ""
+
+    // Validation function
+    fun validate(): String? {
+        if (name.isBlank()) return "El nombre no puede estar vacío"
+        if (apellidoPaterno.isBlank()) return "El apellido paterno no puede estar vacío"
+        if (apellidoMaterno.isBlank()) return "El apellido materno no puede estar vacío"
+        if (email.isBlank()) return "El correo no puede estar vacío"
+        val emailPattern = Regex("^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+        if (!emailPattern.matches(email)) return "Ingrese un correo electrónico válido"
+        if (enrollment.isBlank()) return "La matrícula no puede estar vacía"
+        if (edad.isBlank()) return "La edad no puede estar vacía"
+        val edadInt = edad.toIntOrNull()
+        if (edadInt == null || edadInt < 17 || edadInt > 99) return "La edad debe estar entre 17 y 99 años"
+        if (gender.isBlank()) return "Seleccione un sexo"
+        val cuatrimestreNum = quarter.replace("°", "").toIntOrNull()
+        if (cuatrimestreNum == null || cuatrimestreNum < 1 || cuatrimestreNum > 10) return "Seleccione un cuatrimestre válido (1-10)"
+        return null
+    }
 
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -138,6 +154,20 @@ fun EditProfileScreen(
                     }
                 }
 
+                // Error message
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage!!,
+                        color = Color(0xFFEF5350),
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 8.dp)
+                    )
+                }
+
                 // Main Info Form
                 Card(
                     modifier = Modifier
@@ -149,23 +179,25 @@ fun EditProfileScreen(
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         EditField(label = "NOMBRE", value = name, onValueChange = { name = it }, icon = "user.png")
-                        EditField(label = "APELLIDOS", value = lastName, onValueChange = { lastName = it }, icon = "user.png")
+                        EditField(label = "APELLIDO PATERNO", value = apellidoPaterno, onValueChange = { apellidoPaterno = it }, icon = "user.png")
+                        EditField(label = "APELLIDO MATERNO", value = apellidoMaterno, onValueChange = { apellidoMaterno = it }, icon = "user.png")
                         EditField(label = "CORREO", value = email, onValueChange = { email = it }, icon = "correo.png")
                         EditField(label = "MATRÍCULA", value = enrollment, onValueChange = { enrollment = it }, icon = "diploma.png")
-                        
+                        EditField(label = "EDAD", value = edad, onValueChange = { edad = it }, icon = "user.png")
+
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             EditField(
-                                label = "SEXO", 
-                                value = gender, 
-                                onValueChange = { gender = it }, 
+                                label = "SEXO",
+                                value = gender,
+                                onValueChange = { gender = it },
                                 modifier = Modifier.weight(1f),
                                 isDropdown = true,
                                 dropdownOptions = listOf("Masculino", "Femenino", "Otro")
                             )
                             EditField(
-                                label = "CUATRIMESTRE", 
-                                value = quarter, 
-                                onValueChange = { quarter = it }, 
+                                label = "CUATRIMESTRE",
+                                value = quarter,
+                                onValueChange = { quarter = it },
                                 modifier = Modifier.weight(1f),
                                 isDropdown = true,
                                 dropdownOptions = listOf("1°", "2°", "3°", "4°", "5°", "6°", "7°", "8°", "9°", "10°")
@@ -174,86 +206,67 @@ fun EditProfileScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Password Section
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text("Cambiar contraseña", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        EditField(
-                            label = "CONTRASEÑA ACTUAL", 
-                            value = currentPassword, 
-                            onValueChange = { currentPassword = it }, 
-                            isPassword = true,
-                            passwordVisible = currentPasswordVisible,
-                            onPasswordToggle = { currentPasswordVisible = !currentPasswordVisible },
-                            icon = "lock.png"
-                        )
-                        EditField(
-                            label = "NUEVA CONTRASEÑA", 
-                            value = newPassword, 
-                            onValueChange = { newPassword = it }, 
-                            isPassword = true,
-                            passwordVisible = newPasswordVisible,
-                            onPasswordToggle = { newPasswordVisible = !newPasswordVisible },
-                            icon = "lock.png"
-                        )
-                        EditField(
-                            label = "CONFIRMAR NUEVA CONTRASEÑA", 
-                            value = confirmPassword, 
-                            onValueChange = { confirmPassword = it }, 
-                            isPassword = true,
-                            passwordVisible = confirmPasswordVisible,
-                            onPasswordToggle = { confirmPasswordVisible = !confirmPasswordVisible },
-                            icon = "lock.png"
-                        )
-                    }
-                }
-
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Bottom Save Button
                 Button(
                     onClick = {
+                        errorMessage = null
+                        // Validate fields
+                        val validationError = validate()
+                        if (validationError != null) {
+                            errorMessage = validationError
+                            return@Button
+                        }
+
+                        isSaving = true
                         scope.launch {
                             try {
-                                val token = PreferencesHelper.getBearerToken(context)
-                                val userId = PreferencesHelper.getUserId(context)
-                                val lastNameParts = lastName.trim().split(Regex("\\s+"))
-                                val body: Map<String, Any> = mapOf(
+                                val cuatrimestreNum = quarter.replace("°", "").toIntOrNull() ?: 0
+                                val edadInt = edad.toIntOrNull() ?: 0
+
+                                val body = mutableMapOf<String, Any>(
                                     "nombre" to name,
-                                    "apellidoPaterno" to lastNameParts.getOrElse(0) { lastName },
-                                    "apellidoMaterno" to lastNameParts.getOrElse(1) { "" },
-                                    "sexo" to if (gender == "Masculino") "M" else if (gender == "Femenino") "F" else "",
-                                    "cuatrimestre" to (quarter.replace("°", "").toIntOrNull() ?: 0)
+                                    "apellidoPaterno" to apellidoPaterno,
+                                    "apellidoMaterno" to apellidoMaterno,
+                                    "correo" to email,
+                                    "matricula" to enrollment,
+                                    "sexo" to gender,
+                                    "cuatrimestre" to cuatrimestreNum,
+                                    "edad" to edadInt
                                 )
-                                val response = ApiClient.apiService.actualizarAlumno(token, userId, body)
+
+                                val response = ApiClient.apiService.actualizarAlumno(
+                                    bearerToken,
+                                    idUsuario,
+                                    body
+                                )
+
                                 if (response.isSuccessful) {
-                                    // Update SharedPreferences
-                                    val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
+                                    // Update SharedPreferences with new data
                                     prefs.edit()
                                         .putString("nombre", name)
-                                        .putString("apellidoPaterno", lastNameParts.getOrElse(0) { lastName })
-                                        .putString("apellidoMaterno", lastNameParts.getOrElse(1) { "" })
-                                        .putString("sexo", if (gender == "Masculino") "M" else if (gender == "Femenino") "F" else "")
-                                        .putInt("cuatrimestre", quarter.replace("°", "").toIntOrNull() ?: 0)
+                                        .putString("apellidoPaterno", apellidoPaterno)
+                                        .putString("apellidoMaterno", apellidoMaterno)
+                                        .putString("correo", email)
+                                        .putString("matricula", enrollment)
+                                        .putString("sexo", gender)
+                                        .putInt("cuatrimestre", cuatrimestreNum)
+                                        .putInt("edad", edadInt)
                                         .apply()
+
                                     showSuccessDialog = true
                                 } else {
-                                    errorMessage = "Error al guardar los datos. Intenta nuevamente."
-                                    showErrorDialog = true
+                                    val errBody = response.errorBody()?.string()
+                                    val msg = try {
+                                        JSONObject(errBody ?: "").optString("mensaje", "")
+                                    } catch (_: Exception) { "" }
+                                    errorMessage = msg.ifBlank { "Error al actualizar el perfil" }
                                 }
                             } catch (e: Exception) {
-                                errorMessage = "Error: ${e.message}"
-                                showErrorDialog = true
+                                errorMessage = "Error de conexión"
+                            } finally {
+                                isSaving = false
                             }
                         }
                     },
@@ -262,20 +275,17 @@ fun EditProfileScreen(
                         .padding(horizontal = 20.dp)
                         .height(56.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED)),
+                    enabled = !isSaving
                 ) {
-                    Text("Guardar datos", style = MaterialTheme.typography.titleMedium, color = Color.White)
+                    Text(
+                        if (isSaving) "Guardando..." else "Guardar datos",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
                 }
             }
         }
-    }
-
-    // Error Dialog
-    if (showErrorDialog) {
-        ErrorDialog(
-            message = errorMessage,
-            onDismiss = { showErrorDialog = false }
-        )
     }
 
     // Success Dialog
@@ -290,52 +300,6 @@ fun EditProfileScreen(
                 onHome()
             }
         )
-    }
-}
-
-@Composable
-private fun ErrorDialog(message: String, onDismiss: () -> Unit) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier.size(80.dp).clip(CircleShape).background(Color(0xFFFEE5E5)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFFE74C3C)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("✕", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(text = "Error al guardar", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
-                ) {
-                    Text("Entendido", fontWeight = FontWeight.Bold)
-                }
-            }
-        }
     }
 }
 
@@ -363,10 +327,10 @@ private fun SuccessDialog(onBackToProfile: () -> Unit, onGoHome: () -> Unit) {
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(text = "¡Datos actualizados!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(text = "Perfil actualizado correctamente", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Tu información ha sido guardada correctamente en nuestro sistema. Los cambios ya son visibles en tu perfil público.",
+                    text = "Tu información ha sido guardada correctamente en nuestro sistema. Los cambios ya son visibles en tu perfil.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
@@ -397,9 +361,9 @@ private fun SuccessDialog(onBackToProfile: () -> Unit, onGoHome: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditField(
-    label: String, 
-    value: String, 
-    onValueChange: (String) -> Unit, 
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     isDropdown: Boolean = false,
     dropdownOptions: List<String> = emptyList(),
@@ -413,7 +377,7 @@ private fun EditField(
     Column(modifier = modifier.padding(bottom = 16.dp)) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A7A7A), fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         if (isDropdown) {
             ExposedDropdownMenuBox(
                 expanded = expanded,

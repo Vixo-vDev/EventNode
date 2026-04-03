@@ -1,5 +1,6 @@
 package mx.edu.utez.integradoraeventnode.ui.screens.student.home
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +22,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -41,6 +47,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.ButtonDefaults
@@ -49,17 +56,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import android.util.Base64
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.student.profile.ProfileBottomNav
-import androidx.compose.ui.platform.LocalContext
-import mx.edu.utez.integradoraeventnode.utils.PreferencesHelper
-import mx.edu.utez.integradoraeventnode.utils.AppColors
-import mx.edu.utez.integradoraeventnode.ui.utils.decodeBase64Image
+import androidx.compose.ui.graphics.asImageBitmap
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -68,43 +76,118 @@ fun HomeScreen(
     onDiplomas: () -> Unit = {},
     onProfile: () -> Unit = {}
 ) {
-    var searchText by remember { mutableStateOf("") }
-
-    var eventos by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
-    var studentDiplomas by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
-    
-    val context = LocalContext.current
-
-    LaunchedEffect(Unit) {
-        isLoading = true
-        try {
-            val response = ApiClient.apiService.getEventos(estado = "ACTIVO")
-            if (response.isSuccessful) {
-                eventos = response.body() ?: emptyList()
+    // Helper function to decode base64 images
+    fun decodeBase64Image(base64Str: String?): ImageBitmap? {
+        if (base64Str.isNullOrEmpty()) return null
+        return try {
+            val cleanBase64 = if (base64Str.contains(",")) {
+                base64Str.substringAfter(",")
             } else {
-                errorMessage = "Error al cargar eventos"
+                base64Str
             }
-
-            // Fetch diplomas
-            val token = PreferencesHelper.getToken(context)
-            val userId = PreferencesHelper.getUserId(context)
-            if (token.isNotEmpty() && userId > 0) {
-                val diplomaResponse = ApiClient.apiService.listarDiplomasEstudiante("Bearer $token", userId)
-                if (diplomaResponse.isSuccessful) {
-                    studentDiplomas = diplomaResponse.body() ?: emptyList()
-                }
-            }
+            val imageBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)?.asImageBitmap()
         } catch (e: Exception) {
-            errorMessage = "Error de conexión"
-        } finally {
-            isLoading = false
+            null
         }
     }
 
-    Surface(modifier = modifier.fillMaxSize(), color = AppColors.Background) {
+    // --- Context and auth token ---
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
+    val token = prefs.getString("token", "") ?: ""
+    val bearerToken = if (token.isNotEmpty()) "Bearer $token" else ""
+
+    // --- Search & filter state ---
+    var searchText by remember { mutableStateOf("") }
+    var selectedMonth by remember { mutableStateOf<Int?>(null) }
+    var selectedCategoryId by remember { mutableStateOf<Int?>(null) }
+    var selectedCategoryName by remember { mutableStateOf("Todas") }
+    var selectedMonthName by remember { mutableStateOf("Todos") }
+
+    // Month dropdown state
+    var expandedMonth by remember { mutableStateOf(false) }
+    // Category dropdown state
+    var expandedCategory by remember { mutableStateOf(false) }
+
+    // Categories loaded from API
+    var categorias by remember { mutableStateOf<List<Pair<Int, String>>>(emptyList()) }
+
+    val monthNames = listOf(
+        "Todos", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    )
+
+    var eventos by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    // --- Load categories on first composition ---
+    LaunchedEffect(Unit) {
+        if (bearerToken.isNotEmpty()) {
+            try {
+                val response = ApiClient.apiService.getCategorias(bearerToken)
+                if (response.isSuccessful) {
+                    val body = response.body() ?: emptyList()
+                    categorias = body.mapNotNull { map ->
+                        val id = (map["idCategoria"] as? Number)?.toInt()
+                        val name = map["nombre"] as? String
+                        if (id != null && name != null) Pair(id, name) else null
+                    }
+                }
+            } catch (_: Exception) {
+                // Categories are optional; silently ignore errors
+            }
+        }
+    }
+
+    // --- Fetch events whenever filters change ---
+    fun fetchEventos() {
+        scope.launch {
+            isLoading = true
+            errorMessage = null
+            try {
+                val nombreParam = searchText.ifBlank { null }
+                val response = ApiClient.apiService.getEventosFiltrados(
+                    token = bearerToken,
+                    nombre = nombreParam,
+                    mes = selectedMonth,
+                    categoriaId = selectedCategoryId,
+                    estado = "ACTIVO"
+                )
+                if (response.isSuccessful) {
+                    val all = response.body() ?: emptyList()
+                    // Client-side: filter out past events (fechaFin before now)
+                    val now = LocalDateTime.now()
+                    eventos = all.filter { evento ->
+                        try {
+                            val fechaFin = LocalDateTime.parse(
+                                evento.fechaFin,
+                                DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                            )
+                            !fechaFin.isBefore(now)
+                        } catch (_: Exception) {
+                            true // keep events with unparseable dates
+                        }
+                    }
+                } else {
+                    errorMessage = "Error al cargar eventos"
+                }
+            } catch (e: Exception) {
+                errorMessage = "Error de conexión"
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    // Initial load and reload when filters change
+    LaunchedEffect(searchText, selectedMonth, selectedCategoryId) {
+        fetchEventos()
+    }
+
+    Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -114,7 +197,8 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.Top
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
+                // --- Search bar ---
                 TextField(
                     value = searchText,
                     onValueChange = { searchText = it },
@@ -133,21 +217,117 @@ fun HomeScreen(
                     singleLine = true,
                     leadingIcon = {
                         Image(
-                            bitmap = assetImageBitmap("home.png"), // Reusing home as placeholder for search
+                            bitmap = assetImageBitmap("home.png"),
                             contentDescription = null,
                             modifier = Modifier.size(20.dp),
                             colorFilter = ColorFilter.tint(Color.Gray)
                         )
                     }
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // --- Filter row: Month + Category dropdowns ---
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Month filter dropdown
+                    ExposedDropdownMenuBox(
+                        expanded = expandedMonth,
+                        onExpandedChange = { expandedMonth = !expandedMonth },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        OutlinedTextField(
+                            value = selectedMonthName,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Mes", style = MaterialTheme.typography.labelSmall) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            shape = RoundedCornerShape(12.dp),
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMonth) },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White
+                            ),
+                            textStyle = MaterialTheme.typography.bodySmall
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedMonth,
+                            onDismissRequest = { expandedMonth = false },
+                            modifier = Modifier.background(Color.White)
+                        ) {
+                            monthNames.forEachIndexed { index, name ->
+                                DropdownMenuItem(
+                                    text = { Text(name) },
+                                    onClick = {
+                                        selectedMonthName = name
+                                        selectedMonth = if (index == 0) null else index
+                                        expandedMonth = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    // Category filter dropdown
+                    ExposedDropdownMenuBox(
+                        expanded = expandedCategory,
+                        onExpandedChange = { expandedCategory = !expandedCategory },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        OutlinedTextField(
+                            value = selectedCategoryName,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Categoria", style = MaterialTheme.typography.labelSmall) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            shape = RoundedCornerShape(12.dp),
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategory) },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White
+                            ),
+                            textStyle = MaterialTheme.typography.bodySmall
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedCategory,
+                            onDismissRequest = { expandedCategory = false },
+                            modifier = Modifier.background(Color.White)
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Todas") },
+                                onClick = {
+                                    selectedCategoryName = "Todas"
+                                    selectedCategoryId = null
+                                    expandedCategory = false
+                                }
+                            )
+                            categorias.forEach { (id, name) ->
+                                DropdownMenuItem(
+                                    text = { Text(name) },
+                                    onClick = {
+                                        selectedCategoryName = name
+                                        selectedCategoryId = id
+                                        expandedCategory = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                     SectionHeader(title = "Próximos Eventos", action = "Ver más eventos")
                     Spacer(modifier = Modifier.height(12.dp))
-                    
+
                     if (isLoading) {
                         Text(
-                            text = "Cargando eventos...", 
+                            text = "Cargando eventos...",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.Gray,
                             modifier = Modifier.fillMaxWidth().padding(32.dp),
@@ -162,29 +342,18 @@ fun HomeScreen(
                         )
                     } else if (eventos.isEmpty()) {
                         Text(
-                            text = "No hay eventos próximos",
+                            text = "No se encontraron resultados",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.Gray,
                             modifier = Modifier.fillMaxWidth().padding(32.dp),
                             textAlign = TextAlign.Center
                         )
                     } else {
-                        val filteredEventos = if (searchText.isBlank()) eventos else eventos.filter { it.nombre.contains(searchText, ignoreCase = true) }
-
-                        if (filteredEventos.isEmpty()) {
-                            Text(
-                                text = "No se encontraron eventos",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray,
-                                modifier = Modifier.fillMaxWidth().padding(32.dp),
-                                textAlign = TextAlign.Center
-                            )
-                        } else {
-                            filteredEventos.forEach { evento ->
-                            val cat = evento.categoriaNombre ?: "EVENTO"
+                        eventos.forEach { evento ->
+                            val cat = evento.nombreCategoria ?: "EVENTO"
                             val mainTextLength = if (evento.nombre.length > 15) 15 else evento.nombre.length
                             val main = evento.nombre.substring(0, mainTextLength).uppercase()
-                            
+
                             val dateStr = if (evento.fechaInicio.length >= 16) {
                                 evento.fechaInicio.substring(0, 10).replace("-", "/") + " • " + evento.fechaInicio.substring(11, 16)
                             } else {
@@ -206,61 +375,29 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                         }
-                        }
                     }
 
                     SectionHeader(title = "Diploma", action = "Ver historial", onActionClick = onDiplomas)
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    if (studentDiplomas.isEmpty()) {
-                        Text(
-                            text = "Sin diplomas aún",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray,
-                            modifier = Modifier.fillMaxWidth().padding(32.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    } else {
-                        studentDiplomas.take(2).forEachIndexed { index, diploma ->
-                            val nombreEvento = diploma["nombreEvento"] as? String ?: "Evento"
-                            val fechaEnvio = diploma["fechaEnvio"] as? String ?: ""
-                            val estadoEnvio = diploma["estadoEnvio"] as? String ?: "DIPLOMA EMITIDO"
-
-                            // Extract category from event name (first word or first 8 chars)
-                            val category = nombreEvento.split(" ").firstOrNull()?.uppercase() ?: "EVENTO"
-
-                            // Extract main text (second word or remaining)
-                            val mainText = nombreEvento.split(" ").drop(1).joinToString(" ").take(12).uppercase()
-
-                            // Format date
-                            val formattedDate = if (fechaEnvio.length >= 10) {
-                                fechaEnvio.substring(0, 10).replace("-", "/")
-                            } else {
-                                fechaEnvio
-                            }
-
-                            // Color palette for cards
-                            val cardColors = listOf(
-                                Color(0xFFC9D7C4),
-                                Color(0xFFA8B8B6),
-                                Color(0xFFB5C8E8),
-                                Color(0xFFD4C5B9)
-                            )
-
-                            SimpleEventCard(
-                                category = category,
-                                mainText = mainText,
-                                title = nombreEvento,
-                                subtitle = formattedDate,
-                                status = estadoEnvio,
-                                cardColor = cardColors[index % cardColors.size],
-                                onClick = onDiplomas
-                            )
-                            if (index < minOf(1, studentDiplomas.size - 1)) {
-                                Spacer(modifier = Modifier.height(16.dp))
-                            }
-                        }
-                    }
+                    SimpleEventCard(
+                        category = "WEB DEV",
+                        mainText = "SUMMIT",
+                        title = "Web Development Summit '23",
+                        subtitle = "Septiembre 2023",
+                        status = "DIPLOMA EMITIDO",
+                        cardColor = Color(0xFFC9D7C4),
+                        onClick = onDiplomas
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    SimpleEventCard(
+                        category = "MINIMAL",
+                        mainText = "DATA SCIENCE",
+                        title = "Seminario Avanzado: Big Data",
+                        subtitle = "Agosto 2023",
+                        status = "DIPLOMA EMITIDO",
+                        cardColor = Color(0xFFA8B8B6),
+                        onClick = onDiplomas
+                    )
                 }
             }
             Box(
@@ -294,7 +431,7 @@ private fun SectionHeader(title: String, action: String, onActionClick: () -> Un
                     .width(4.dp)
                     .height(16.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(AppColors.Primary)
+                    .background(Color(0xFF2F6FED))
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -305,7 +442,7 @@ private fun SectionHeader(title: String, action: String, onActionClick: () -> Un
         Text(
             text = action,
             style = MaterialTheme.typography.bodySmall,
-            color = AppColors.Primary,
+            color = Color(0xFF2F6FED),
             modifier = Modifier.clickable { onActionClick() }
         )
     }
@@ -371,7 +508,7 @@ private fun EventCard(
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(if(tag == "ACTIVO") AppColors.Primary else Color(0xFF757575))
+                            .background(if(tag == "ACTIVO") Color(0xFF2F6FED) else Color(0xFF757575))
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                     
@@ -430,7 +567,7 @@ private fun EventCard(
                     onClick = onDetailsClick,
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
                 ) {
                     Text(buttonText, fontWeight = FontWeight.Bold)
                 }
@@ -520,7 +657,7 @@ private fun SimpleEventCard(
                     Text(
                         text = "Ver más",
                         style = MaterialTheme.typography.labelSmall,
-                        color = AppColors.Primary,
+                        color = Color(0xFF2F6FED),
                         fontWeight = FontWeight.Bold
                     )
                 }

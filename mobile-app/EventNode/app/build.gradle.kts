@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.zxing.core)
+    implementation(libs.zxing.android.embedded)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.compose.foundation.layout)
     testImplementation(libs.junit)

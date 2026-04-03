@@ -56,7 +56,7 @@ public class AlumnoService {
         }
 
         Integer cuatrimestre = request.getCuatrimestre();
-        if (cuatrimestre == null || cuatrimestre < 1 || cuatrimestre > 10 || cuatrimestre == 6 || cuatrimestre == 10) {
+        if (cuatrimestre == null || cuatrimestre < 1 || cuatrimestre > 10) {
             throw new IllegalArgumentException("Cuatrimestre fuera de rango");
         }
 
@@ -103,7 +103,7 @@ public class AlumnoService {
         }
 
         Integer cuatrimestre = request.getCuatrimestre();
-        if (cuatrimestre == null || cuatrimestre < 1 || cuatrimestre > 10 || cuatrimestre == 5 || cuatrimestre == 10) {
+        if (cuatrimestre == null || cuatrimestre < 1 || cuatrimestre > 10) {
             throw new IllegalArgumentException("Cuatrimestre fuera de rango");
         }
         

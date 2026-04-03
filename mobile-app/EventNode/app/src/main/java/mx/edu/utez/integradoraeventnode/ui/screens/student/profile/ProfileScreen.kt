@@ -25,6 +25,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,7 +48,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.border
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -78,15 +86,75 @@ fun ProfileScreen(
 
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE) }
-    
-    val nombre = prefs.getString("nombre", "") ?: ""
-    val apellidoPaterno = prefs.getString("apellidoPaterno", "") ?: ""
-    val apellidoMaterno = prefs.getString("apellidoMaterno", "") ?: ""
-    val correo = prefs.getString("correo", "") ?: ""
-    val matricula = prefs.getString("matricula", "") ?: ""
-    val sexo = prefs.getString("sexo", "") ?: ""
-    val cuatrimestre = prefs.getInt("cuatrimestre", 0)
-    val rol = prefs.getString("rol", "ALUMNO") ?: "ALUMNO"
+
+    var nombre by remember { mutableStateOf(prefs.getString("nombre", "") ?: "") }
+    var apellidoPaterno by remember { mutableStateOf(prefs.getString("apellidoPaterno", "") ?: "") }
+    var apellidoMaterno by remember { mutableStateOf(prefs.getString("apellidoMaterno", "") ?: "") }
+    var correo by remember { mutableStateOf(prefs.getString("correo", "") ?: "") }
+    var matricula by remember { mutableStateOf(prefs.getString("matricula", "") ?: "") }
+    var sexo by remember { mutableStateOf(prefs.getString("sexo", "") ?: "") }
+    var cuatrimestre by remember { mutableStateOf(prefs.getInt("cuatrimestre", 0)) }
+    var rol by remember { mutableStateOf(prefs.getString("rol", "ALUMNO") ?: "ALUMNO") }
+    var edad by remember { mutableStateOf(prefs.getInt("edad", 0)) }
+
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
+
+    val idUsuario = prefs.getInt("id", -1)
+    val token = prefs.getString("token", "") ?: ""
+
+    // Load profile from API on screen launch
+    LaunchedEffect(Unit) {
+        if (idUsuario == -1 || token.isBlank()) {
+            isLoading = false
+            return@LaunchedEffect
+        }
+        try {
+            val response = ApiClient.apiService.obtenerPerfil("Bearer $token", idUsuario)
+            if (response.isSuccessful) {
+                val data = response.body() ?: emptyMap()
+                val nuevoNombre = (data["nombre"] as? String) ?: nombre
+                val nuevoApellidoPaterno = (data["apellidoPaterno"] as? String) ?: apellidoPaterno
+                val nuevoApellidoMaterno = (data["apellidoMaterno"] as? String) ?: apellidoMaterno
+                val nuevoCorreo = (data["correo"] as? String) ?: correo
+                val nuevaMatricula = (data["matricula"] as? String) ?: matricula
+                val nuevoSexo = (data["sexo"] as? String) ?: sexo
+                val nuevoCuatrimestre = (data["cuatrimestre"] as? Number)?.toInt() ?: cuatrimestre
+                val nuevoRol = (data["rol"] as? String) ?: rol
+                val nuevaEdad = (data["edad"] as? Number)?.toInt() ?: edad
+
+                // Update state
+                nombre = nuevoNombre
+                apellidoPaterno = nuevoApellidoPaterno
+                apellidoMaterno = nuevoApellidoMaterno
+                correo = nuevoCorreo
+                matricula = nuevaMatricula
+                sexo = nuevoSexo
+                cuatrimestre = nuevoCuatrimestre
+                rol = nuevoRol
+                edad = nuevaEdad
+
+                // Update SharedPreferences with fresh data
+                prefs.edit()
+                    .putString("nombre", nuevoNombre)
+                    .putString("apellidoPaterno", nuevoApellidoPaterno)
+                    .putString("apellidoMaterno", nuevoApellidoMaterno)
+                    .putString("correo", nuevoCorreo)
+                    .putString("matricula", nuevaMatricula)
+                    .putString("sexo", nuevoSexo)
+                    .putInt("cuatrimestre", nuevoCuatrimestre)
+                    .putString("rol", nuevoRol)
+                    .putInt("edad", nuevaEdad)
+                    .apply()
+            } else {
+                errorMsg = "Error al cargar el perfil"
+            }
+        } catch (_: Exception) {
+            errorMsg = "Error de conexión"
+        } finally {
+            isLoading = false
+        }
+    }
 
     val fullName = listOf(nombre, apellidoPaterno, apellidoMaterno)
         .filter { it.isNotBlank() }
@@ -95,7 +163,13 @@ fun ProfileScreen(
 
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color(0xFF2F6FED)
+                )
+            } else {
+                Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(bottom = 90.dp)
@@ -120,7 +194,7 @@ fun ProfileScreen(
                                 .background(Color(0xFFD9D9D9))
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
@@ -139,9 +213,9 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Editar Perfil", color = Color.Black, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     }
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     Text(
                         text = fullName,
                         style = MaterialTheme.typography.titleLarge,
@@ -158,9 +232,9 @@ fun ProfileScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF7A7A7A)
                     )
-                    
+
                     Spacer(modifier = Modifier.height(12.dp))
-                    
+
                     if (matricula.isNotBlank()) {
                         Box(
                             modifier = Modifier
@@ -180,6 +254,17 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
+                // Error message
+                if (errorMsg != null) {
+                    Text(
+                        text = errorMsg!!,
+                        color = Color(0xFFEF5350),
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)
+                    )
+                }
+
                 // Personal Info Section
                 Column(
                     modifier = Modifier
@@ -192,11 +277,12 @@ fun ProfileScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     InfoRow(label = "Nombre", value = nombre.ifBlank { "N/A" }, icon = "user.png")
                     InfoRow(label = "Apellidos", value = "$apellidoPaterno $apellidoMaterno".trim().ifBlank { "N/A" }, icon = "user.png")
                     InfoRow(label = "Correo", value = correo.ifBlank { "N/A" }, icon = "correo.png")
                     if (matricula.isNotBlank()) InfoRow(label = "Matrícula", value = matricula, icon = "diploma.png")
+                    if (edad > 0) InfoRow(label = "Edad", value = "$edad años", icon = "user.png")
                     if (sexo.isNotBlank()) InfoRow(label = "Sexo", value = sexo, icon = "user.png")
                     if (cuatrimestre > 0) InfoRow(label = "Cuatrimestre", value = "$cuatrimestre°", icon = "book-open-reader.png")
                 }
@@ -324,6 +410,7 @@ fun ProfileScreen(
             ) {
                 ProfileBottomNav(onHome = onHome, onAgenda = onAgenda, onDiplomas = onDiplomas, onProfile = {})
             }
+            } // close else block
         }
     }
 
@@ -567,26 +654,43 @@ private fun ChangePasswordDialog(correo: String, onDismiss: () -> Unit) {
                         Text(error!!, color = Color(0xFFEF5350), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 12.dp))
                     }
 
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
+                    val focusRequesters = remember { List(6) { FocusRequester() } }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         for (i in 0..5) {
-                            OutlinedTextField(
+                            BasicTextField(
                                 value = code[i],
                                 onValueChange = { v ->
-                                    if (v.length <= 1 && v.all { it.isDigit() }) {
-                                        code = code.toMutableList().also { it[i] = v }
+                                    val filtered = v.filter { it.isDigit() }.take(1)
+                                    if (filtered != code[i]) {
+                                        code = code.toMutableList().also { it[i] = filtered }
                                         error = null
+                                        if (filtered.isNotEmpty() && i < 5) {
+                                            focusRequesters[i + 1].requestFocus()
+                                        }
                                     }
                                 },
-                                modifier = Modifier.width(44.dp).height(52.dp),
-                                textStyle = androidx.compose.ui.text.TextStyle(textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, fontSize = 20.sp),
-                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(52.dp)
+                                    .focusRequester(focusRequesters[i])
+                                    .border(1.dp, if (code[i].isNotEmpty()) Color(0xFF2F6FED) else Color(0xFFE1E2EC), RoundedCornerShape(10.dp))
+                                    .background(if (code[i].isNotEmpty()) Color(0xFFF0F7FF) else Color(0xFFF8F9FB), RoundedCornerShape(10.dp)),
+                                textStyle = androidx.compose.ui.text.TextStyle(
+                                    textAlign = TextAlign.Center,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 22.sp,
+                                    color = Color.Black
+                                ),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 singleLine = true,
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = Color(0xFFF0F7FF),
-                                    unfocusedContainerColor = Color(0xFFF8F9FB),
-                                    focusedIndicatorColor = Color(0xFF2F6FED),
-                                    unfocusedIndicatorColor = Color(0xFFE1E2EC)
-                                )
+                                decorationBox = { innerTextField ->
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        innerTextField()
+                                    }
+                                }
                             )
                         }
                     }

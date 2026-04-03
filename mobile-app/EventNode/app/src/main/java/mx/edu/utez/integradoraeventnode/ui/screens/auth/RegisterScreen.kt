@@ -55,7 +55,7 @@ fun RegisterScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
     var expandedCuatrimestre by remember { mutableStateOf(false) }
-    val cuatrimestres = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
+    val cuatrimestres = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -304,7 +304,7 @@ fun RegisterScreen(
                             onClick = {
                                 // Validations
                                 errorMessage = null
-                                val emailPattern = "^[a-zA-Z0-9._-]+@utez\\.edu\\.mx$".toRegex()
+                                val emailPattern = "^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$".toRegex()
                                 val pwdPattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!_\\-]).{8,}$".toRegex()
                                 
                                 if (name.isBlank() || apellidoPaterno.isBlank() || apellidoMaterno.isBlank() || enrollment.isBlank() || institutionalEmail.isBlank() || password.isBlank() || confirmPassword.isBlank() || fechaNacimiento == null || semester.isBlank()) {
@@ -316,11 +316,11 @@ fun RegisterScreen(
                                     return@Button
                                 }
                                 if (!institutionalEmail.matches(emailPattern)) {
-                                    errorMessage = "El correo debe tener terminación @utez.edu.mx"
+                                    errorMessage = "Ingrese una dirección de correo electrónico válida"
                                     return@Button
                                 }
                                 if (!password.matches(pwdPattern)) {
-                                    errorMessage = "La contraseña no es válida.\nDebe tener 8+ caracteres, mayúsculas, minúsculas, números y un símbolo."
+                                    errorMessage = "La contraseña no es válida. Debe tener mínimo 8 caracteres, incluyendo mayúsculas, minúsculas, números y un símbolo especial."
                                     return@Button
                                 }
                                 if (age < 17 || age > 99) {
@@ -328,7 +328,7 @@ fun RegisterScreen(
                                     return@Button
                                 }
                                 val cuatriInt = semester.toIntOrNull()
-                                if (cuatriInt == null || cuatrimestres.indexOf(semester) == -1) {
+                                if (cuatriInt == null || cuatriInt < 1 || cuatriInt > 10) {
                                     errorMessage = "Cuatrimestre fuera de rango"
                                     return@Button
                                 }
