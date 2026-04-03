@@ -35,8 +35,8 @@ function StudentDiplomas({ user }) {
       a.click()
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
-    } catch {
-      toast.error('Error al descargar el diploma')
+    } catch (err) {
+      toast.error(err.message || 'Error al descargar el diploma')
     }
   }
 
@@ -82,15 +82,13 @@ function StudentDiplomas({ user }) {
                       <i className="bi bi-eye"></i>
                       {t('studentDiplomas.view')}
                     </Link>
-                    {d.estadoEnvio === 'ENVIADO' && (
-                      <button
-                        className="btn btn-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
-                        onClick={() => handleDownload(d)}
-                      >
-                        <i className="bi bi-download"></i>
-                        {t('studentDiplomas.download')}
-                      </button>
-                    )}
+                    <button
+                      className="btn btn-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
+                      onClick={() => handleDownload(d)}
+                    >
+                      <i className="bi bi-download"></i>
+                      {t('studentDiplomas.download')}
+                    </button>
                   </div>
                 </div>
               </div>

@@ -62,8 +62,8 @@ function StudentDiplomaDetail({ user }) {
       a.click()
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
-    } catch {
-      toast.error('Error al descargar el diploma')
+    } catch (err) {
+      toast.error(err.message || 'Error al descargar el diploma')
     } finally {
       setDownloading(false)
     }

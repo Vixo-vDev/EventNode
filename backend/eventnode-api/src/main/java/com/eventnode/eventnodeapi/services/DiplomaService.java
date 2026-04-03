@@ -179,6 +179,10 @@ public class DiplomaService {
 
     private void validarPlantillaJasper(String plantillaBase64) {
         try {
+            System.setProperty("net.sf.jasperreports.awt.ignore.missing.font", "true");
+            System.setProperty("net.sf.jasperreports.default.pdf.font.name", "Helvetica");
+            System.setProperty("net.sf.jasperreports.default.font.name", "SansSerif");
+
             String base64 = plantillaBase64.contains(",")
                     ? plantillaBase64.substring(plantillaBase64.indexOf(",") + 1)
                     : plantillaBase64;
@@ -193,6 +197,11 @@ public class DiplomaService {
 
     private byte[] generarDiplomaPdf(Diploma diploma, String studentName) {
         try {
+            // Fuentes DejaVu no disponibles en fat JAR — usar fuentes PDF estándar como fallback
+            System.setProperty("net.sf.jasperreports.awt.ignore.missing.font", "true");
+            System.setProperty("net.sf.jasperreports.default.pdf.font.name", "Helvetica");
+            System.setProperty("net.sf.jasperreports.default.font.name", "SansSerif");
+
             String base64 = diploma.getPlantillaPdf();
             if (base64.contains(",")) {
                 base64 = base64.substring(base64.indexOf(",") + 1);
@@ -358,6 +367,7 @@ public class DiplomaService {
                 de.setEstadoEnvio("ENVIADO");
                 de.setFechaEnvio(LocalDateTime.now());
             } catch (Exception e) {
+                log.error("Error al re-emitir diploma actualizado para usuario {} ({}): {}", usuario.getIdUsuario(), fullName, e.getMessage(), e);
                 de.setEstadoEnvio("ERROR");
             }
             diplomaEmitidoRepository.save(de);
