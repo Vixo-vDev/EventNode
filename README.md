@@ -11,6 +11,9 @@
 
 <pre>
 <code>
+#0. NECESARIO PARA TENER LOS NUEVOS CAMBIOS DE LA BD
+docker compose down -v && docker compose up -d
+
 # 1. Clonar repo
 git clone https://github.com/tu-repo/EventNode.git
 cd EventNode
