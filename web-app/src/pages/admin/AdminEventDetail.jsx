@@ -81,7 +81,13 @@ function AdminEventDetail() {
       }
 
       const result = await diplomaService.emitirDiplomas(diploma.idDiploma)
-      toast.success(`${result.totalEmitidos || 0} diploma(s) emitido(s) y enviado(s) por correo`)
+      if (result.totalErrores > 0 && result.totalEmitidos === 0) {
+        toast.error(`Error al generar diplomas: ${result.primerError || 'Error desconocido'}`)
+      } else if (result.totalErrores > 0) {
+        toast.warning(`${result.totalEmitidos} enviados, ${result.totalErrores} con error: ${result.primerError}`)
+      } else {
+        toast.success(`${result.totalEmitidos} diploma(s) emitido(s) y enviado(s) por correo`)
+      }
     } catch (err) {
       toast.error(err.message)
     } finally {

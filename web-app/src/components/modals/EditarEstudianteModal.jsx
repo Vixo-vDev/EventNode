@@ -54,10 +54,9 @@ function EditarEstudianteModal({ student, onStudentUpdated }) {
       
       const modalEl = document.getElementById('editarEstudianteModal')
       if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide()
       }
-      
+
       if (onStudentUpdated) onStudentUpdated()
     } catch (err) {
       toast.error(err.message || 'Error al actualizar estudiante')
@@ -71,11 +70,10 @@ function EditarEstudianteModal({ student, onStudentUpdated }) {
       setDisableLoading(true)
       await userService.cambiarEstado(student.id)
       toast.success(student?.active ? 'Estudiante deshabilitado exitosamente' : 'Estudiante habilitado exitosamente')
-      
+
       const modalEl = document.getElementById('editarEstudianteModal')
       if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide()
       }
       
       if (onStudentUpdated) onStudentUpdated()

@@ -45,8 +45,8 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
     const file = e.target.files[0]
     if (!file) return
 
-    if (field === 'plantillaPdf' && file.type !== 'application/pdf') {
-      toast.warning('Solo se permiten archivos PDF')
+    if (field === 'plantillaPdf' && !file.name.endsWith('.jrxml')) {
+      toast.warning('Solo se permiten plantillas Jasper (.jrxml)')
       return
     }
 
@@ -138,7 +138,7 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
             {/* Plantilla PDF */}
             <div className="bg-white rounded-3 p-4 mb-3 shadow-sm border-0">
               <div className="d-flex align-items-center gap-2 mb-3">
-                <i className="bi bi-file-pdf text-primary"></i>
+                <i className="bi bi-file-earmark-code text-primary"></i>
                 <h6 className="fw-bold mb-0 text-dark fs-6">{t('editDiploma.pdfTemplate')}</h6>
               </div>
               <div
@@ -150,7 +150,7 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
                   <div className="d-flex align-items-center justify-content-between bg-light rounded-3 p-2 border w-100 mx-auto" style={{ maxWidth: '600px' }}>
                     <div className="d-flex align-items-center gap-3">
                       <div className="bg-primary bg-opacity-10 text-primary rounded p-2 d-flex align-items-center justify-content-center">
-                        <i className="bi bi-file-earmark-pdf"></i>
+                        <i className="bi bi-file-earmark-code"></i>
                       </div>
                       <div className="text-start lh-sm">
                         <div className="fw-semibold text-dark mb-1" style={{ fontSize: '12px' }}>{pdfFileName}</div>
@@ -180,7 +180,7 @@ function EditarDiplomaModal({ diploma, onSubmit, isLoading }) {
                   ref={pdfInputRef}
                   type="file"
                   className="d-none"
-                  accept="application/pdf"
+                  accept=".jrxml"
                   onChange={(e) => handleFileChange(e, 'plantillaPdf')}
                 />
               </div>

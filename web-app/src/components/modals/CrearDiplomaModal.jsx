@@ -14,8 +14,8 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
   const handlePdfChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
-    if (file.type !== 'application/pdf') {
-      toast.warning('Solo se permiten archivos PDF')
+    if (!file.name.endsWith('.jrxml')) {
+      toast.warning('Solo se permiten plantillas Jasper (.jrxml)')
       return
     }
     if (file.size > 15 * 1024 * 1024) {
@@ -124,7 +124,7 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
             {/* PDF Template Upload */}
             <div className="bg-white rounded-3 p-4 mb-3 shadow-sm border-0">
               <div className="d-flex align-items-center gap-2 mb-3">
-                <i className="bi bi-file-earmark-pdf text-danger"></i>
+                <i className="bi bi-file-earmark-code text-primary"></i>
                 <h6 className="fw-bold mb-0 text-dark fs-6">{t('createDiploma.pdfTemplate')}</h6>
               </div>
               <p className="text-secondary small mb-3" style={{ fontSize: '12px' }}>
@@ -134,7 +134,7 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
               <input
                 type="file"
                 ref={pdfInputRef}
-                accept="application/pdf"
+                accept=".jrxml"
                 className="d-none"
                 onChange={handlePdfChange}
               />
@@ -153,8 +153,8 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
                 </div>
               ) : (
                 <div className="d-flex align-items-center gap-3 p-3 bg-light rounded-3 border">
-                  <div className="bg-danger bg-opacity-10 text-danger rounded d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', minWidth: '40px' }}>
-                    <i className="bi bi-file-earmark-pdf fs-5"></i>
+                  <div className="bg-primary bg-opacity-10 text-primary rounded d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', minWidth: '40px' }}>
+                    <i className="bi bi-file-earmark-code fs-5"></i>
                   </div>
                   <div className="flex-grow-1 overflow-hidden">
                     <p className="mb-0 fw-semibold small text-truncate">{pdfPreview}</p>

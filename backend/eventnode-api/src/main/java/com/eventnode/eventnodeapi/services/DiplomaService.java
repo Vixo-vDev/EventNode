@@ -11,31 +11,31 @@ import com.eventnode.eventnodeapi.repositories.AsistenciaRepository;
 import com.eventnode.eventnodeapi.repositories.EventoRepository;
 import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
 import jakarta.mail.internet.MimeMessage;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.io.RandomAccessReadBuffer;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.data.JREmptyDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
-import java.util.List;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class DiplomaService {
+
+    private static final Logger log = LoggerFactory.getLogger(DiplomaService.class);
 
     private final DiplomaRepository diplomaRepository;
     private final DiplomaEmitidoRepository diplomaEmitidoRepository;
@@ -67,6 +67,8 @@ public class DiplomaService {
         if (diplomaRepository.findByIdEvento(idEvento).isPresent()) {
             throw new IllegalStateException("Ya existe un diploma para este evento");
         }
+
+        validarPlantillaJasper(plantillaPdf);
 
         Diploma diploma = new Diploma();
         diploma.setIdEvento(idEvento);
@@ -107,7 +109,7 @@ public class DiplomaService {
     }
 
     @Transactional
-    public long emitirDiplomas(Integer idDiploma) {
+    public Map<String, Object> emitirDiplomas(Integer idDiploma) {
         Diploma diploma = diplomaRepository.findById(idDiploma)
                 .orElseThrow(() -> new IllegalArgumentException("Diploma no encontrado"));
 
@@ -117,7 +119,13 @@ public class DiplomaService {
 
         List<Asistencia> asistencias = asistenciaRepository.findByIdEvento(diploma.getIdEvento());
 
-        long count = 0;
+        if (asistencias.isEmpty()) {
+            throw new IllegalStateException("No hay asistencias registradas para este evento");
+        }
+
+        long enviados = 0;
+        long errores = 0;
+        String primerError = null;
         List<DiplomaEmitido> existentes = diplomaEmitidoRepository.findByIdDiploma(idDiploma);
 
         for (Asistencia asistencia : asistencias) {
@@ -139,16 +147,23 @@ public class DiplomaService {
                     byte[] pdfBytes = generarDiplomaPdf(diploma, fullName);
                     enviarCorreoDiploma(usuario.getCorreo(), fullName, diploma.getNombreEvento(), pdfBytes);
                     diplomaEmitido.setEstadoEnvio("ENVIADO");
+                    enviados++;
                 } catch (Exception e) {
+                    log.error("Error al emitir diploma para usuario {} ({}): {}", usuario.getIdUsuario(), fullName, e.getMessage(), e);
                     diplomaEmitido.setEstadoEnvio("ERROR");
+                    if (primerError == null) primerError = e.getMessage();
+                    errores++;
                 }
 
                 diplomaEmitidoRepository.save(diplomaEmitido);
-                count++;
             }
         }
 
-        return count;
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalEnviados", enviados);
+        result.put("totalErrores", errores);
+        if (primerError != null) result.put("primerError", primerError);
+        return result;
     }
 
     public byte[] generarDiplomaPdf(Integer idDiploma, Integer idUsuario) {
@@ -162,136 +177,65 @@ public class DiplomaService {
         return generarDiplomaPdf(diploma, fullName);
     }
 
+    private void validarPlantillaJasper(String plantillaBase64) {
+        try {
+            String base64 = plantillaBase64.contains(",")
+                    ? plantillaBase64.substring(plantillaBase64.indexOf(",") + 1)
+                    : plantillaBase64;
+            byte[] jrxmlBytes = Base64.getDecoder().decode(base64);
+            JasperCompileManager.compileReport(new ByteArrayInputStream(jrxmlBytes));
+        } catch (JRException e) {
+            throw new IllegalArgumentException("La plantilla Jasper no es válida: " + e.getMessage());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("No se pudo procesar la plantilla: " + e.getMessage());
+        }
+    }
+
     private byte[] generarDiplomaPdf(Diploma diploma, String studentName) {
         try {
-            String pdfBase64 = diploma.getPlantillaPdf();
-            if (pdfBase64.contains(",")) {
-                pdfBase64 = pdfBase64.substring(pdfBase64.indexOf(",") + 1);
+            String base64 = diploma.getPlantillaPdf();
+            if (base64.contains(",")) {
+                base64 = base64.substring(base64.indexOf(",") + 1);
             }
-            byte[] templateBytes = Base64.getDecoder().decode(pdfBase64);
+            byte[] jrxmlBytes = Base64.getDecoder().decode(base64);
 
-            PDDocument document = Loader.loadPDF(new RandomAccessReadBuffer(templateBytes));
-            PDPage page = document.getPage(0);
-            PDRectangle mediaBox = page.getMediaBox();
-            float pageWidth = mediaBox.getWidth();
-            float pageHeight = mediaBox.getHeight();
+            JasperReport jasperReport = JasperCompileManager.compileReport(
+                    new ByteArrayInputStream(jrxmlBytes));
 
-            PDPageContentStream contentStream = new PDPageContentStream(
-                    document, page, PDPageContentStream.AppendMode.APPEND, true);
+            Map<String, Object> params = new HashMap<>();
+            params.put("STUDENT_NAME", studentName);
+            params.put("EVENT_NAME", diploma.getNombreEvento());
+            params.put("FIRMA_NOMBRE", diploma.getFirma() != null ? diploma.getFirma() : "");
 
-            // Sanitize text for font compatibility
-            String safeName = sanitizeForFont(studentName);
-            String safeEventName = sanitizeForFont(diploma.getNombreEvento());
-            String safeFirma = sanitizeForFont(diploma.getFirma());
-
-            // ── Draw student name centered at ~50% height ──
-            PDType1Font nameFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-            float nameFontSize = 28f;
-            // Adjust font size if name is too long
-            float nameWidth = nameFont.getStringWidth(safeName) / 1000 * nameFontSize;
-            while (nameWidth > pageWidth * 0.85f && nameFontSize > 14f) {
-                nameFontSize -= 2f;
-                nameWidth = nameFont.getStringWidth(safeName) / 1000 * nameFontSize;
-            }
-            float nameX = (pageWidth - nameWidth) / 2;
-            float nameY = pageHeight * 0.48f;
-
-            contentStream.beginText();
-            contentStream.setFont(nameFont, nameFontSize);
-            contentStream.setNonStrokingColor(0.1f, 0.1f, 0.1f);
-            contentStream.newLineAtOffset(nameX, nameY);
-            contentStream.showText(safeName);
-            contentStream.endText();
-
-            // ── Draw event name centered below student name at ~40% height ──
-            if (safeEventName != null && !safeEventName.isBlank()) {
-                PDType1Font eventFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-                float eventFontSize = 16f;
-                float eventWidth = eventFont.getStringWidth(safeEventName) / 1000 * eventFontSize;
-                while (eventWidth > pageWidth * 0.85f && eventFontSize > 10f) {
-                    eventFontSize -= 1f;
-                    eventWidth = eventFont.getStringWidth(safeEventName) / 1000 * eventFontSize;
-                }
-                float eventX = (pageWidth - eventWidth) / 2;
-                float eventY = pageHeight * 0.38f;
-
-                contentStream.beginText();
-                contentStream.setFont(eventFont, eventFontSize);
-                contentStream.setNonStrokingColor(0.2f, 0.2f, 0.4f);
-                contentStream.newLineAtOffset(eventX, eventY);
-                contentStream.showText(safeEventName);
-                contentStream.endText();
+            Evento evento = eventoRepository.findById(diploma.getIdEvento()).orElse(null);
+            if (evento != null && evento.getFechaInicio() != null) {
+                String fecha = evento.getFechaInicio().format(
+                        DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "MX")));
+                params.put("FECHA", fecha);
+            } else {
+                params.put("FECHA", "");
             }
 
-            // ── Draw signature image if available ──
             if (diploma.getFirmaImagen() != null && !diploma.getFirmaImagen().isBlank()) {
-                try {
-                    String sigBase64 = diploma.getFirmaImagen();
-                    if (sigBase64.contains(",")) {
-                        sigBase64 = sigBase64.substring(sigBase64.indexOf(",") + 1);
-                    }
-                    byte[] sigBytes = Base64.getDecoder().decode(sigBase64);
-
-                    PDImageXObject sigImage = PDImageXObject.createFromByteArray(document, sigBytes, "firma");
-
-                    float sigWidth = 150;
-                    float sigHeight = (float) sigImage.getHeight() / sigImage.getWidth() * sigWidth;
-                    float sigX = (pageWidth - sigWidth) / 2;
-                    float sigY = pageHeight * 0.18f;
-
-                    contentStream.drawImage(sigImage, sigX, sigY, sigWidth, sigHeight);
-                } catch (Exception e) {
-                    // If signature image fails, continue without it
+                String sigBase64 = diploma.getFirmaImagen();
+                if (sigBase64.contains(",")) {
+                    sigBase64 = sigBase64.substring(sigBase64.indexOf(",") + 1);
                 }
+                byte[] sigBytes = Base64.getDecoder().decode(sigBase64);
+                params.put("FIRMA_IMAGEN", new ByteArrayInputStream(sigBytes));
             }
 
-            // ── Draw signer name below signature at ~14% height ──
-            if (safeFirma != null && !safeFirma.isBlank()) {
-                PDType1Font signerFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-                float signerFontSize = 12f;
-                float signerWidth = signerFont.getStringWidth(safeFirma) / 1000 * signerFontSize;
-                float signerX = (pageWidth - signerWidth) / 2;
-                float signerY = pageHeight * 0.14f;
-
-                contentStream.beginText();
-                contentStream.setFont(signerFont, signerFontSize);
-                contentStream.setNonStrokingColor(0.3f, 0.3f, 0.3f);
-                contentStream.newLineAtOffset(signerX, signerY);
-                contentStream.showText(safeFirma);
-                contentStream.endText();
-            }
-
-            contentStream.close();
+            JasperPrint jasperPrint = JasperFillManager.fillReport(
+                    jasperReport, params, new JREmptyDataSource());
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            document.save(baos);
-            document.close();
+            JasperExportManager.exportReportToPdfStream(jasperPrint, baos);
 
             return baos.toByteArray();
 
         } catch (Exception e) {
             throw new RuntimeException("Error al generar el PDF del diploma: " + e.getMessage(), e);
         }
-    }
-
-    /**
-     * Sanitize text to ensure compatibility with PDType1Font (WinAnsiEncoding).
-     * Replaces characters not supported by the encoding.
-     */
-    private String sanitizeForFont(String text) {
-        if (text == null) return "";
-        // WinAnsiEncoding supports basic Latin + accented chars (á,é,í,ó,ú,ñ,ü,Á,É,Í,Ó,Ú,Ñ,Ü)
-        // Replace any problematic characters that might cause encoding issues
-        StringBuilder sb = new StringBuilder();
-        for (char c : text.toCharArray()) {
-            if (c < 256) {
-                sb.append(c);
-            } else {
-                // Replace unsupported Unicode chars with closest ASCII equivalent
-                sb.append('?');
-            }
-        }
-        return sb.toString();
     }
 
     private void enviarCorreoDiploma(String correo, String nombre, String nombreEvento, byte[] pdfBytes) {
@@ -393,7 +337,10 @@ public class DiplomaService {
 
         if (firma != null && !firma.isBlank()) diploma.setFirma(firma);
         if (diseno != null && !diseno.isBlank()) diploma.setDiseno(diseno);
-        if (plantillaPdf != null && !plantillaPdf.isBlank()) diploma.setPlantillaPdf(plantillaPdf);
+        if (plantillaPdf != null && !plantillaPdf.isBlank()) {
+            validarPlantillaJasper(plantillaPdf);
+            diploma.setPlantillaPdf(plantillaPdf);
+        }
         if (firmaImagen != null && !firmaImagen.isBlank()) diploma.setFirmaImagen(firmaImagen);
 
         diplomaRepository.save(diploma);

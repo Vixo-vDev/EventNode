@@ -100,14 +100,28 @@ public class DiplomaController {
     @PostMapping("/{idDiploma}/emitir")
     public ResponseEntity<?> emitirDiplomas(@PathVariable Integer idDiploma) {
         try {
-            long count = diplomaService.emitirDiplomas(idDiploma);
+            Map<String, Object> result = diplomaService.emitirDiplomas(idDiploma);
+
+            long enviados = ((Number) result.get("totalEnviados")).longValue();
+            long errores = ((Number) result.get("totalErrores")).longValue();
 
             Map<String, Object> response = new HashMap<>();
-            response.put("mensaje", "Diplomas emitidos exitosamente");
-            response.put("totalEmitidos", count);
+            response.put("totalEmitidos", enviados);
+            response.put("totalErrores", errores);
+
+            if (errores > 0 && result.containsKey("primerError")) {
+                response.put("primerError", result.get("primerError"));
+            }
+
+            if (enviados == 0 && errores > 0) {
+                response.put("mensaje", "No se pudo enviar ningún diploma. Error: " + result.get("primerError"));
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+
+            response.put("mensaje", "Diplomas procesados: " + enviados + " enviados, " + errores + " con error");
             return ResponseEntity.ok(response);
 
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | IllegalStateException ex) {
             Map<String, String> error = new HashMap<>();
             error.put("mensaje", ex.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);

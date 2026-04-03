@@ -40,8 +40,7 @@ function EditarAdministradorModal({ admin, onAdminUpdated }) {
       toast.success('Administrador actualizado exitosamente')
       const modalEl = document.getElementById('editarAdminModal')
       if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide()
       }
       if (onAdminUpdated) onAdminUpdated()
     } catch (err) {
@@ -58,8 +57,7 @@ function EditarAdministradorModal({ admin, onAdminUpdated }) {
       toast.success(admin?.active ? 'Administrador deshabilitado' : 'Administrador habilitado')
       const modalEl = document.getElementById('editarAdminModal')
       if (modalEl && window.bootstrap) {
-        const bsModal = window.bootstrap.Modal.getInstance(modalEl)
-        if (bsModal) bsModal.hide()
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide()
       }
       if (onAdminUpdated) onAdminUpdated()
     } catch (err) {
