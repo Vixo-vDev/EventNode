@@ -1,4 +1,5 @@
 import org.gradle.api.JavaVersion
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -10,6 +11,14 @@ android {
     namespace = "mx.edu.utez.integradoraeventnode"
     compileSdk = 35
 
+    // Leer BACKEND_IP desde local.properties (cada miembro del equipo pone su IP)
+    val localProps = Properties()
+    val localPropsFile = rootProject.file("local.properties")
+    if (localPropsFile.exists()) {
+        localProps.load(localPropsFile.inputStream())
+    }
+    val backendIp = localProps.getProperty("BACKEND_IP", "10.0.2.2")
+
     defaultConfig {
         applicationId = "mx.edu.utez.integradoraeventnode"
         minSdk = 26
@@ -18,6 +27,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Inyecta la IP como BuildConfig.BACKEND_IP
+        buildConfigField("String", "BACKEND_IP", "\"$backendIp\"")
     }
 
     buildTypes {
@@ -41,6 +53,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     sourceSets["main"].assets.srcDir("../Iconos")

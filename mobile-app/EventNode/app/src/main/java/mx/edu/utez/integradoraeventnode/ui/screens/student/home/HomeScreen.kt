@@ -63,8 +63,6 @@ import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.student.profile.ProfileBottomNav
 import androidx.compose.ui.graphics.asImageBitmap
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 
 
@@ -160,18 +158,9 @@ fun HomeScreen(
                 )
                 if (response.isSuccessful) {
                     val all = response.body() ?: emptyList()
-                    val now = LocalDateTime.now()
+                    // Show all events that are not cancelled or finished
                     eventos = all.filter { evento ->
-                        (evento.estado == "ACTIVO" || evento.estado == "PRÓXIMO") &&
-                        try {
-                            val fechaFin = LocalDateTime.parse(
-                                evento.fechaFin,
-                                DateTimeFormatter.ISO_LOCAL_DATE_TIME
-                            )
-                            !fechaFin.isBefore(now)
-                        } catch (_: Exception) {
-                            true
-                        }
+                        evento.estado != "CANCELADO" && evento.estado != "FINALIZADO"
                     }
                 } else {
                     errorMessage = "Error al cargar eventos"

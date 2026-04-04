@@ -105,9 +105,9 @@ fun StudentEventDetailScreen(
                         val countResponse = ApiClient.apiService.contarInscritos(bearerToken, eventId)
                         if (countResponse.isSuccessful) {
                             val countData = countResponse.body()
-                            inscritosCount = (countData?.get("total") as? Number)?.toInt()
+                            inscritosCount = (countData?.get("totalInscritos") as? Number)?.toInt()
+                                ?: (countData?.get("total") as? Number)?.toInt()
                                 ?: (countData?.get("count") as? Number)?.toInt()
-                                ?: (countData?.get("inscritos") as? Number)?.toInt()
                         }
                     } catch (_: Exception) { /* Non-critical: capacity count failed */ }
                 }
@@ -352,7 +352,7 @@ fun StudentEventDetailScreen(
                                     color = Color.White
                                 )
                             }
-                        } else if (ev.estado == "ACTIVO") {
+                        } else if (ev.estado == "ACTIVO" || ev.estado == "PRÓXIMO") {
                             Button(
                                 onClick = { errorMessage = null; showInscribirseDialog = true },
                                 modifier = Modifier

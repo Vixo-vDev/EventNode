@@ -1,13 +1,15 @@
 package mx.edu.utez.integradoraeventnode.data.network
 
+import mx.edu.utez.integradoraeventnode.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
-    // 192.168.0.184 es la IP local de tu computadora para pruebas en dispositivo físico
-    private const val BASE_URL = "http://192.168.0.184:8080"
+    // La IP se lee desde local.properties (BACKEND_IP=tu.ip.aqui)
+    // Cada miembro del equipo configura su propia IP sin afectar a los demás
+    private const val BASE_URL = "http://${BuildConfig.BACKEND_IP}:8080"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
