@@ -1,6 +1,10 @@
 package mx.edu.utez.integradoraeventnode.ui.screens.admin.scanner
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +27,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.ResultPoint
+import com.journeyapps.barcodescanner.BarcodeCallback
+import com.journeyapps.barcodescanner.BarcodeResult
+import com.journeyapps.barcodescanner.DecoratedBarcodeView
+import com.journeyapps.barcodescanner.DefaultDecoderFactory
 import kotlinx.coroutines.launch
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
@@ -323,18 +335,26 @@ private fun InitialScannerView(
         }
 
         Button(
-            onClick = onManual,
+            onClick = onScan,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
         ) {
-            Text("Entrada manual", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Escanear QR del alumno", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
-        TextButton(onClick = onScan, modifier = Modifier.padding(top = 8.dp)) {
-            Text("Simular Escaneo", color = Color.Gray)
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedButton(
+            onClick = onManual,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("Entrada manual", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
         TextButton(onClick = onChangeEvent, modifier = Modifier.padding(top = 4.dp)) {
@@ -353,15 +373,27 @@ private fun ScanningView(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var isProcessing by remember { mutableStateOf(false) }
-    var simulatedQrInput by remember { mutableStateOf("") }
+    var hasScanned by remember { mutableStateOf(false) }
+    var hasPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                    PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted -> hasPermission = granted }
+
+    LaunchedEffect(Unit) {
+        if (!hasPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
+    }
 
     fun processQrCode(qrData: String) {
-        if (isProcessing) return
+        if (isProcessing || hasScanned) return
+        hasScanned = true
         isProcessing = true
 
-        // Parse QR data - expects format EVENTNODE_CHECKIN:{eventId}
-        // The admin scans the student's QR which contains their userId
-        // Or if the QR is the event QR, the student scans it and the app registers via userId
         coroutineScope.launch {
             try {
                 val prefs = context.getSharedPreferences("EventNodePrefs", Context.MODE_PRIVATE)
@@ -372,7 +404,6 @@ private fun ScanningView(
                     return@launch
                 }
 
-                // Try to parse as matrícula (manual/QR scan of student ID)
                 val response = ApiClient.apiService.registrarAsistenciaManual(
                     "Bearer $token",
                     mapOf(
@@ -403,104 +434,133 @@ private fun ScanningView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Escanea el código QR",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 32.dp)
-        )
-        Text(
-            text = "Ubica el código dentro del recuadro para registrar asistencia",
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray,
-            modifier = Modifier.padding(top = 8.dp)
-        )
+        // Top bar
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(36.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.White)
+                    .clickable { onBack() },
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    bitmap = assetImageBitmap("arrow-small-left.png"),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Text(
+                text = "Escanear QR del alumno",
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Text(
             text = event.nombre,
             style = MaterialTheme.typography.labelMedium,
             color = Color(0xFF2F6FED),
-            modifier = Modifier.padding(top = 4.dp)
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Box(
-            modifier = Modifier
-                .size(280.dp)
-                .clip(RoundedCornerShape(32.dp))
-        ) {
-            Image(
-                bitmap = assetImageBitmap("Gemini_Generated_Image_j7p5usj7p5usj7p5.png"),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(40.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.Black.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isProcessing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
-                        color = Color.White
-                    )
-                } else {
-                    Image(
-                        bitmap = assetImageBitmap("qr-scan.png"),
-                        contentDescription = null,
-                        modifier = Modifier.size(120.dp)
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Simulated QR input for testing
-        OutlinedTextField(
-            value = simulatedQrInput,
-            onValueChange = { simulatedQrInput = it },
-            placeholder = { Text("Matrícula del alumno (simular QR)") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White
-            )
+            textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = {
-                if (simulatedQrInput.isNotEmpty()) {
-                    processQrCode(simulatedQrInput)
+        if (!hasPermission) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Se requiere permiso de cámara para escanear.", textAlign = TextAlign.Center, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
+                        Text("Conceder permiso")
+                    }
                 }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED)),
-            enabled = !isProcessing && simulatedQrInput.isNotEmpty()
-        ) {
-            Text(
-                if (isProcessing) "Procesando..." else "Registrar Asistencia",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            }
+        } else {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Black),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                var barcodeViewRef by remember { mutableStateOf<DecoratedBarcodeView?>(null) }
+
+                DisposableEffect(Unit) {
+                    onDispose { barcodeViewRef?.pause() }
+                }
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    AndroidView(
+                        factory = { ctx ->
+                            DecoratedBarcodeView(ctx).apply {
+                                barcodeView.decoderFactory = DefaultDecoderFactory(listOf(BarcodeFormat.QR_CODE))
+                                setStatusText("")
+                                decodeContinuous(object : BarcodeCallback {
+                                    override fun barcodeResult(result: BarcodeResult?) {
+                                        if (result != null) processQrCode(result.text)
+                                    }
+                                    override fun possibleResultPoints(resultPoints: MutableList<ResultPoint>?) {}
+                                })
+                                resume()
+                                barcodeViewRef = this
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(24.dp))
+                    )
+
+                    if (isProcessing) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.5f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(48.dp))
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFFE6F0FF))
+                    .padding(horizontal = 14.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = "ESCÁNER ACTIVO",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF2F6FED),
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
-        TextButton(onClick = onBack, modifier = Modifier.padding(top = 8.dp)) {
-            Text("Atrás", color = Color.Gray)
-        }
+        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 

@@ -199,7 +199,7 @@ class DiplomaControllerTest {
 
     @Test
     void emitirDiplomasRetornaTotalTest() throws Exception {
-        when(diplomaService.emitirDiplomas(2)).thenReturn(4L);
+        when(diplomaService.emitirDiplomas(2)).thenReturn(Map.of("totalEnviados", 4L, "totalErrores", 0L));
 
         resultadoMvc = mockMvc.perform(post("/api/diplomas/2/emitir")).andReturn();
 

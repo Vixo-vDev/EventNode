@@ -67,6 +67,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -154,13 +156,13 @@ fun HomeScreen(
                     nombre = nombreParam,
                     mes = selectedMonth,
                     categoriaId = selectedCategoryId,
-                    estado = "ACTIVO"
+                    estado = null
                 )
                 if (response.isSuccessful) {
                     val all = response.body() ?: emptyList()
-                    // Client-side: filter out past events (fechaFin before now)
                     val now = LocalDateTime.now()
                     eventos = all.filter { evento ->
+                        (evento.estado == "ACTIVO" || evento.estado == "PRÓXIMO") &&
                         try {
                             val fechaFin = LocalDateTime.parse(
                                 evento.fechaFin,
@@ -168,7 +170,7 @@ fun HomeScreen(
                             )
                             !fechaFin.isBefore(now)
                         } catch (_: Exception) {
-                            true // keep events with unparseable dates
+                            true
                         }
                     }
                 } else {
@@ -362,7 +364,7 @@ fun HomeScreen(
 
                             EventCard(
                                 tag = evento.estado.uppercase(),
-                                category = cat,
+                                category = cat as String,
                                 mainText = main,
                                 title = evento.nombre,
                                 date = dateStr,

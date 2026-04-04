@@ -11,15 +11,12 @@ import com.eventnode.eventnodeapi.repositories.DiplomaRepository;
 import com.eventnode.eventnodeapi.repositories.EventoRepository;
 import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
 import jakarta.mail.internet.MimeMessage;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mail.javamail.JavaMailSender;
 
-import java.io.ByteArrayOutputStream;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -63,19 +60,35 @@ class DiplomaServiceTest {
 
     @BeforeAll
     public static void iniciarPlantillas() throws Exception {
-        plantillaPdfBase64 = crearPdfMinimoBase64();
+        plantillaPdfBase64 = crearJrxmlMinimoBase64();
         // PNG 1x1 transparente
         firmaPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
         instancia = null;
     }
 
-    private static String crearPdfMinimoBase64() throws Exception {
-        try (PDDocument document = new PDDocument()) {
-            document.addPage(new PDPage());
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            document.save(baos);
-            return Base64.getEncoder().encodeToString(baos.toByteArray());
-        }
+    private static String crearJrxmlMinimoBase64() {
+        String jrxml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<jasperReport xmlns=\"http://jasperreports.sourceforge.net/jasperreports\"\n" +
+                "              xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                "              xsi:schemaLocation=\"http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd\"\n" +
+                "              name=\"diploma_test\" pageWidth=\"595\" pageHeight=\"842\"\n" +
+                "              columnWidth=\"555\" leftMargin=\"20\" rightMargin=\"20\"\n" +
+                "              topMargin=\"20\" bottomMargin=\"20\">\n" +
+                "    <parameter name=\"STUDENT_NAME\" class=\"java.lang.String\"/>\n" +
+                "    <parameter name=\"EVENT_NAME\" class=\"java.lang.String\"/>\n" +
+                "    <parameter name=\"FIRMA_NOMBRE\" class=\"java.lang.String\"/>\n" +
+                "    <parameter name=\"FECHA\" class=\"java.lang.String\"/>\n" +
+                "    <parameter name=\"FIRMA_IMAGEN\" class=\"java.io.InputStream\"/>\n" +
+                "    <detail>\n" +
+                "        <band height=\"30\">\n" +
+                "            <textField>\n" +
+                "                <reportElement x=\"0\" y=\"0\" width=\"555\" height=\"30\"/>\n" +
+                "                <textFieldExpression><![CDATA[$P{STUDENT_NAME}]]></textFieldExpression>\n" +
+                "            </textField>\n" +
+                "        </band>\n" +
+                "    </detail>\n" +
+                "</jasperReport>";
+        return Base64.getEncoder().encodeToString(jrxml.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     @BeforeEach
@@ -287,10 +300,9 @@ class DiplomaServiceTest {
         when(diplomaEmitidoRepository.findByIdDiploma(idDiploma)).thenReturn(Collections.emptyList());
 
         // Invocar método
-        longResultado = instancia.emitirDiplomas(idDiploma);
+        assertThrows(IllegalStateException.class, () -> instancia.emitirDiplomas(idDiploma));
 
         // Validar resultado
-        assertEquals(0L, longResultado);
         verify(mailSender, never()).send(any(MimeMessage.class));
     }
 
@@ -305,7 +317,7 @@ class DiplomaServiceTest {
         when(diplomaEmitidoRepository.save(any(DiplomaEmitido.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // Invocar método
-        longResultado = instancia.emitirDiplomas(idDiploma);
+        longResultado = (Long) instancia.emitirDiplomas(idDiploma).get("totalEnviados");
 
         // Validar resultado
         assertEquals(1L, longResultado);
@@ -321,7 +333,7 @@ class DiplomaServiceTest {
         when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.empty());
 
         // Invocar método
-        longResultado = instancia.emitirDiplomas(idDiploma);
+        longResultado = (Long) instancia.emitirDiplomas(idDiploma).get("totalEnviados");
 
         // Validar resultado
         assertEquals(0L, longResultado);
@@ -338,7 +350,7 @@ class DiplomaServiceTest {
         when(diplomaEmitidoRepository.findByIdDiploma(idDiploma)).thenReturn(List.of(ya));
 
         // Invocar método
-        longResultado = instancia.emitirDiplomas(idDiploma);
+        longResultado = (Long) instancia.emitirDiplomas(idDiploma).get("totalEnviados");
 
         // Validar resultado
         assertEquals(0L, longResultado);
@@ -461,7 +473,7 @@ class DiplomaServiceTest {
         when(diplomaEmitidoRepository.save(any(DiplomaEmitido.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // Invocar método
-        longResultado = instancia.emitirDiplomas(idDiploma);
+        longResultado = (Long) instancia.emitirDiplomas(idDiploma).get("totalErrores");
 
         // Validar resultado (se registró intento con estado ERROR)
         assertEquals(1L, longResultado);

@@ -12,7 +12,7 @@ import com.eventnode.eventnodeapi.repositories.EventoRepository;
 import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
 import jakarta.mail.internet.MimeMessage;
 import net.sf.jasperreports.engine.*;
-import net.sf.jasperreports.engine.data.JREmptyDataSource;
+import net.sf.jasperreports.engine.JREmptyDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;

@@ -7,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
     // 192.168.0.184 es la IP local de tu computadora para pruebas en dispositivo físico
-    private const val BASE_URL = "http://192.168.100.9:8080"
+    private const val BASE_URL = "http://192.168.0.184:8080"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

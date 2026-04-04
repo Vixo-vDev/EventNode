@@ -13,5 +13,8 @@ data class EventoResponse(
     val descripcion: String,
     val estado: String,
     val categoriaId: Int?,
-    val categoriaNombre: String?
-)
+    val categoriaNombre: String?,
+    val nombreCategoria: String?
+) {
+
+}
