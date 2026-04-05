@@ -2,6 +2,7 @@ package mx.edu.utez.integradoraeventnode.ui.screens.admin.home
 
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -168,19 +169,20 @@ fun AdminHomeScreen(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 filteredEvents.take(3).forEach { event ->
-                                val (day, month) = extractDateParts(event.fechaInicio)
-                                val statusColor = getStatusColor(event.estado)
-                                AdminEventCard(
-                                    day = day,
-                                    month = month,
-                                    title = event.nombre,
-                                    location = event.ubicacion,
-                                    status = event.estado,
-                                    statusColor = statusColor,
-                                    eventId = event.idEvento,
-                                    onClick = onViewEventDetail
-                                )
-                            }
+                                    val (day, month) = extractDateParts(event.fechaInicio)
+                                    val statusColor = getStatusColor(event.estado)
+                                    AdminEventCard(
+                                        day = day,
+                                        month = month,
+                                        title = event.nombre,
+                                        location = event.ubicacion,
+                                        status = event.estado,
+                                        statusColor = statusColor,
+                                        bannerBase64 = event.banner,
+                                        eventId = event.idEvento,
+                                        onClick = onViewEventDetail
+                                    )
+                                }
                         }
 
                             Spacer(modifier = Modifier.height(24.dp))
@@ -203,8 +205,8 @@ fun AdminHomeScreen(
                                         HorizontalDivider(color = Color(0xFFF0F0F0))
                                     }
                                     RecentCertItem(
-                                        title = diploma["nombre"]?.toString() ?: "Sin nombre",
-                                        info = "DIPLOMA ID: ${diploma["idDiploma"]?.toString() ?: "N/A"}",
+                                        title = diploma["nombreEvento"]?.toString() ?: diploma["nombre"]?.toString() ?: "Sin nombre",
+                                        info = "ID: ${diploma["idDiploma"]?.toString() ?: "N/A"} • Emitidos: ${(diploma["totalEmitidos"] as? Number)?.toInt() ?: 0}",
                                         status = if (diploma["estado"]?.toString() == "EMITIDO") "COMPLETADO" else "PENDIENTE",
                                         statusColor = if (diploma["estado"]?.toString() == "EMITIDO") Color(0xFF4CAF50) else Color(0xFFFFB300),
                                         icon = "diploma.png"
@@ -299,9 +301,19 @@ private fun AdminEventCard(
     location: String,
     status: String,
     statusColor: Color,
+    bannerBase64: String? = null,
     eventId: Int = 0,
     onClick: (Int) -> Unit = {}
 ) {
+    val decodedBanner: ImageBitmap? = remember(bannerBase64) {
+        if (bannerBase64.isNullOrEmpty()) return@remember null
+        try {
+            val clean = if (bannerBase64.contains(",")) bannerBase64.substringAfter(",") else bannerBase64
+            val bytes = Base64.decode(clean, Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+        } catch (e: Exception) { null }
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -309,41 +321,66 @@ private fun AdminEventCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
+        Column {
+            // Banner
+            Box(
                 modifier = Modifier
-                    .width(45.dp)
-                    .padding(vertical = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .background(Color(0xFF6F9EA6))
             ) {
-                Text(text = month, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                Text(text = day, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
+                if (decodedBanner != null) {
+                    Image(
+                        bitmap = decodedBanner,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        alpha = 0.85f
+                    )
+                }
+                // Status badge over banner
                 Box(
                     modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(statusColor.copy(alpha = 0.1f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .background(statusColor.copy(alpha = 0.9f))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
-                    Text(text = status, style = MaterialTheme.typography.labelSmall, color = statusColor, fontWeight = FontWeight.Bold, fontSize = 9.sp)
-                }
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(text = title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("📍", fontSize = 10.sp)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = location, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(
+                        text = status,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 9.sp
+                    )
                 }
             }
 
-            Text("〉", color = Color.LightGray, modifier = Modifier.padding(horizontal = 8.dp))
+            // Info row below banner
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier
+                        .width(45.dp)
+                        .padding(vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = month, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    Text(text = day, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    Text(text = location, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                }
+
+                Text(">", color = Color.LightGray, modifier = Modifier.padding(horizontal = 8.dp))
+            }
         }
     }
 }

@@ -323,7 +323,7 @@ private fun SuccessDialog(onBackToProfile: () -> Unit, onGoHome: () -> Unit) {
                         modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFF2F6FED)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("✓", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(Color.White))
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))

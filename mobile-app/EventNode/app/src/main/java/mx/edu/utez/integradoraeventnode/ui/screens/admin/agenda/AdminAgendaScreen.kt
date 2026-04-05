@@ -26,11 +26,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
-import kotlin.math.min
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
@@ -48,45 +45,31 @@ fun AdminAgendaScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var selectedTab by remember { mutableStateOf(0) } // 0: Próximos, 1: Pasados
     var isLoading by remember { mutableStateOf(true) }
-    var allEvents by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
-    var upcomingGrouped by remember { mutableStateOf<List<Pair<String, List<EventoResponse>>>>(emptyList()) }
-    var pastEvents by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
+    var enVivoEvents by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
+    var proximosEvents by remember { mutableStateOf<List<EventoResponse>>(emptyList()) }
 
     LaunchedEffect(Unit) {
         scope.launch {
             try {
                 val prefs = context.getSharedPreferences("EventNodePrefs", Context.MODE_PRIVATE)
                 val token = prefs.getString("token", "") ?: ""
-                val bearerToken = "Bearer $token"
-
                 if (token.isNotEmpty()) {
-                    val response = ApiClient.apiService.getEventosFiltrados(bearerToken)
+                    val response = ApiClient.apiService.getEventosFiltrados("Bearer $token")
                     if (response.isSuccessful) {
-                        allEvents = response.body() ?: emptyList()
-
-                        // Split into upcoming and past
+                        val all = (response.body() ?: emptyList()).filter {
+                            it.estado != "CANCELADO" && it.estado != "FINALIZADO"
+                        }
                         val now = LocalDateTime.now()
-                        val upcoming = allEvents.filter { event ->
-                            try {
-                                val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-                                LocalDateTime.parse(event.fechaInicio, formatter).isAfter(now)
-                            } catch (e: Exception) {
-                                false
-                            }
+                        enVivoEvents = all.filter { ev ->
+                            val inicio = parseDateTime(ev.fechaInicio)
+                            val fin = parseDateTime(ev.fechaFin)
+                            inicio != null && fin != null && !inicio.isAfter(now) && !fin.isBefore(now)
                         }
-                        pastEvents = allEvents.filter { event ->
-                            try {
-                                val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-                                LocalDateTime.parse(event.fechaInicio, formatter).isBefore(now)
-                            } catch (e: Exception) {
-                                false
-                            }
+                        proximosEvents = all.filter { ev ->
+                            val inicio = parseDateTime(ev.fechaInicio)
+                            inicio != null && inicio.isAfter(now)
                         }
-
-                        // Group upcoming by date
-                        upcomingGrouped = groupEventsByDate(upcoming)
                     }
                 }
                 isLoading = false
@@ -99,10 +82,7 @@ fun AdminAgendaScreen(
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else {
@@ -110,80 +90,51 @@ fun AdminAgendaScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(bottom = 90.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp)
                 ) {
-                    // Tabs
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = Color.White,
-                        shadowElevation = 1.dp
-                    ) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            TabItem(
-                                text = "Próximos",
-                                selected = selectedTab == 0,
-                                modifier = Modifier.weight(1f),
-                                onClick = { selectedTab = 0 }
-                            )
-                            TabItem(
-                                text = "Pasados",
-                                selected = selectedTab == 1,
-                                modifier = Modifier.weight(1f),
-                                onClick = { selectedTab = 1 }
-                            )
+                    Text(
+                        text = "Mis Eventos",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    if (enVivoEvents.isEmpty() && proximosEvents.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("No hay eventos activos ni próximos.", color = Color.Gray, textAlign = TextAlign.Center)
                         }
-                    }
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(20.dp)
-                    ) {
-                        if (selectedTab == 0) {
-                            if (upcomingGrouped.isEmpty()) {
-                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Text("No hay eventos próximos", color = Color.Gray)
-                                }
-                            } else {
-                                upcomingGrouped.forEach { (dateLabel, events) ->
-                                    Text(
-                                        text = dateLabel,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(bottom = 16.dp)
-                                    )
-
-                                    events.forEach { event ->
-                                        AdminAgendaCard(
-                                            event = event,
-                                            onDetail = { onViewDetail(event.idEvento) }
-                                        )
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                    }
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                }
+                    } else {
+                        // ── EN VIVO ──
+                        if (enVivoEvents.isNotEmpty()) {
+                            SectionLabel(label = "EN VIVO", color = Color(0xFFE53935))
+                            Spacer(modifier = Modifier.height(12.dp))
+                            enVivoEvents.forEach { event ->
+                                AdminAgendaCard(event = event, isLive = true, onDetail = { onViewDetail(event.idEvento) })
+                                Spacer(modifier = Modifier.height(16.dp))
                             }
-                        } else {
-                            if (pastEvents.isEmpty()) {
-                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Text("No hay eventos pasados", color = Color.Gray)
-                                }
-                            } else {
-                                pastEvents.forEach { event ->
-                                    CompactEventCard(
-                                        event = event,
-                                        onViewDetail = { onViewDetail(event.idEvento) }
-                                    )
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        // ── PRÓXIMOS ──
+                        if (proximosEvents.isNotEmpty()) {
+                            SectionLabel(label = "PRÓXIMOS", color = Color(0xFF2F6FED))
+                            Spacer(modifier = Modifier.height(12.dp))
+                            proximosEvents.forEach { event ->
+                                AdminAgendaCard(event = event, isLive = false, onDetail = { onViewDetail(event.idEvento) })
+                                Spacer(modifier = Modifier.height(16.dp))
                             }
                         }
                     }
                 }
             }
 
-            // Bottom Nav
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -204,49 +155,28 @@ fun AdminAgendaScreen(
     }
 }
 
-private fun groupEventsByDate(events: List<EventoResponse>): List<Pair<String, List<EventoResponse>>> {
-    val grouped = mutableMapOf<String, MutableList<EventoResponse>>()
-    val today = LocalDate.now()
-    val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-    val dateFormatter = DateTimeFormatter.ofPattern("d 'de' MMMM", Locale("es", "ES"))
-
-    events.forEach { event ->
-        try {
-            val eventDate = LocalDateTime.parse(event.fechaInicio, formatter).toLocalDate()
-            val dateLabel = when {
-                eventDate == today -> "Hoy, ${today.format(dateFormatter)}"
-                eventDate == today.plusDays(1) -> "Mañana, ${today.plusDays(1).format(dateFormatter)}"
-                else -> eventDate.format(dateFormatter)
-            }
-
-            grouped.getOrPut(dateLabel) { mutableListOf() }.add(event)
-        } catch (e: Exception) {
-            // Skip events that can't be parsed
-        }
-    }
-
-    return grouped.toList().sortedBy { it.first }
+private fun parseDateTime(str: String?): LocalDateTime? {
+    if (str.isNullOrEmpty()) return null
+    return try {
+        LocalDateTime.parse(str.take(19), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
+    } catch (e: Exception) { null }
 }
 
 @Composable
-private fun TabItem(text: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Column(
-        modifier = modifier
-            .clickable { onClick() }
-            .padding(vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = text,
-            color = if (selected) Color(0xFF2F6FED) else Color.Gray,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-        )
-        Spacer(modifier = Modifier.height(8.dp))
+private fun SectionLabel(label: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.6f)
-                .height(2.dp)
-                .background(if (selected) Color(0xFF2F6FED) else Color.Transparent)
+                .size(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(color)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = color
         )
     }
 }
@@ -254,144 +184,86 @@ private fun TabItem(text: String, selected: Boolean, modifier: Modifier = Modifi
 @Composable
 private fun AdminAgendaCard(
     event: EventoResponse,
+    isLive: Boolean,
     onDetail: () -> Unit
 ) {
-    val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-    val (hours, minutes) = try {
-        val startTime = LocalDateTime.parse(event.fechaInicio, formatter)
-        val endTime = LocalDateTime.parse(event.fechaFin, formatter)
-        val startStr = startTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-        val endStr = endTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-        Pair(startStr, endStr)
-    } catch (e: Exception) {
-        Pair("", "")
+    val timeRange = try {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+        val start = LocalDateTime.parse(event.fechaInicio.take(19), formatter)
+        val end = LocalDateTime.parse(event.fechaFin.take(19), formatter)
+        "${start.format(DateTimeFormatter.ofPattern("HH:mm"))} - ${end.format(DateTimeFormatter.ofPattern("HH:mm"))}"
+    } catch (e: Exception) { "Hora no disponible" }
+
+    val bannerBitmap: ImageBitmap? = remember(event.banner) {
+        if (event.banner.isNullOrEmpty()) return@remember null
+        try {
+            val clean = if (event.banner!!.contains(",")) event.banner!!.substringAfter(",") else event.banner!!
+            val bytes = android.util.Base64.decode(clean, android.util.Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+        } catch (e: Exception) { null }
     }
 
-    val timeRange = if (hours.isNotEmpty() && minutes.isNotEmpty()) "$hours - $minutes" else "Hora no disponible"
+    val accentColor = if (isLive) Color(0xFFB71C1C) else Color(0xFF2F6FED)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column {
-            Box {
-                // Banner image or placeholder - decode outside composable tree
-                val bannerBitmap = remember(event.banner) {
-                    if (!event.banner.isNullOrEmpty()) {
-                        try {
-                            val decodedBytes = android.util.Base64.decode(event.banner!!, android.util.Base64.DEFAULT)
-                            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
-                        } catch (e: Exception) {
-                            null
-                        }
-                    } else null
-                }
-
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .background(accentColor.copy(alpha = 0.8f))
+            ) {
                 if (bannerBitmap != null) {
                     Image(
                         bitmap = bannerBitmap,
                         contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(160.dp),
-                        contentScale = ContentScale.Crop
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        alpha = if (isLive) 0.5f else 0.7f
                     )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(160.dp)
-                            .background(Color(0xFF2F6FED))
+                }
+                // Badge
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(10.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isLive) Color(0xFFFFEBEE) else Color(0xFFE6F0FF))
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = if (isLive) "EN VIVO" else "PRÓXIMO",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isLive) Color(0xFFE53935) else Color(0xFF2F6FED),
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
 
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(text = event.nombre, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🕒", fontSize = 12.sp)
-                    Spacer(modifier = Modifier.width(8.dp))
                     Text(text = timeRange, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("📍", fontSize = 12.sp)
-                    Spacer(modifier = Modifier.width(8.dp))
                     Text(text = event.ubicacion, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 Button(
                     onClick = onDetail,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = accentColor)
                 ) {
-                    Text("Ver detalles")
+                    Text("Ver detalles", fontWeight = FontWeight.Bold)
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CompactEventCard(
-    event: EventoResponse,
-    onViewDetail: () -> Unit
-) {
-    val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-    val (day, month) = try {
-        val eventDate = LocalDateTime.parse(event.fechaInicio, formatter)
-        val dayStr = eventDate.dayOfMonth.toString().padStart(2, '0')
-        val monthFormatter = DateTimeFormatter.ofPattern("MMM", Locale("es", "ES"))
-        val monthStr = eventDate.format(monthFormatter).uppercase()
-        Pair(dayStr, monthStr)
-    } catch (e: Exception) {
-        Pair("--", "---")
-    }
-
-    val (hours, minutes) = try {
-        val startTime = LocalDateTime.parse(event.fechaInicio, formatter)
-        val startStr = startTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-        Pair(startStr, "")
-    } catch (e: Exception) {
-        Pair("", "")
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .clickable { onViewDetail() },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFF5F6FA)),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(text = day, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color(0xFF2F6FED))
-                Text(text = month, fontSize = 12.sp, color = Color(0xFF2F6FED))
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = event.nombre, fontWeight = FontWeight.Bold)
-                Text(text = "${hours} - ${event.ubicacion}", fontSize = 12.sp, color = Color.Gray)
-                Text(text = event.estado, fontSize = 11.sp, color = Color.LightGray)
-            }
-
-            TextButton(onClick = onViewDetail) {
-                Text("Ver detalles", fontSize = 12.sp, color = Color(0xFF2F6FED))
             }
         }
     }
@@ -400,7 +272,5 @@ private fun CompactEventCard(
 @Preview(showBackground = true)
 @Composable
 fun AdminAgendaScreenPreview() {
-    IntegradoraEventNodeTheme {
-        AdminAgendaScreen()
-    }
+    IntegradoraEventNodeTheme { AdminAgendaScreen() }
 }

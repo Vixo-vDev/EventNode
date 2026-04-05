@@ -533,7 +533,7 @@ fun StudentEventDetailScreen(
                                     .background(Color(0xFF2F6FED)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("✓", fontSize = 40.sp, color = Color.White)
+                                Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color.White))
                             }
                             Spacer(modifier = Modifier.height(24.dp))
                             Text(
@@ -785,9 +785,9 @@ private fun SuccessDialog(onHome: () -> Unit, onOtherEvents: () -> Unit) {
                     .background(Color(0xFF2F6FED)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("✓", fontSize = 40.sp, color = Color.White)
+                Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color.White))
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(

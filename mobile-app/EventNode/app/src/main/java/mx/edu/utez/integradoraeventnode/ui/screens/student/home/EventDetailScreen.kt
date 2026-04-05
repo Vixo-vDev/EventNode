@@ -156,7 +156,8 @@ fun EventDetailScreen(
                 ) {
                     val bannerBitmap = evento?.banner?.let { base64String ->
                         try {
-                            val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
+                            val clean = if (base64String.contains(",")) base64String.substringAfter(",") else base64String
+                            val decodedBytes = Base64.decode(clean, Base64.DEFAULT)
                             BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
                         } catch (e: Exception) {
                             null

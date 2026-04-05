@@ -280,11 +280,11 @@ private fun DiplomaAdminCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         BadgeItem(
-                            label = if (diploma.tienePlantilla) "✓ Plantilla" else "Sin plantilla",
+                            label = if (diploma.tienePlantilla) "Plantilla" else "Sin plantilla",
                             color = if (diploma.tienePlantilla) Color(0xFF4CAF50) else Color(0xFFBDBDBD)
                         )
                         BadgeItem(
-                            label = if (diploma.tieneFirma) "✓ Firma" else "Sin firma",
+                            label = if (diploma.tieneFirma) "Firma" else "Sin firma",
                             color = if (diploma.tieneFirma) Color(0xFF4CAF50) else Color(0xFFBDBDBD)
                         )
                     }
@@ -296,7 +296,11 @@ private fun DiplomaAdminCard(
                         .background(Color(0xFFF0F7FF)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("🎓", fontSize = 24.sp)
+                    Image(
+                        bitmap = mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap("diploma.png"),
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp)
+                    )
                 }
             }
 
@@ -365,7 +369,12 @@ private fun DiplomaSuccessDialog(count: Int, onDismiss: () -> Unit) {
                     modifier = Modifier.size(80.dp).clip(CircleShape).background(Color(0xFFE8F5E9)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("✓", color = Color(0xFF4CAF50), fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(Color(0xFF4CAF50))
+                    )
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(text = "¡Diplomas Emitidos!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)

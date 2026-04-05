@@ -150,7 +150,8 @@ fun AdminEventDetailScreen(
                     Box(modifier = Modifier.fillMaxWidth().height(240.dp)) {
                         val bannerBitmap = eventData?.banner?.let { base64String ->
                             try {
-                                val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
+                                val clean = if (base64String.contains(",")) base64String.substringAfter(",") else base64String
+                                val decodedBytes = Base64.decode(clean, Base64.DEFAULT)
                                 BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
                             } catch (e: Exception) {
                                 null
@@ -348,7 +349,7 @@ fun AdminEventDetailScreen(
                                     Text(text = "Ver Lista de Asistencia", fontWeight = FontWeight.Bold)
                                     Text(text = "Gestionar participantes y registros", fontSize = 12.sp, color = Color.Gray)
                                 }
-                                Text("〉", color = Color.LightGray)
+                                Text(">", color = Color.LightGray)
                             }
                         }
 
@@ -527,8 +528,7 @@ private fun MetricCard(
             Spacer(modifier = Modifier.height(8.dp))
             if (showTrend) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("↗", color = Color(0xFF4CAF50), fontSize = 12.sp)
-                    Text("Sincronizado", color = Color(0xFF4CAF50), fontSize = 10.sp, modifier = Modifier.padding(start = 4.dp))
+                    Text("Sincronizado", color = Color(0xFF4CAF50), fontSize = 10.sp)
                 }
             } else {
                 LinearProgressIndicator(

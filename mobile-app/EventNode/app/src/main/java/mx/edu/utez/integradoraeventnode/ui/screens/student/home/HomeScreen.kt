@@ -97,6 +97,7 @@ fun HomeScreen(
     val prefs = context.getSharedPreferences("EventNodePrefs", android.content.Context.MODE_PRIVATE)
     val token = prefs.getString("token", "") ?: ""
     val bearerToken = if (token.isNotEmpty()) "Bearer $token" else ""
+    val userId = prefs.getInt("id", 0)
 
     // --- Search & filter state ---
     var searchText by remember { mutableStateOf("") }
@@ -122,6 +123,8 @@ fun HomeScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+
+    var diplomas by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
 
     // --- Load categories on first composition ---
     LaunchedEffect(Unit) {
@@ -176,6 +179,18 @@ fun HomeScreen(
     // Initial load and reload when filters change
     LaunchedEffect(searchText, selectedMonth, selectedCategoryId) {
         fetchEventos()
+    }
+
+    // Load student diplomas
+    LaunchedEffect(Unit) {
+        if (bearerToken.isNotEmpty() && userId > 0) {
+            try {
+                val response = ApiClient.apiService.listarDiplomasEstudiante(bearerToken, userId)
+                if (response.isSuccessful) {
+                    diplomas = response.body() ?: emptyList()
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
@@ -368,27 +383,68 @@ fun HomeScreen(
                         }
                     }
 
-                    SectionHeader(title = "Diploma", action = "Ver historial", onActionClick = onDiplomas)
+                    SectionHeader(title = "Mis Diplomas", action = "Ver todos", onActionClick = onDiplomas)
                     Spacer(modifier = Modifier.height(12.dp))
-                    SimpleEventCard(
-                        category = "WEB DEV",
-                        mainText = "SUMMIT",
-                        title = "Web Development Summit '23",
-                        subtitle = "Septiembre 2023",
-                        status = "DIPLOMA EMITIDO",
-                        cardColor = Color(0xFFC9D7C4),
-                        onClick = onDiplomas
+
+                    val diplomaColors = listOf(
+                        Color(0xFFC9D7C4),
+                        Color(0xFFA8B8B6),
+                        Color(0xFFD1B0A0),
+                        Color(0xFFB8D1A5)
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    SimpleEventCard(
-                        category = "MINIMAL",
-                        mainText = "DATA SCIENCE",
-                        title = "Seminario Avanzado: Big Data",
-                        subtitle = "Agosto 2023",
-                        status = "DIPLOMA EMITIDO",
-                        cardColor = Color(0xFFA8B8B6),
-                        onClick = onDiplomas
-                    )
+
+                    if (diplomas.isEmpty()) {
+                        Text(
+                            text = "Aún no tienes diplomas. ¡Asiste a eventos para obtenerlos!",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    } else {
+                        diplomas.take(2).forEachIndexed { index, diploma ->
+                            val nombreEvento = diploma["nombreEvento"] as? String ?: "Evento"
+                            val fechaEnvio = diploma["fechaEnvio"] as? String
+                            val estadoEnvio = diploma["estadoEnvio"] as? String ?: ""
+
+                            val subtitleText = if (!fechaEnvio.isNullOrEmpty()) {
+                                try {
+                                    val parts = fechaEnvio.substring(0, 10).split("-")
+                                    val meses = listOf("", "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+                                        "Jul", "Ago", "Sep", "Oct", "Nov", "Dic")
+                                    val mes = parts.getOrNull(1)?.toIntOrNull()?.let { meses.getOrNull(it) } ?: parts.getOrNull(1) ?: ""
+                                    "${parts.getOrNull(2) ?: ""} $mes ${parts.getOrNull(0) ?: ""}"
+                                } catch (_: Exception) { fechaEnvio }
+                            } else "Fecha pendiente"
+
+                            val statusText = when (estadoEnvio.uppercase()) {
+                                "ENVIADO" -> "DIPLOMA EMITIDO"
+                                "ERROR" -> "ERROR EN ENVÍO"
+                                else -> "PENDIENTE"
+                            }
+
+                            val mainText = nombreEvento
+                                .split(" ")
+                                .firstOrNull()
+                                ?.uppercase()
+                                ?.take(10) ?: "EVENTO"
+
+                            SimpleEventCard(
+                                category = "DIPLOMA",
+                                mainText = mainText,
+                                title = nombreEvento,
+                                subtitle = subtitleText,
+                                status = statusText,
+                                cardColor = diplomaColors[index % diplomaColors.size],
+                                onClick = onDiplomas
+                            )
+                            if (index < diplomas.take(2).lastIndex) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
+                    }
                 }
             }
             Box(
