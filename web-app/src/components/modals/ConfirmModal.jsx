@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from '../../i18n/I18nContext'
 
 function ConfirmModal({ id = 'confirmModal', title, message, confirmText = 'Confirmar', cancelText = 'Cancelar', onConfirm, isLoading = false, variant = 'danger' }) {
   const { t } = useTranslation()
+  const closeBtnRef = useRef(null)
   const btnClass = variant === 'danger' ? 'btn-danger' : variant === 'warning' ? 'btn-warning' : 'btn-primary'
   const iconClass = variant === 'danger' ? 'bi-exclamation-triangle text-danger' : variant === 'warning' ? 'bi-exclamation-circle text-warning' : 'bi-question-circle text-primary'
 
@@ -19,6 +20,15 @@ function ConfirmModal({ id = 'confirmModal', title, message, confirmText = 'Conf
     return () => modalEl.removeEventListener('hide.bs.modal', handleHide)
   }, [id])
 
+  const handleConfirm = async () => {
+    try {
+      await onConfirm()
+      closeBtnRef.current?.click()
+    } catch {
+      // El error ya fue mostrado por el padre
+    }
+  }
+
   return (
     <div className="modal fade" id={id} tabIndex="-1" aria-labelledby={`${id}Label`} aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered">
@@ -30,7 +40,7 @@ function ConfirmModal({ id = 'confirmModal', title, message, confirmText = 'Conf
               </div>
               <h5 className="fw-bold mb-0" id={`${id}Label`}>{title}</h5>
             </div>
-            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" ref={closeBtnRef}></button>
           </div>
           <div className="modal-body px-4 py-3">
             <p className="text-secondary mb-0" style={{ fontSize: '14px' }}>{message}</p>
@@ -47,7 +57,7 @@ function ConfirmModal({ id = 'confirmModal', title, message, confirmText = 'Conf
             <button
               type="button"
               className={`btn ${btnClass} px-4 fw-semibold rounded-pill`}
-              onClick={onConfirm}
+              onClick={handleConfirm}
               disabled={isLoading}
               style={{ fontSize: '13px' }}
             >

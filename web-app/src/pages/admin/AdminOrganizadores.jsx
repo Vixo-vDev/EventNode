@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { useTranslation } from '../../i18n/I18nContext'
 import { eventService } from '../../services/eventService'
-import { closeModal } from '../../services/apiHelper'
+import { closeModal, apiGet } from '../../services/apiHelper'
 
 const INITIAL_FORM = { nombre: '', correo: '', descripcion: '' }
 const DESC_MAX_LENGTH = 60
@@ -23,13 +23,14 @@ function AdminOrganizadores() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const orgModalCloseBtnRef = useRef(null)
+  const deleteOrgCloseBtnRef = useRef(null)
 
   // Detail view state
   const [detailTarget, setDetailTarget] = useState(null)
 
   const fetchOrganizadores = async () => {
     try {
-      const data = await eventService.buscarOrganizadores('')
+      const data = await apiGet('/eventos/organizadores')
       setOrganizadores(data)
     } catch {
       setOrganizadores([])
@@ -99,7 +100,7 @@ function AdminOrganizadores() {
       await eventService.eliminarOrganizador(deleteTarget.idOrganizador)
       toast.success(t('organizers.organizerDeleted'))
       setDeleteTarget(null)
-      closeModal('deleteOrgModal')
+      deleteOrgCloseBtnRef.current?.click()
       setLoading(true)
       fetchOrganizadores()
     } catch (err) {
@@ -304,7 +305,7 @@ function AdminOrganizadores() {
               {t('organizers.deleteConfirm', { name: deleteTarget?.nombre })}
             </p>
             <div className="d-flex justify-content-center gap-2">
-              <button className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">{t('common.cancel')}</button>
+              <button className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal" ref={deleteOrgCloseBtnRef}>{t('common.cancel')}</button>
               <button className="btn btn-danger rounded-pill px-4" onClick={handleDelete} disabled={deleteLoading}>
                 {deleteLoading ? t('organizers.deleting') : t('organizers.delete')}
               </button>

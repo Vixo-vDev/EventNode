@@ -19,11 +19,15 @@ function AdminEventCard({ id, image, title, location, date, status, capacityCurr
   const percent = capacityMax > 0 ? Math.round((capacityCurrent / capacityMax) * 100) : 0
 
   return (
-    <div
-      className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden card-hover"
-      style={isFull ? { border: '2px solid #dc3545' } : {}}
+    <Link
+      to={`/admin/evento/${id}`}
+      className="text-decoration-none text-dark"
+      style={{ display: 'block' }}
     >
-      <Link to={`/admin/evento/${id}`} className="text-decoration-none text-dark">
+      <div
+        className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden card-hover"
+        style={isFull ? { border: '2px solid #dc3545' } : {}}
+      >
         <div className="position-relative">
           <img
             src={image}
@@ -47,53 +51,53 @@ function AdminEventCard({ id, image, title, location, date, status, capacityCurr
         <div className="card-body p-3">
           <h6 className="fw-bold mb-2">{title}</h6>
         </div>
-      </Link>
-      <div className="card-body p-3 pt-0">
-        <div className="d-flex align-items-center gap-1 text-secondary small mb-3">
-          <i className="bi bi-geo-alt"></i>
-          <span>{location}</span>
-          <span className="mx-1">•</span>
-          <span>{date}</span>
-        </div>
+        <div className="card-body p-3 pt-0">
+          <div className="d-flex align-items-center gap-1 text-secondary small mb-3">
+            <i className="bi bi-geo-alt"></i>
+            <span>{location}</span>
+            <span className="mx-1">•</span>
+            <span>{date}</span>
+          </div>
 
-        <div className="d-flex justify-content-between align-items-center mb-2">
-          <span className={`text-uppercase small fw-bold ${isFull ? 'text-danger' : isTerminado ? 'text-secondary' : 'text-dark'}`}>
-            {isTerminado ? 'Finalizado' : 'Capacidad'}
-          </span>
-          <span className={`small fw-semibold ${isFull ? 'text-danger' : ''}`}>
-            {capacityCurrent} / {capacityMax}
-          </span>
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <span className={`text-uppercase small fw-bold ${isFull ? 'text-danger' : isTerminado ? 'text-secondary' : 'text-dark'}`}>
+              {isTerminado ? 'Finalizado' : 'Capacidad'}
+            </span>
+            <span className={`small fw-semibold ${isFull ? 'text-danger' : ''}`}>
+              {capacityCurrent} / {capacityMax}
+            </span>
+          </div>
+          <div className="progress" style={{ height: '4px' }}>
+            <div
+              className={`progress-bar ${isFull ? 'bg-danger' : isTerminado ? 'bg-secondary' : 'bg-primary'}`}
+              style={{ width: `${percent}%` }}
+            ></div>
+          </div>
         </div>
-        <div className="progress" style={{ height: '4px' }}>
-          <div
-            className={`progress-bar ${isFull ? 'bg-danger' : isTerminado ? 'bg-secondary' : 'bg-primary'}`}
-            style={{ width: `${percent}%` }}
-          ></div>
+        <div className="card-footer bg-white border-top d-flex justify-content-start gap-3 px-3 py-2">
+          {(isActive || isProximo) && (
+            <>
+              <button
+                className="btn btn-link text-secondary p-0"
+                title="Editar"
+                data-bs-toggle="modal"
+                data-bs-target="#editarEventoModal"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit && onEdit() }}
+              >
+                <i className="bi bi-pencil"></i>
+              </button>
+            </>
+          )}
+          <button
+            className="btn btn-link text-secondary p-0"
+            title="Eliminar"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete && onDelete() }}
+          >
+            <i className="bi bi-trash"></i>
+          </button>
         </div>
       </div>
-      <div className="card-footer bg-white border-top d-flex justify-content-start gap-3 px-3 py-2">
-        {(isActive || isProximo) && (
-          <>
-            <button
-              className="btn btn-link text-secondary p-0"
-              title="Editar"
-              data-bs-toggle="modal"
-              data-bs-target="#editarEventoModal"
-              onClick={(e) => { e.preventDefault(); onEdit && onEdit() }}
-            >
-              <i className="bi bi-pencil"></i>
-            </button>
-          </>
-        )}
-        <button
-          className="btn btn-link text-secondary p-0"
-          title="Eliminar"
-          onClick={(e) => { e.preventDefault(); onDelete && onDelete() }}
-        >
-          <i className="bi bi-trash"></i>
-        </button>
-      </div>
-    </div>
+    </Link>
   )
 }
 

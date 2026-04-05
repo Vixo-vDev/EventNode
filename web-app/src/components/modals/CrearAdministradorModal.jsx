@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useTranslation } from '../../i18n/I18nContext'
 
 function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmit }) {
@@ -7,16 +7,22 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [localError, setLocalError] = useState('')
+  const closeBtnRef = useRef(null)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLocalError('')
     if (formData.password !== confirmPassword) {
       setLocalError('Las contraseñas no coinciden')
       return
     }
-    onSubmit(e)
-    setConfirmPassword('')
+    try {
+      await onSubmit(e)
+      setConfirmPassword('')
+      closeBtnRef.current?.click()
+    } catch {
+      // El error ya fue mostrado por el padre
+    }
   }
 
   const displayError = localError || error
@@ -32,7 +38,7 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                 {t('createAdmin.subtitle')}
               </p>
             </div>
-            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label={t('common.close')} onClick={() => { setConfirmPassword(''); setLocalError('') }}></button>
+            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label={t('common.close')} ref={closeBtnRef} onClick={() => { setConfirmPassword(''); setLocalError('') }}></button>
           </div>
 
           <form onSubmit={handleSubmit}>

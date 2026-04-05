@@ -197,7 +197,7 @@ function StudentEventDetail({ user }) {
                   <i className="bi bi-people text-primary small"></i>
                 </div>
                 <div className="flex-grow-1">
-                  <div className="text-secondary small">{t('eventDetail.scheduleDetails')}</div>
+                  <div className="text-secondary small">{t('eventDetail.capacity')}</div>
                   <div className="fw-semibold small">{inscritos} / {evento.capacidadMaxima}</div>
                   <div className="progress mt-1" style={{ height: '4px' }}>
                     <div className={`progress-bar ${capacityPercent >= 100 ? 'bg-danger' : 'bg-primary'}`} style={{ width: `${Math.min(capacityPercent, 100)}%` }}></div>

@@ -167,6 +167,13 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
     if (Object.keys(newErrors).length > 0) return
     try {
       await onSubmit()
+      setPdfFile(null)
+      setPdfPreview(null)
+      setFirmaFile(null)
+      setFirmaPreview(null)
+      setErrors({})
+      if (pdfInputRef.current) pdfInputRef.current.value = ''
+      if (firmaInputRef.current) firmaInputRef.current.value = ''
       closeBtnRef.current?.click()
     } catch {
       // El error ya fue mostrado por el padre

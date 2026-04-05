@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { eventService } from '../../services/eventService'
 import { asistenciaService } from '../../services/asistenciaService'
 import { precheckinService } from '../../services/precheckinService'
@@ -8,6 +8,7 @@ import { useTranslation } from '../../i18n/I18nContext'
 
 function AdminHome() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
   const [totalEmitidos, setTotalEmitidos] = useState(0)
@@ -159,7 +160,7 @@ function AdminHome() {
                 </thead>
                 <tbody>
                   {eventos.map(event => (
-                    <tr key={event.id}>
+                    <tr key={event.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/admin/evento/${event.id}`)}>
                       <td className={`ps-3 py-3 fw-semibold small ${event.isCancelled ? 'text-primary' : ''}`}>{event.name}</td>
                       <td className="py-3 text-secondary small">{event.date}</td>
                       <td className="py-3">

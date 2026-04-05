@@ -127,13 +127,13 @@ function AdminDiplomas() {
     setDeleting(diplomaToDelete.idDiploma)
     try {
       await diplomaService.eliminarDiploma(diplomaToDelete.idDiploma)
-      closeModal('confirmarEliminarDiplomaModal')
       toast.success(t('diplomas.diplomaDeletedSuccess'))
       setDiplomaToDelete(null)
       setLoading(true)
       fetchDiplomas()
     } catch (err) {
       toast.error(err.message)
+      throw err
     } finally {
       setDeleting(null)
     }

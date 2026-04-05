@@ -55,6 +55,12 @@ function AdminPerfil({ user }) {
     }
   }
 
+  const hasChanges = perfil && (
+    nombre.trim() !== (perfil.nombre || '') ||
+    apellidoPaterno.trim() !== (perfil.apellidoPaterno || '') ||
+    apellidoMaterno.trim() !== (perfil.apellidoMaterno || '')
+  )
+
   const handleCancel = () => {
     if (!perfil) return
     setNombre(perfil.nombre || '')
@@ -175,7 +181,7 @@ function AdminPerfil({ user }) {
             <button className="btn btn-link text-secondary text-decoration-none" onClick={handleCancel} disabled={saving}>
               {t('profile.cancel')}
             </button>
-            <button className="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2" onClick={handleSave} disabled={saving}>
+            <button className="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2" onClick={handleSave} disabled={saving || !hasChanges}>
               {saving ? (
                 <span className="spinner-border spinner-border-sm"></span>
               ) : (

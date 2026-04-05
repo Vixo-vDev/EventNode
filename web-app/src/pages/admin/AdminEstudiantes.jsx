@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { useTranslation } from '../../i18n/I18nContext'
 import { userService } from '../../services/userService'
@@ -34,11 +34,14 @@ function AdminEstudiantes({ user }) {
   const [viewStudent, setViewStudent] = useState(null)
   const [deleteStudentTarget, setDeleteStudentTarget] = useState(null)
   const [deleteStudentLoading, setDeleteStudentLoading] = useState(false)
+  const deleteStudentCloseBtnRef = useRef(null)
 
   // Estado para ver / eliminar administrador
   const [selectedAdmin, setSelectedAdmin] = useState(null)
   const [deleteAdminTarget, setDeleteAdminTarget] = useState(null)
   const [deleteAdminLoading, setDeleteAdminLoading] = useState(false)
+  const deleteAdminCloseBtnRef = useRef(null)
+  const crearAdminCloseBtnRef = useRef(null)
 
   const isSuperAdmin = user?.originalRole === 'SUPERADMIN'
 
@@ -105,14 +108,12 @@ function AdminEstudiantes({ user }) {
       await userService.crearAdmin(payload)
       toast.success(t('students.adminCreatedSuccess'))
       setAdminForm(INITIAL_ADMIN_FORM)
-      // Cerrar modal programáticamente usando Bootstrap JS
-      closeModal('crearAdminModal')
-      // Refrescar lista
       setLoading(true)
       fetchUsers()
     } catch (err) {
       setAdminError(err.message)
       toast.error(err.message)
+      throw err
     } finally {
       setAdminLoading(false)
     }
@@ -125,7 +126,7 @@ function AdminEstudiantes({ user }) {
       await userService.eliminarUsuario(deleteStudentTarget.id)
       toast.success('Estudiante eliminado correctamente')
       setDeleteStudentTarget(null)
-      closeModal('deleteStudentModal')
+      deleteStudentCloseBtnRef.current?.click()
       setLoading(true)
       fetchUsers()
     } catch (err) {
@@ -142,7 +143,7 @@ function AdminEstudiantes({ user }) {
       await userService.eliminarUsuario(deleteAdminTarget.id)
       toast.success('Administrador eliminado correctamente')
       setDeleteAdminTarget(null)
-      closeModal('deleteAdminModal')
+      deleteAdminCloseBtnRef.current?.click()
       setLoading(true)
       fetchUsers()
     } catch (err) {
@@ -511,7 +512,7 @@ function AdminEstudiantes({ user }) {
               ¿Estás seguro de eliminar a <strong>{deleteStudentTarget?.name}</strong>? Esta acción no se puede deshacer.
             </p>
             <div className="d-flex justify-content-center gap-2">
-              <button className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">Cancelar</button>
+              <button className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal" ref={deleteStudentCloseBtnRef}>Cancelar</button>
               <button className="btn btn-danger rounded-pill px-4" onClick={handleDeleteStudent} disabled={deleteStudentLoading}>
                 {deleteStudentLoading ? 'Eliminando...' : 'Eliminar'}
               </button>
@@ -585,7 +586,7 @@ function AdminEstudiantes({ user }) {
               ¿Estás seguro de eliminar a <strong>{deleteAdminTarget?.name}</strong>? Esta acción no se puede deshacer.
             </p>
             <div className="d-flex justify-content-center gap-2">
-              <button className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">Cancelar</button>
+              <button className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal" ref={deleteAdminCloseBtnRef}>Cancelar</button>
               <button className="btn btn-danger rounded-pill px-4" onClick={handleDeleteAdmin} disabled={deleteAdminLoading}>
                 {deleteAdminLoading ? 'Eliminando...' : 'Eliminar'}
               </button>

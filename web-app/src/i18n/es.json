@@ -367,6 +367,7 @@
     "update": "Actualizar",
     "deleteOrganizer": "Eliminar Organizador",
     "deleteConfirm": "¿Estás seguro de eliminar a {{name}}? Esta acción no se puede deshacer.",
+    "delete": "Eliminar",
     "deleting": "Eliminando...",
     "detail": "Detalle del Organizador",
     "close": "Cerrar",

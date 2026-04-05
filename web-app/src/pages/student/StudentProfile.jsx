@@ -15,8 +15,6 @@ function StudentProfile({ user }) {
   const [nombre, setNombre] = useState('')
   const [apellidoPaterno, setApellidoPaterno] = useState('')
   const [apellidoMaterno, setApellidoMaterno] = useState('')
-  const [sexo, setSexo] = useState('')
-  const [cuatrimestre, setCuatrimestre] = useState('')
 
   useEffect(() => {
     if (!user?.id) return
@@ -27,8 +25,6 @@ function StudentProfile({ user }) {
         setNombre(data.nombre || '')
         setApellidoPaterno(data.apellidoPaterno || '')
         setApellidoMaterno(data.apellidoMaterno || '')
-        setSexo(data.sexo || '')
-        setCuatrimestre(data.cuatrimestre?.toString() || '')
       } catch (err) {
         toast.error(err.message)
       } finally {
@@ -38,22 +34,25 @@ function StudentProfile({ user }) {
     fetchPerfil()
   }, [user?.id])
 
+  const hasChanges = perfil && (
+    nombre.trim() !== (perfil.nombre || '') ||
+    apellidoPaterno.trim() !== (perfil.apellidoPaterno || '') ||
+    apellidoMaterno.trim() !== (perfil.apellidoMaterno || '')
+  )
+
   const handleSave = async () => {
     if (!nombre.trim() || !apellidoPaterno.trim()) {
-      toast.error('Nombre y apellido paterno son obligatorios')
+      toast.error(t('profile.requiredFields'))
       return
     }
     setSaving(true)
     try {
-      await userService.actualizarAlumno(user.id, {
+      await userService.actualizarPerfil(user.id, {
         nombre: nombre.trim(),
         apellidoPaterno: apellidoPaterno.trim(),
         apellidoMaterno: apellidoMaterno.trim(),
-        sexo,
-        cuatrimestre: cuatrimestre ? parseInt(cuatrimestre) : undefined,
       })
-      toast.success('Perfil actualizado correctamente')
-      // Refresh profile
+      toast.success(t('profile.profileUpdated'))
       const updated = await userService.getPerfil(user.id)
       setPerfil(updated)
     } catch (err) {
@@ -68,8 +67,6 @@ function StudentProfile({ user }) {
     setNombre(perfil.nombre || '')
     setApellidoPaterno(perfil.apellidoPaterno || '')
     setApellidoMaterno(perfil.apellidoMaterno || '')
-    setSexo(perfil.sexo || '')
-    setCuatrimestre(perfil.cuatrimestre?.toString() || '')
   }
 
   const userName = perfil
@@ -140,20 +137,11 @@ function StudentProfile({ user }) {
             </div>
             <div className="col-12 col-md-4">
               <label className="form-label text-secondary small">{t('profile.gender')}</label>
-              <select className="form-select" value={sexo} onChange={e => setSexo(e.target.value)}>
-                <option value="">{t('auth.select')}</option>
-                <option value="M">{t('profile.male')}</option>
-                <option value="F">{t('profile.female')}</option>
-              </select>
+              <input type="text" className="form-control bg-light" value={sexoLabel} readOnly />
             </div>
             <div className="col-12 col-md-4">
               <label className="form-label text-secondary small">{t('profile.quarter')}</label>
-              <select className="form-select" value={cuatrimestre} onChange={e => setCuatrimestre(e.target.value)}>
-                <option value="">{t('auth.select')}</option>
-                {[1,2,3,4,5,6,7,8,9].map(c => (
-                  <option key={c} value={c}>{c}°</option>
-                ))}
-              </select>
+              <input type="text" className="form-control bg-light" value={perfil?.cuatrimestre ?? ''} readOnly />
             </div>
           </div>
 
@@ -203,7 +191,7 @@ function StudentProfile({ user }) {
             <button className="btn btn-link text-secondary text-decoration-none" onClick={handleCancel} disabled={saving}>
               {t('profile.cancel')}
             </button>
-            <button className="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2" onClick={handleSave} disabled={saving}>
+            <button className="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2" onClick={handleSave} disabled={saving || !hasChanges}>
               {saving ? (
                 <span className="spinner-border spinner-border-sm"></span>
               ) : (

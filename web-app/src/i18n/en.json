@@ -365,6 +365,7 @@
     "update": "Update",
     "deleteOrganizer": "Delete Organizer",
     "deleteConfirm": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+    "delete": "Delete",
     "deleting": "Deleting...",
     "detail": "Organizer Detail",
     "close": "Close",
