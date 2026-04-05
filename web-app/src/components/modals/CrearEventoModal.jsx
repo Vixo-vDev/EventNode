@@ -9,7 +9,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
   const closeBtnRef = useRef(null)
   const [bannerPreview, setBannerPreview] = useState(null)
   const [showSuccess, setShowSuccess] = useState(false)
-  const [showError, setShowError] = useState(false)
+  const [errors, setErrors] = useState({})
   const [formData, setFormData] = useState({
     nombre: '',
     ubicacion: '',
@@ -47,10 +47,8 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }))
   }
-
-  const v = (val) => val && String(val).trim() ? 'is-valid' : ''
-  const vTolerance = () => formData.tiempoToleranciaMinutos !== '' ? 'is-valid' : ''
 
   const handleBannerClick = () => fileInputRef.current?.click()
   const handleBannerChange = (e) => {
@@ -61,6 +59,21 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
     }
   }
 
+  const validate = () => {
+    const { nombre, ubicacion, descripcion, fechaInicio, fechaFin, idCategoria, capacidadMaxima, tiempoCancelacionHoras, tiempoToleranciaMinutos } = formData
+    const e = {}
+    if (!nombre.trim()) e.nombre = 'El nombre es obligatorio'
+    if (!ubicacion.trim()) e.ubicacion = 'La ubicación es obligatoria'
+    if (!descripcion.trim()) e.descripcion = 'La descripción es obligatoria'
+    if (!fechaInicio) e.fechaInicio = 'La fecha de inicio es obligatoria'
+    if (!fechaFin) e.fechaFin = 'La fecha de fin es obligatoria'
+    if (!idCategoria) e.idCategoria = 'Selecciona una categoría'
+    if (!capacidadMaxima) e.capacidadMaxima = 'La capacidad es obligatoria'
+    if (!tiempoCancelacionHoras) e.tiempoCancelacionHoras = 'El tiempo de cancelación es obligatorio'
+    if (tiempoToleranciaMinutos === '') e.tiempoToleranciaMinutos = 'La tolerancia es obligatoria'
+    return e
+  }
+
   const resetForm = () => {
     setFormData({
       nombre: '', ubicacion: '', descripcion: '', fechaInicio: '', fechaFin: '',
@@ -69,33 +82,31 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
     })
     setBannerPreview(null)
     setSelectedOrgs([])
+    setErrors({})
   }
 
   const handleSave = async () => {
-    // Custom validation — sin tooltips del navegador
-    const { nombre, ubicacion, descripcion, fechaInicio, fechaFin, idCategoria, capacidadMaxima, tiempoCancelacionHoras, tiempoToleranciaMinutos } = formData
-    if (!nombre.trim() || !ubicacion.trim() || !descripcion.trim() || !fechaInicio || !fechaFin || !idCategoria || !capacidadMaxima || !tiempoCancelacionHoras || !tiempoToleranciaMinutos) {
-      setShowError(true)
-      setShowSuccess(false)
+    const validationErrors = validate()
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
       return
     }
     try {
-      // Incluir IDs de organizadores seleccionados en el formData
       const dataToSubmit = {
         ...formData,
         organizadores: selectedOrgs.map(o => o.idOrganizador),
       }
       await onSubmit(dataToSubmit)
-      // Cerrar el modal haciendo click en su botón de cierre
       closeBtnRef.current?.click()
       resetForm()
       setShowSuccess(true)
-      setShowError(false)
     } catch {
-      setShowError(true)
-      setShowSuccess(false)
+      // error handled by parent via toast
     }
   }
+
+  const ic = (field) => errors[field] ? 'form-control is-invalid' : 'form-control'
+  const is = (field) => errors[field] ? 'form-select is-invalid' : 'form-select'
 
   return (
     <>
@@ -137,24 +148,26 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <input
                   type="text"
                   name="nombre"
-                  className={`form-control ${v(formData.nombre)}`}
+                  className={ic('nombre')}
                   placeholder={t('createEvent.eventNamePlaceholder')}
                   value={formData.nombre}
                   onChange={handleChange}
                   maxLength={100}
                 />
+                {errors.nombre && <div className="invalid-feedback">{errors.nombre}</div>}
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">{t('createEvent.location')}</label>
                 <input
                   type="text"
                   name="ubicacion"
-                  className={`form-control ${v(formData.ubicacion)}`}
+                  className={ic('ubicacion')}
                   placeholder={t('createEvent.locationPlaceholder')}
                   value={formData.ubicacion}
                   onChange={handleChange}
                   maxLength={150}
                 />
+                {errors.ubicacion && <div className="invalid-feedback">{errors.ubicacion}</div>}
               </div>
             </div>
 
@@ -163,13 +176,14 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
               <label className="form-label fw-semibold small">{t('createEvent.description')}</label>
               <textarea
                 name="descripcion"
-                className={`form-control ${v(formData.descripcion)}`}
+                className={errors.descripcion ? 'form-control is-invalid' : 'form-control'}
                 rows="3"
                 placeholder={t('createEvent.descriptionPlaceholder')}
                 value={formData.descripcion}
                 onChange={handleChange}
                 maxLength={300}
               ></textarea>
+              {errors.descripcion && <div className="invalid-feedback">{errors.descripcion}</div>}
             </div>
 
             {/* Fechas */}
@@ -179,22 +193,28 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <input
                   type="datetime-local"
                   name="fechaInicio"
-                  className={`form-control ${v(formData.fechaInicio)}`}
+                  className={ic('fechaInicio')}
                   value={formData.fechaInicio}
                   onChange={handleChange}
                 />
-                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.futureDate')}</div>
+                {errors.fechaInicio
+                  ? <div className="invalid-feedback">{errors.fechaInicio}</div>
+                  : <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.futureDate')}</div>
+                }
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">{t('createEvent.endDateTime')}</label>
                 <input
                   type="datetime-local"
                   name="fechaFin"
-                  className={`form-control ${v(formData.fechaFin)}`}
+                  className={ic('fechaFin')}
                   value={formData.fechaFin}
                   onChange={handleChange}
                 />
-                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.afterStart')}</div>
+                {errors.fechaFin
+                  ? <div className="invalid-feedback">{errors.fechaFin}</div>
+                  : <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.afterStart')}</div>
+                }
               </div>
             </div>
 
@@ -204,7 +224,7 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <label className="form-label fw-semibold small">{t('createEvent.category')}</label>
                 <select
                   name="idCategoria"
-                  className={`form-select ${v(formData.idCategoria)}`}
+                  className={is('idCategoria')}
                   value={formData.idCategoria}
                   onChange={handleChange}
                 >
@@ -215,19 +235,21 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                     </option>
                   ))}
                 </select>
+                {errors.idCategoria && <div className="invalid-feedback">{errors.idCategoria}</div>}
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">{t('createEvent.maxCapacity')}</label>
                 <input
                   type="number"
                   name="capacidadMaxima"
-                  className={`form-control ${v(formData.capacidadMaxima)}`}
+                  className={ic('capacidadMaxima')}
                   placeholder={t('createEvent.capacityPlaceholder')}
                   min="1"
                   max="9999"
                   value={formData.capacidadMaxima}
                   onChange={handleChange}
                 />
+                {errors.capacidadMaxima && <div className="invalid-feedback">{errors.capacidadMaxima}</div>}
               </div>
             </div>
 
@@ -238,28 +260,34 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
                 <input
                   type="number"
                   name="tiempoCancelacionHoras"
-                  className={`form-control ${v(formData.tiempoCancelacionHoras)}`}
+                  className={ic('tiempoCancelacionHoras')}
                   placeholder={t('createEvent.cancellationPlaceholder')}
                   min="1"
                   max="720"
                   value={formData.tiempoCancelacionHoras}
                   onChange={handleChange}
                 />
-                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.cancellationHelp')}</div>
+                {errors.tiempoCancelacionHoras
+                  ? <div className="invalid-feedback">{errors.tiempoCancelacionHoras}</div>
+                  : <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.cancellationHelp')}</div>
+                }
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold small">{t('createEvent.toleranceTime')}</label>
                 <input
                   type="number"
                   name="tiempoToleranciaMinutos"
-                  className={`form-control ${vTolerance()}`}
+                  className={ic('tiempoToleranciaMinutos')}
                   placeholder={t('createEvent.tolerancePlaceholder')}
                   min="0"
                   max="120"
                   value={formData.tiempoToleranciaMinutos}
                   onChange={handleChange}
                 />
-                <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.toleranceHelp')}</div>
+                {errors.tiempoToleranciaMinutos
+                  ? <div className="invalid-feedback">{errors.tiempoToleranciaMinutos}</div>
+                  : <div className="text-secondary small mt-1" style={{ fontSize: '11px' }}>{t('createEvent.toleranceHelp')}</div>
+                }
               </div>
             </div>
 
@@ -322,36 +350,21 @@ function CrearEventoModal({ categorias = [], isLoading, onSubmit }) {
         </form>
       </div>
     </div>
+
     {showSuccess && (
       <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
-          <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '400px', width: '90%' }}>
-              <div className="mb-3">
-                <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '3rem' }}></i>
-              </div>
-              <h5>{t('createEvent.eventCreated')}</h5>
-              <p className="text-secondary small">{t('createEvent.eventSaved')}</p>
-              <button className="btn btn-primary rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowSuccess(false)}>
-                {t('createEvent.accept')}
-              </button>
+        <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '400px', width: '90%' }}>
+          <div className="mb-3">
+            <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '3rem' }}></i>
           </div>
+          <h5>{t('createEvent.eventCreated')}</h5>
+          <p className="text-secondary small">{t('createEvent.eventSaved')}</p>
+          <button className="btn btn-primary rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowSuccess(false)}>
+            {t('createEvent.accept')}
+          </button>
         </div>
-      )}
-
-      {/* Error modal */}
-      {showError && (
-        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}>
-          <div className="bg-white border-0 rounded-4 shadow text-center p-4" style={{ maxWidth: '350px', width: '90%' }}>
-              <div className="mb-3">
-                <i className="bi bi-x-circle-fill text-danger" style={{ fontSize: '3rem' }}></i>
-              </div>
-              <h5>{t('createEvent.reviewData')}</h5>
-              <p className="text-secondary small">{t('createEvent.requiredFields')}</p>
-              <button className="btn btn-danger rounded-pill px-4 mt-2 mx-auto" onClick={() => setShowError(false)}>
-                {t('createEvent.understood')}
-              </button>
-          </div>
-        </div>
-      )}
+      </div>
+    )}
     </>
   )
 }
