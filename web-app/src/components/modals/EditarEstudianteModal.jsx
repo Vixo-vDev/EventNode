@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { userService } from '../../services/userService'
 import { useTranslation } from '../../i18n/I18nContext'
@@ -17,6 +17,7 @@ function EditarEstudianteModal({ student, onStudentUpdated }) {
   })
   const [loading, setLoading] = useState(false)
   const [disableLoading, setDisableLoading] = useState(false)
+  const closeBtnRef = useRef(null)
 
   useEffect(() => {
     if (student) {
@@ -51,12 +52,7 @@ function EditarEstudianteModal({ student, onStudentUpdated }) {
         cuatrimestre: parseInt(formData.cuatrimestre, 10)
       })
       toast.success('Estudiante actualizado exitosamente')
-      
-      const modalEl = document.getElementById('editarEstudianteModal')
-      if (modalEl && window.bootstrap) {
-        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide()
-      }
-
+      closeBtnRef.current?.click()
       if (onStudentUpdated) onStudentUpdated()
     } catch (err) {
       toast.error(err.message || 'Error al actualizar estudiante')
@@ -70,12 +66,7 @@ function EditarEstudianteModal({ student, onStudentUpdated }) {
       setDisableLoading(true)
       await userService.cambiarEstado(student.id)
       toast.success(student?.active ? 'Estudiante deshabilitado exitosamente' : 'Estudiante habilitado exitosamente')
-
-      const modalEl = document.getElementById('editarEstudianteModal')
-      if (modalEl && window.bootstrap) {
-        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide()
-      }
-      
+      closeBtnRef.current?.click()
       if (onStudentUpdated) onStudentUpdated()
     } catch (err) {
       toast.error(err.message || 'Error al cambiar estado')
@@ -95,7 +86,7 @@ function EditarEstudianteModal({ student, onStudentUpdated }) {
                 {t('students.editSubtitle')}
               </p>
             </div>
-            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label={t('common.close')}></button>
+            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label={t('common.close')} ref={closeBtnRef}></button>
           </div>
           
           <div className="modal-body p-4 pt-4">

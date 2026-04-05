@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { useTranslation } from '../../i18n/I18nContext'
 import { eventService } from '../../services/eventService'
@@ -22,6 +22,7 @@ function AdminOrganizadores() {
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const orgModalCloseBtnRef = useRef(null)
 
   // Detail view state
   const [detailTarget, setDetailTarget] = useState(null)
@@ -80,7 +81,7 @@ function AdminOrganizadores() {
       }
       setFormData(INITIAL_FORM)
       setEditingId(null)
-      closeModal('orgFormModal')
+      orgModalCloseBtnRef.current?.click()
       setLoading(true)
       fetchOrganizadores()
     } catch (err) {
@@ -241,7 +242,7 @@ function AdminOrganizadores() {
           <form onSubmit={handleSubmit} noValidate className="modal-content border-0 rounded-4 shadow">
             <div className="modal-header border-0 px-4 pt-4 pb-0">
               <h5 className="fw-bold">{editingId ? t('organizers.editOrganizer') : t('organizers.newOrganizer')}</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('common.close')}></button>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('common.close')} ref={orgModalCloseBtnRef}></button>
             </div>
             <div className="modal-body px-4 py-3">
               {formError && (

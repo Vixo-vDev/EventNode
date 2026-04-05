@@ -76,11 +76,11 @@ function AdminDiplomas() {
       })
       toast.success(t('diplomas.diplomaCreated'))
       setFormData({ idEvento: '', firma: '', diseno: 'Personalizado', plantillaPdf: '', firmaImagen: '' })
-      closeModal('crearDiplomaModal')
       setLoading(true)
       fetchDiplomas()
     } catch (err) {
       toast.error(err.message)
+      throw err
     } finally {
       setCreating(false)
     }
@@ -111,12 +111,12 @@ function AdminDiplomas() {
     try {
       const result = await diplomaService.actualizarDiploma(idDiploma, datos)
       toast.success(result.mensaje || t('diplomas.diplomaUpdatedSuccess'))
-      closeModal('editarDiplomaModal')
       setSelectedDiploma(null)
       setLoading(true)
       fetchDiplomas()
     } catch (err) {
       toast.error(err.message)
+      throw err
     } finally {
       setEditing(false)
     }
@@ -222,7 +222,7 @@ function AdminDiplomas() {
                       <div className="d-flex gap-2 mt-1">
                         {d.tienePlantilla && (
                           <span className="badge bg-success bg-opacity-10 text-success" style={{ fontSize: '10px' }}>
-                            <i className="bi bi-file-pdf me-1"></i>{t('diplomas.pdf')}
+                            <i className="bi bi-file-earmark-code me-1"></i>{t('diplomas.pdf')}
                           </span>
                         )}
                         {d.tieneFirma && (

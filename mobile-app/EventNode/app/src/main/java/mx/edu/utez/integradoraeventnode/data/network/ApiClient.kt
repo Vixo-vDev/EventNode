@@ -1,5 +1,6 @@
 package mx.edu.utez.integradoraeventnode.data.network
 
+import com.google.firebase.appdistribution.gradle.ApiService
 import mx.edu.utez.integradoraeventnode.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { userService } from '../../services/userService'
-import { closeModal } from '../../services/apiHelper'
 
 const INITIAL_FORM = {
   nombre: '',
@@ -22,6 +21,7 @@ function CrearEstudianteModal({ onStudentCreated }) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const closeBtnRef = useRef(null)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -54,7 +54,7 @@ function CrearEstudianteModal({ onStudentCreated }) {
       })
       toast.success('Estudiante creado correctamente')
       handleClose()
-      closeModal('crearEstudianteModal')
+      closeBtnRef.current?.click()
       if (onStudentCreated) onStudentCreated()
     } catch (err) {
       setError(err.message)
@@ -75,7 +75,7 @@ function CrearEstudianteModal({ onStudentCreated }) {
                 Completa los datos para registrar un estudiante
               </p>
             </div>
-            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label="Cerrar" onClick={handleClose}></button>
+            <button type="button" className="btn-close align-self-start mt-1" data-bs-dismiss="modal" aria-label="Cerrar" onClick={handleClose} ref={closeBtnRef}></button>
           </div>
 
           <form onSubmit={handleSubmit}>
