@@ -2,7 +2,10 @@ package mx.edu.utez.integradoraeventnode.ui.screens.admin.scanner
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -363,9 +366,29 @@ private fun InitialScannerView(
     val context = LocalContext.current
     val adminName = PreferencesHelper.getFullName(context)
 
+    var hasPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                    PackageManager.PERMISSION_GRANTED
+        )
+    }
+    var permissionDeniedPermanently by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasPermission = granted
+        if (!granted) permissionDeniedPermanently = true
+    }
+
+    LaunchedEffect(Unit) {
+        if (!hasPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -442,7 +465,7 @@ private fun InitialScannerView(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Icono de escaneo donde el alumno tiene el QR
+                // Icono de escaneo / estado de permiso
                 Box(
                     modifier = Modifier
                         .size(220.dp)
@@ -455,13 +478,32 @@ private fun InitialScannerView(
                             bitmap = assetImageBitmap("qr-scan.png"),
                             contentDescription = null,
                             modifier = Modifier.size(80.dp),
-                            colorFilter = ColorFilter.tint(Color(0xFF2F6FED))
+                            colorFilter = ColorFilter.tint(
+                                if (hasPermission) Color(0xFF2F6FED) else Color(0xFFBDBDBD)
+                            )
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Listo para\nescanear",
+                            text = if (hasPermission) "Listo para\nescanear" else "Sin permiso\nde cámara",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF999999),
+                            color = if (hasPermission) Color(0xFF999999) else Color(0xFFD32F2F),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                if (permissionDeniedPermanently) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFFFFF3E0))
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = "Permiso de cámara denegado. Actívalo manualmente en Configuración.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFE65100),
                             textAlign = TextAlign.Center
                         )
                     }
@@ -491,12 +533,23 @@ private fun InitialScannerView(
 
         // Botón principal
         Button(
-            onClick = onScan,
+            onClick = {
+                if (hasPermission) {
+                    onScan()
+                } else {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (hasPermission) Color(0xFF2F6FED) else Color(0xFFE65100)
+            )
         ) {
             Image(
                 bitmap = assetImageBitmap("qr-scan.png"),
@@ -505,7 +558,11 @@ private fun InitialScannerView(
                 colorFilter = ColorFilter.tint(Color.White)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Escanear", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = if (hasPermission) "Escanear" else "Ir a Configuración",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -573,7 +630,8 @@ private fun ScanningView(
                     "Bearer $token",
                     mapOf(
                         "matricula" to qrData.trim(),
-                        "idEvento" to event.idEvento
+                        "idEvento" to event.idEvento,
+                        "metodo" to "QR"
                     )
                 )
 
@@ -661,6 +719,22 @@ private fun ScanningView(
             }
         } else {
             val lifecycleOwner = LocalLifecycleOwner.current
+            var scannerView by remember { mutableStateOf<DecoratedBarcodeView?>(null) }
+
+            DisposableEffect(lifecycleOwner) {
+                val observer = LifecycleEventObserver { _, event ->
+                    when (event) {
+                        Lifecycle.Event.ON_RESUME -> scannerView?.resume()
+                        Lifecycle.Event.ON_PAUSE -> scannerView?.pause()
+                        else -> {}
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose {
+                    lifecycleOwner.lifecycle.removeObserver(observer)
+                    scannerView?.pause()
+                }
+            }
 
             Card(
                 modifier = Modifier
@@ -682,17 +756,10 @@ private fun ScanningView(
                                     }
                                     override fun possibleResultPoints(resultPoints: MutableList<ResultPoint>?) {}
                                 })
-                                val observer = LifecycleEventObserver { _, event ->
-                                    when (event) {
-                                        Lifecycle.Event.ON_RESUME -> resume()
-                                        Lifecycle.Event.ON_PAUSE -> pause()
-                                        else -> {}
-                                    }
-                                }
-                                lifecycleOwner.lifecycle.addObserver(observer)
+                                resume()
+                                scannerView = this
                             }
                         },
-                        update = { view -> view.resume() },
                         modifier = Modifier.fillMaxSize()
                     )
 

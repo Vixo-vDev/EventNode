@@ -58,6 +58,7 @@ public class AsistenciaController {
         try {
             String matricula = (String) body.get("matricula");
             Integer idEvento = (Integer) body.get("idEvento");
+            String metodo = body.get("metodo") instanceof String m ? m : "MANUAL";
 
             if (matricula == null || idEvento == null) {
                 Map<String, String> error = new HashMap<>();
@@ -65,7 +66,7 @@ public class AsistenciaController {
                 return ResponseEntity.badRequest().body(error);
             }
 
-            asistenciaService.registrarAsistenciaManual(matricula, idEvento);
+            asistenciaService.registrarAsistenciaManual(matricula, idEvento, metodo);
 
             Map<String, String> response = new HashMap<>();
             response.put("mensaje", "Asistencia registrada exitosamente");

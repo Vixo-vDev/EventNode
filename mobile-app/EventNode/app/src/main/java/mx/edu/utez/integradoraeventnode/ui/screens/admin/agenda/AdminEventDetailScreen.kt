@@ -81,13 +81,13 @@ fun AdminEventDetailScreen(
                 // Fetch registered count
                 val inscrptosResponse = ApiClient.apiService.contarInscritos(bearerToken, eventId)
                 if (inscrptosResponse.isSuccessful) {
-                    inscritos = (inscrptosResponse.body()?.get("count") as? Number)?.toInt() ?: 0
+                    inscritos = (inscrptosResponse.body()?.get("totalInscritos") as? Number)?.toInt() ?: 0
                 }
 
                 // Fetch attendance count
                 val asistenciasResponse = ApiClient.apiService.contarAsistencias(bearerToken, eventId)
                 if (asistenciasResponse.isSuccessful) {
-                    asistencias = (asistenciasResponse.body()?.get("count") as? Number)?.toInt() ?: 0
+                    asistencias = (asistenciasResponse.body()?.get("totalAsistencias") as? Number)?.toInt() ?: 0
                 }
 
                 // Fetch attendees list (only loaded when dialog opens)

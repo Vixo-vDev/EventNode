@@ -54,9 +54,6 @@ fun AdminProfileScreen(
     var apellidoPaterno by remember { mutableStateOf("") }
     var apellidoMaterno by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
-    var matricula by remember { mutableStateOf("") }
-    var sexo by remember { mutableStateOf("") }
-    var cuatrimestre by remember { mutableStateOf(0) }
     var rol by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
     var userId by remember { mutableStateOf(0) }
@@ -75,9 +72,6 @@ fun AdminProfileScreen(
         apellidoPaterno = sharedPrefs.getString("apellidoPaterno", "") ?: ""
         apellidoMaterno = sharedPrefs.getString("apellidoMaterno", "") ?: ""
         correo = sharedPrefs.getString("correo", "") ?: ""
-        matricula = sharedPrefs.getString("matricula", "") ?: ""
-        sexo = sharedPrefs.getString("sexo", "") ?: ""
-        cuatrimestre = sharedPrefs.getInt("cuatrimestre", 0)
         rol = sharedPrefs.getString("rol", "") ?: ""
         token = sharedPrefs.getString("token", "") ?: ""
         userId = sharedPrefs.getInt("id", 0)
@@ -96,13 +90,6 @@ fun AdminProfileScreen(
                 isLoadingDiplomas = false
             }
         }
-    }
-
-    // Map gender code to Spanish text
-    val generoTexto = when (sexo) {
-        "M" -> "Masculino"
-        "F" -> "Femenino"
-        else -> sexo
     }
 
     // Get initials for avatar
@@ -211,11 +198,6 @@ fun AdminProfileScreen(
 
                     ProfileInfoItem(label = stringResource(R.string.profile_full_name), value = nombreCompleto, icon = "user.png")
                     ProfileInfoItem(label = stringResource(R.string.profile_email), value = correo, icon = "correo.png")
-                    ProfileInfoItem(label = stringResource(R.string.profile_matricula), value = matricula, icon = "user.png")
-                    ProfileInfoItem(label = stringResource(R.string.profile_gender), value = generoTexto, icon = "user.png")
-                    if (cuatrimestre > 0) {
-                        ProfileInfoItem(label = stringResource(R.string.profile_quarter), value = cuatrimestre.toString(), icon = "user.png")
-                    }
                     ProfileInfoItem(label = stringResource(R.string.profile_role), value = rolTexto, icon = "user.png")
 
                     Spacer(modifier = Modifier.height(32.dp))

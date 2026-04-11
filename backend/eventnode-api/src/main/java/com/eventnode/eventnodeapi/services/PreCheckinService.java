@@ -161,6 +161,7 @@ public class PreCheckinService {
                 map.put("fechaFin", evento.getFechaFin());
                 map.put("estado", evento.getEstado());
                 map.put("banner", evento.getBanner());
+                map.put("tiempoToleranciaMinutos", evento.getTiempoToleranciaMinutos());
 
                 map.put("categoriaNombre", evento.getCategoria() != null ? evento.getCategoria().getNombre() : "Sin categoría");
             }

@@ -85,11 +85,11 @@ public class AsistenciaService {
     }
 
     @Transactional
-    public void registrarAsistenciaManual(String matricula, Integer idEvento) {
+    public void registrarAsistenciaManual(String matricula, Integer idEvento, String metodo) {
         Alumno alumno = alumnoRepository.findByMatricula(matricula)
                 .orElseThrow(() -> new IllegalArgumentException("Alumno no encontrado con esa matrícula"));
 
-        registrarAsistencia(alumno.getIdUsuario(), idEvento, "MANUAL");
+        registrarAsistencia(alumno.getIdUsuario(), idEvento, metodo);
     }
 
     public List<Map<String, Object>> listarAsistencias(Integer idEvento) {

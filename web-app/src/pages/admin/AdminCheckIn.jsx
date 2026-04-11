@@ -14,7 +14,6 @@ function AdminCheckIn() {
   const [search, setSearch] = useState('')
   const [matricula, setMatricula] = useState('')
   const [manualLoading, setManualLoading] = useState(false)
-  const [updatingIds, setUpdatingIds] = useState(new Set())
 
   const fetchData = async () => {
     try {
@@ -48,30 +47,6 @@ function AdminCheckIn() {
     }
   }
 
-  const handleToggleEstado = async (student) => {
-    const newEstado = student.estado === 'ASISTIDO' ? 'PENDIENTE' : 'ASISTIDO'
-    setUpdatingIds(prev => new Set([...prev, student.idAsistencia]))
-    try {
-      await asistenciaService.actualizarEstado(student.idAsistencia, newEstado)
-      setStudents(prev =>
-        prev.map(s =>
-          s.idAsistencia === student.idAsistencia
-            ? { ...s, estado: newEstado }
-            : s
-        )
-      )
-      toast.success(newEstado === 'ASISTIDO' ? t('checkin.markedAttended') : t('checkin.markedPending'))
-    } catch (err) {
-      toast.error(err.message)
-    } finally {
-      setUpdatingIds(prev => {
-        const next = new Set(prev)
-        next.delete(student.idAsistencia)
-        return next
-      })
-    }
-  }
-
   const filtered = search
     ? students.filter(s =>
         (s.nombre || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -79,8 +54,8 @@ function AdminCheckIn() {
       )
     : students
 
-  const asistidosCount = students.filter(s => s.estado === 'ASISTIDO').length
-  const pendientesCount = students.filter(s => s.estado === 'PENDIENTE' || !s.estado).length
+  const qrCount = students.filter(s => s.metodo === 'QR').length
+  const manualCount = students.filter(s => s.metodo === 'MANUAL').length
 
   return (
     <div>
@@ -111,16 +86,16 @@ function AdminCheckIn() {
         <div className="col-6 col-md-3">
           <div className="card border-0 shadow-sm rounded-3">
             <div className="card-body p-3 text-center">
-              <div className="text-success small text-uppercase fw-bold mb-1">{t('checkin.attended')}</div>
-              <div className="fw-bold fs-4 text-success">{asistidosCount}</div>
+              <div className="text-primary small text-uppercase fw-bold mb-1">QR</div>
+              <div className="fw-bold fs-4 text-primary">{qrCount}</div>
             </div>
           </div>
         </div>
         <div className="col-6 col-md-3">
           <div className="card border-0 shadow-sm rounded-3">
             <div className="card-body p-3 text-center">
-              <div className="text-warning small text-uppercase fw-bold mb-1">{t('checkin.pending')}</div>
-              <div className="fw-bold fs-4 text-warning">{pendientesCount}</div>
+              <div className="text-warning small text-uppercase fw-bold mb-1">Manual</div>
+              <div className="fw-bold fs-4 text-warning">{manualCount}</div>
             </div>
           </div>
         </div>
@@ -179,38 +154,19 @@ function AdminCheckIn() {
                     <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 ps-3" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Nombre Completo</th>
                     <th className="text-uppercase text-secondary small fw-bold pb-3 border-0" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>{t('checkin.quarter')}</th>
                     <th className="text-uppercase text-secondary small fw-bold pb-3 border-0" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Correo</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>{t('checkin.method')}</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 text-center" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>{t('checkin.status')}</th>
-                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 text-center pe-3" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>{t('checkin.attendedStatus')}</th>
+                    <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 pe-3" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>{t('checkin.method')}</th>
                   </tr>
                 </thead>
                 <tbody className="border-top-0">
                   {filtered.map((student) => (
-                    <tr key={student.idAsistencia} className={student.estado === 'ASISTIDO' ? 'table-success' : ''}>
+                    <tr key={student.idAsistencia}>
                       <td className="fw-bold small py-3 border-light ps-3">{student.nombre}</td>
                       <td className="small py-3 border-light text-secondary">{student.cuatrimestre ? `${student.cuatrimestre}°` : '—'}</td>
                       <td className="small py-3 border-light text-secondary">{student.correo}</td>
-                      <td className="small py-3 border-light">
+                      <td className="small py-3 border-light pe-3">
                         <span className={`badge rounded-pill px-2 py-1 ${student.metodo === 'QR' ? 'bg-primary bg-opacity-10 text-primary' : 'bg-warning bg-opacity-10 text-warning'}`} style={{ fontSize: '10px' }}>
-                          {student.metodo}
+                          {student.metodo === 'QR' ? 'QR' : 'Manual'}
                         </span>
-                      </td>
-                      <td className="py-3 border-light text-center">
-                        <span className={`badge rounded-pill px-3 py-2 fw-semibold ${student.estado === 'ASISTIDO' ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning'}`} style={{ fontSize: '11px' }}>
-                          {student.estado === 'ASISTIDO' ? t('checkin.attendedStatus') : t('checkin.pending')}
-                        </span>
-                      </td>
-                      <td className="py-3 border-light text-center pe-3">
-                        <div className="form-check d-flex justify-content-center m-0">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-                            checked={student.estado === 'ASISTIDO'}
-                            disabled={updatingIds.has(student.idAsistencia)}
-                            onChange={() => handleToggleEstado(student)}
-                          />
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -225,10 +181,12 @@ function AdminCheckIn() {
         </div>
         <div className="card-footer bg-transparent border-top p-3 d-flex justify-content-between align-items-center">
           <span className="text-secondary small">
-            {t('checkin.attendedCount', { count: asistidosCount })}
+            {students.length} registros totales
           </span>
-          <span className="text-success small fw-semibold">
-            {t('checkin.attendedCount', { count: asistidosCount })}
+          <span className="text-secondary small">
+            <span className="text-primary fw-semibold">{qrCount} QR</span>
+            {' · '}
+            <span className="text-warning fw-semibold">{manualCount} Manual</span>
           </span>
         </div>
       </div>
