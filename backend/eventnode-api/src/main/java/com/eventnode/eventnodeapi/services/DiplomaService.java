@@ -177,16 +177,36 @@ public class DiplomaService {
         return generarDiplomaPdf(diploma, fullName);
     }
 
+    /**
+     * Decodifica un JRXML en base64 (con o sin prefijo data:),
+     * elimina el BOM UTF-8 (U+FEFF) y espacios iniciales que rompen el parser XML.
+     */
+    private byte[] decodeJrxml(String base64OrDataUrl) {
+        String base64 = base64OrDataUrl.contains(",")
+                ? base64OrDataUrl.substring(base64OrDataUrl.indexOf(",") + 1)
+                : base64OrDataUrl;
+        byte[] raw = Base64.getDecoder().decode(base64);
+
+        // Convertir a String UTF-8 para limpiar BOM (U+FEFF) y whitespace inicial
+        String content = new String(raw, java.nio.charset.StandardCharsets.UTF_8);
+        // Eliminar BOM y cualquier carácter de espacio/control antes de '<?xml'
+        int start = 0;
+        while (start < content.length() && (content.charAt(start) == '\uFEFF' || content.charAt(start) <= ' ')) {
+            start++;
+        }
+        if (start > 0) {
+            content = content.substring(start);
+        }
+        return content.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
     private void validarPlantillaJasper(String plantillaBase64) {
         try {
             System.setProperty("net.sf.jasperreports.awt.ignore.missing.font", "true");
             System.setProperty("net.sf.jasperreports.default.pdf.font.name", "Helvetica");
             System.setProperty("net.sf.jasperreports.default.font.name", "SansSerif");
 
-            String base64 = plantillaBase64.contains(",")
-                    ? plantillaBase64.substring(plantillaBase64.indexOf(",") + 1)
-                    : plantillaBase64;
-            byte[] jrxmlBytes = Base64.getDecoder().decode(base64);
+            byte[] jrxmlBytes = decodeJrxml(plantillaBase64);
             JasperCompileManager.compileReport(new ByteArrayInputStream(jrxmlBytes));
         } catch (JRException e) {
             throw new IllegalArgumentException("La plantilla Jasper no es válida: " + e.getMessage());
@@ -202,11 +222,7 @@ public class DiplomaService {
             System.setProperty("net.sf.jasperreports.default.pdf.font.name", "Helvetica");
             System.setProperty("net.sf.jasperreports.default.font.name", "SansSerif");
 
-            String base64 = diploma.getPlantillaPdf();
-            if (base64.contains(",")) {
-                base64 = base64.substring(base64.indexOf(",") + 1);
-            }
-            byte[] jrxmlBytes = Base64.getDecoder().decode(base64);
+            byte[] jrxmlBytes = decodeJrxml(diploma.getPlantillaPdf());
 
             JasperReport jasperReport = JasperCompileManager.compileReport(
                     new ByteArrayInputStream(jrxmlBytes));
@@ -423,6 +439,7 @@ public class DiplomaService {
         map.put("estado", diploma.getEstado());
         map.put("tienePlantilla", diploma.getPlantillaPdf() != null && !diploma.getPlantillaPdf().isBlank());
         map.put("tieneFirma", diploma.getFirmaImagen() != null && !diploma.getFirmaImagen().isBlank());
+        map.put("firmaImagen", diploma.getFirmaImagen());
 
         List<DiplomaEmitido> emitidos = diplomaEmitidoRepository.findByIdDiploma(idDiploma);
         List<Map<String, Object>> emitidosList = emitidos.stream().map(de -> {
@@ -443,6 +460,50 @@ public class DiplomaService {
         map.put("emitidos", emitidosList);
 
         return map;
+    }
+
+    public byte[] previewPlantilla(String plantillaPdf, String eventName, String signerName, String firmaImagen) {
+        try {
+            System.setProperty("net.sf.jasperreports.awt.ignore.missing.font", "true");
+            System.setProperty("net.sf.jasperreports.default.pdf.font.name", "Helvetica");
+            System.setProperty("net.sf.jasperreports.default.font.name", "SansSerif");
+
+            byte[] jrxmlBytes = decodeJrxml(plantillaPdf);
+            JasperReport jasperReport = JasperCompileManager.compileReport(new ByteArrayInputStream(jrxmlBytes));
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("STUDENT_NAME", "Nombre del Participante");
+            params.put("EVENT_NAME", eventName != null && !eventName.isBlank() ? eventName : "Nombre del Evento");
+            params.put("FIRMA_NOMBRE", signerName != null && !signerName.isBlank() ? signerName : "Nombre del Firmante");
+            params.put("FECHA", LocalDateTime.now().format(
+                    DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "MX"))));
+
+            if (firmaImagen != null && !firmaImagen.isBlank()) {
+                String sigBase64 = firmaImagen.contains(",")
+                        ? firmaImagen.substring(firmaImagen.indexOf(",") + 1)
+                        : firmaImagen;
+                byte[] sigBytes = Base64.getDecoder().decode(sigBase64);
+                params.put("FIRMA_IMAGEN", new ByteArrayInputStream(sigBytes));
+            } else {
+                // PNG transparente 1×1 para evitar NullPointerException en el elemento <image> del JRXML
+                byte[] transparentPng = Base64.getDecoder().decode(
+                    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
+                params.put("FIRMA_IMAGEN", new ByteArrayInputStream(transparentPng));
+            }
+
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, new JREmptyDataSource());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            JasperExportManager.exportReportToPdfStream(jasperPrint, baos);
+            return baos.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar preview: " + e.getMessage(), e);
+        }
+    }
+
+    public byte[] previewDiploma(Integer idDiploma) {
+        Diploma diploma = diplomaRepository.findById(idDiploma)
+                .orElseThrow(() -> new IllegalArgumentException("Diploma no encontrado"));
+        return generarDiplomaPdf(diploma, "Nombre del Participante");
     }
 
     private String buildFullName(Usuario usuario) {

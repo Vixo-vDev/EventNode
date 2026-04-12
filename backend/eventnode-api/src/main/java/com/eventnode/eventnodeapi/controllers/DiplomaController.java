@@ -189,6 +189,50 @@ public class DiplomaController {
         }
     }
 
+    @PostMapping("/preview-template")
+    public ResponseEntity<?> previewTemplate(@RequestBody Map<String, Object> body) {
+        try {
+            String plantillaPdf = body.get("plantillaPdf") != null ? body.get("plantillaPdf").toString() : null;
+            String eventName    = body.get("eventName")    != null ? body.get("eventName").toString()    : null;
+            String signerName   = body.get("signerName")   != null ? body.get("signerName").toString()   : null;
+            String firmaImagen  = body.get("firmaImagen")  != null ? body.get("firmaImagen").toString()  : null;
+
+            if (plantillaPdf == null || plantillaPdf.isBlank()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("mensaje", "plantillaPdf es requerido");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            byte[] pdfBytes = diplomaService.previewPlantilla(plantillaPdf, eventName, signerName, firmaImagen);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Error al generar previsualización: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @GetMapping("/{idDiploma}/preview")
+    public ResponseEntity<?> previewDiploma(@PathVariable Integer idDiploma) {
+        try {
+            byte[] pdfBytes = diplomaService.previewDiploma(idDiploma);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (IllegalArgumentException ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Error al generar previsualización: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
     @GetMapping("/{idDiploma}/descargar/{idUsuario}")
     public ResponseEntity<?> descargarDiploma(@PathVariable Integer idDiploma, @PathVariable Integer idUsuario) {
         try {

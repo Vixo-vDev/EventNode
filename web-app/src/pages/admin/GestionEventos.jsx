@@ -386,24 +386,6 @@ function GestionEventos({ user }) {
             </p>
           </div>
         )}
-        <div className="col-12 col-md-6 col-lg-4">
-          <div
-            className="card h-100 rounded-4 d-flex align-items-center justify-content-center text-center p-4 card-dashed"
-            style={{ cursor: 'pointer' }}
-            data-bs-toggle="modal"
-            data-bs-target="#crearEventoModal"
-            role="button"
-          >
-            <div className="rounded-circle bg-light d-flex align-items-center justify-content-center mb-2"
-              style={{ width: '48px', height: '48px' }}>
-              <i className="bi bi-plus-lg text-secondary fs-4"></i>
-            </div>
-            <h6 className="fw-bold mb-1 fst-italic">{t('events.createNewEvent')}</h6>
-            <p className="text-secondary small mb-0 fst-italic">
-              {t('events.configureEvent')}
-            </p>
-          </div>
-        </div>
       </div>
       </div>
 

@@ -45,6 +45,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/alumnos/registro").permitAll()
                 .requestMatchers("/api/seed/init").permitAll()
                 
+                // Endpoints de Categorías
+                .requestMatchers(HttpMethod.GET, "/api/categorias").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/categorias").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/categorias/**").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/categorias/**").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")
+
                 // Endpoints de Eventos
                 .requestMatchers(HttpMethod.GET, "/api/eventos/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/eventos/crear").hasAnyRole("ADMINISTRADOR", "SUPERADMIN")

@@ -1,79 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { toast } from 'react-toastify'
 import { useTranslation } from '../../i18n/I18nContext'
-
-function DiplomaPreview({ eventName, signerName, firmaPreview }) {
-  return (
-    <div
-      style={{
-        background: 'white',
-        border: '2px solid #e0e7ff',
-        borderRadius: '12px',
-        padding: '28px 24px',
-        textAlign: 'center',
-        fontFamily: 'Georgia, serif',
-        minHeight: '320px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '10px',
-        boxShadow: '0 2px 12px rgba(47,111,237,0.07)',
-      }}
-    >
-      <div style={{ fontSize: '9px', color: '#aaa', letterSpacing: '3px', textTransform: 'uppercase' }}>
-        Certificado de Participación
-      </div>
-      <div style={{ fontSize: '12px', color: '#777', marginTop: '4px' }}>Se certifica que</div>
-      <div
-        style={{
-          fontSize: '20px',
-          fontWeight: 'bold',
-          color: '#2F6FED',
-          borderBottom: '1px solid #2F6FED',
-          paddingBottom: '4px',
-          minWidth: '180px',
-        }}
-      >
-        Nombre del Participante
-      </div>
-      <div style={{ fontSize: '11px', color: '#777' }}>ha participado satisfactoriamente en</div>
-      <div style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
-        {eventName || <span style={{ color: '#bbb', fontStyle: 'italic' }}>[ Selecciona un evento ]</span>}
-      </div>
-
-      <div style={{ marginTop: '16px', width: '140px' }}>
-        {firmaPreview ? (
-          <img
-            src={firmaPreview}
-            alt="firma"
-            style={{ maxHeight: '55px', maxWidth: '140px', objectFit: 'contain' }}
-          />
-        ) : (
-          <div
-            style={{
-              height: '40px',
-              borderBottom: '1px dashed #ccc',
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-              paddingBottom: '4px',
-            }}
-          >
-            <span style={{ fontSize: '9px', color: '#ccc', fontStyle: 'italic' }}>[ imagen de firma ]</span>
-          </div>
-        )}
-        <div style={{ borderTop: firmaPreview ? '1px solid #ddd' : 'none', paddingTop: '4px', fontSize: '11px', color: '#555', marginTop: '4px' }}>
-          {signerName || <span style={{ color: '#bbb', fontStyle: 'italic' }}>[ nombre del firmante ]</span>}
-        </div>
-      </div>
-
-      <div style={{ fontSize: '9px', color: '#ccc', marginTop: '8px', fontStyle: 'italic' }}>
-        * Diseño final basado en la plantilla JRXML
-      </div>
-    </div>
-  )
-}
+import { diplomaService } from '../../services/diplomaService'
 
 function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, isLoading }) {
   const { t } = useTranslation()
@@ -82,15 +10,56 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
   const [firmaFile, setFirmaFile] = useState(null)
   const [firmaPreview, setFirmaPreview] = useState(null)
   const [errors, setErrors] = useState({})
+  const [previewPdfUrl, setPreviewPdfUrl] = useState(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
   const pdfInputRef = useRef(null)
   const firmaInputRef = useRef(null)
   const closeBtnRef = useRef(null)
+  const previewBlobRef = useRef(null)
 
   const selectedEvento = eventos.find(e => String(e.idEvento) === String(formData.idEvento))
 
   const clearError = (field) => {
     if (errors[field]) setErrors(prev => { const e = { ...prev }; delete e[field]; return e })
   }
+
+  // Genera la previsualización PDF real llamando al backend
+  const generarPreview = useCallback(async (plantillaPdf, eventName, signerName, firmaImg) => {
+    if (!plantillaPdf) return
+    setLoadingPreview(true)
+    try {
+      const blob = await diplomaService.previewTemplate({
+        plantillaPdf,
+        eventName: eventName || '',
+        signerName: signerName || '',
+        firmaImagen: firmaImg || '',
+      })
+      if (previewBlobRef.current) URL.revokeObjectURL(previewBlobRef.current)
+      const url = URL.createObjectURL(blob)
+      previewBlobRef.current = url
+      setPreviewPdfUrl(url)
+    } catch (err) {
+      console.error('Error generando previsualización:', err?.message || err)
+      toast.warning('No se pudo generar la previsualización: ' + (err?.message || 'Error desconocido'))
+    } finally {
+      setLoadingPreview(false)
+    }
+  }, [])
+
+  // Regenerar preview al cambiar evento o firmante (solo si ya hay plantilla cargada)
+  useEffect(() => {
+    if (!formData.plantillaPdf) return
+    const timeout = setTimeout(() => {
+      generarPreview(formData.plantillaPdf, selectedEvento?.nombre, formData.firma, firmaPreview)
+    }, 700)
+    return () => clearTimeout(timeout)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.idEvento, formData.firma, firmaPreview, selectedEvento?.nombre])
+
+  // Limpiar blob al desmontar
+  useEffect(() => {
+    return () => { if (previewBlobRef.current) URL.revokeObjectURL(previewBlobRef.current) }
+  }, [])
 
   const handlePdfChange = (e) => {
     const file = e.target.files[0]
@@ -107,7 +76,12 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
     setPdfPreview(file.name)
     clearError('plantillaPdf')
     const reader = new FileReader()
-    reader.onload = () => onChange({ target: { name: 'plantillaPdf', value: reader.result } })
+    reader.onload = () => {
+      const dataUrl = reader.result
+      onChange({ target: { name: 'plantillaPdf', value: dataUrl } })
+      // Lanzar preview inmediatamente sin debounce
+      generarPreview(dataUrl, selectedEvento?.nombre, formData.firma, firmaPreview)
+    }
     reader.readAsDataURL(file)
   }
 
@@ -147,6 +121,8 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
   const removePdf = () => {
     setPdfFile(null)
     setPdfPreview(null)
+    setPreviewPdfUrl(null)
+    if (previewBlobRef.current) { URL.revokeObjectURL(previewBlobRef.current); previewBlobRef.current = null }
     onChange({ target: { name: 'plantillaPdf', value: '' } })
     if (pdfInputRef.current) pdfInputRef.current.value = ''
   }
@@ -171,6 +147,8 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
       setPdfPreview(null)
       setFirmaFile(null)
       setFirmaPreview(null)
+      setPreviewPdfUrl(null)
+      if (previewBlobRef.current) { URL.revokeObjectURL(previewBlobRef.current); previewBlobRef.current = null }
       setErrors({})
       if (pdfInputRef.current) pdfInputRef.current.value = ''
       if (firmaInputRef.current) firmaInputRef.current.value = ''
@@ -326,13 +304,39 @@ function CrearDiplomaModal({ eventos = [], formData = {}, onChange, onSubmit, is
                   <i className="bi bi-eye text-primary"></i>
                   <h6 className="fw-bold mb-0 text-dark fs-6">Previsualización</h6>
                 </div>
-                <DiplomaPreview
-                  eventName={selectedEvento?.nombre}
-                  signerName={formData.firma}
-                  firmaPreview={firmaPreview}
-                />
+
+                {previewPdfUrl ? (
+                  <div className="flex-grow-1 position-relative" style={{ minHeight: '300px' }}>
+                    {loadingPreview && (
+                      <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ background: 'rgba(248,249,251,0.8)', zIndex: 2, borderRadius: '8px' }}>
+                        <div className="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        <span className="text-secondary small">Actualizando...</span>
+                      </div>
+                    )}
+                    <iframe
+                      src={previewPdfUrl}
+                      title="Previsualización del diploma"
+                      style={{ width: '100%', height: '100%', minHeight: '340px', border: 'none', borderRadius: '8px' }}
+                    />
+                  </div>
+                ) : loadingPreview ? (
+                  <div className="flex-grow-1 d-flex flex-column align-items-center justify-content-center gap-2">
+                    <div className="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <span className="text-secondary small">Generando previsualización...</span>
+                  </div>
+                ) : (
+                  <div className="flex-grow-1 d-flex flex-column align-items-center justify-content-center gap-2 border border-dashed rounded-3" style={{ borderColor: '#dee2e6', minHeight: '300px' }}>
+                    <i className="bi bi-file-earmark-pdf text-secondary fs-1 opacity-25"></i>
+                    <p className="text-secondary mb-0 text-center" style={{ fontSize: '12px' }}>
+                      Sube una plantilla JRXML<br />para ver la previsualización real
+                    </p>
+                  </div>
+                )}
+
                 <p className="text-secondary text-center mt-3 mb-0" style={{ fontSize: '11px' }}>
-                  La vista previa se actualiza conforme llenas el formulario.
+                  {previewPdfUrl
+                    ? 'Vista previa del diseño real generada con Jasper.'
+                    : 'La previsualización se actualiza al subir la plantilla.'}
                 </p>
               </div>
             </div>

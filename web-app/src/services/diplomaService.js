@@ -30,4 +30,17 @@ export const diplomaService = {
 
   listarDiplomasEstudiante: (idUsuario) =>
     apiGet(`/diplomas/estudiante/${idUsuario}`),
+
+  previewTemplate: async (datos) => {
+    const res = await apiFetch('/diplomas/preview-template', {
+      method: 'POST',
+      body: JSON.stringify(datos),
+    })
+    return res.blob()
+  },
+
+  previewDiploma: async (idDiploma) => {
+    const res = await apiFetch(`/diplomas/${idDiploma}/preview`)
+    return res.blob()
+  },
 }
