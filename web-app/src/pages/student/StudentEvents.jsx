@@ -9,6 +9,17 @@ import eventUiux from '../../assets/events/event_uiux.png'
 
 const fallbackImages = [eventAi, eventMarketing, eventUiux]
 
+/** YYYY-MM-DD en calendario local (alineado con input type="date") */
+function localDateKey(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 function StudentEvents() {
   const { t } = useTranslation()
   const [eventos, setEventos] = useState([])
@@ -16,6 +27,8 @@ function StudentEvents() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   const fetchEventos = async () => {
     try {
@@ -25,6 +38,7 @@ function StudentEvents() {
         id: e.idEvento,
         image: e.banner && e.banner.startsWith('data:image/') ? e.banner : fallbackImages[index % fallbackImages.length],
         title: e.nombre,
+        fechaInicio: e.fechaInicio,
         date: e.fechaInicio ? new Date(e.fechaInicio).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + new Date(e.fechaInicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '',
         location: e.ubicacion,
         category: e.categoriaNombre || 'GENERAL',
@@ -58,8 +72,13 @@ function StudentEvents() {
   const filtered = eventos.filter(e => {
     const matchesSearch = !search || e.title.toLowerCase().includes(search.toLowerCase())
     const matchesCategory = !activeCategory || e.category === activeCategory
-    return matchesSearch && matchesCategory
+    const key = localDateKey(e.fechaInicio)
+    const matchesFrom = !dateFrom || (key && key >= dateFrom)
+    const matchesTo = !dateTo || (key && key <= dateTo)
+    return matchesSearch && matchesCategory && matchesFrom && matchesTo
   })
+
+  const hasActiveFilters = Boolean(search || activeCategory || dateFrom || dateTo)
 
   const handleCategoryChange = (catName) => {
     setActiveCategory(catName === activeCategory ? '' : catName)
@@ -67,14 +86,63 @@ function StudentEvents() {
 
   return (
     <div>
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
-        <div>
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-start gap-3 mb-3">
+        <div className="flex-grow-1 min-w-0">
           <h2 className="fw-bold mb-1">{t('studentEvents.title')}</h2>
           <p className="text-secondary small mb-0">
             {t('studentEvents.subtitle')}
           </p>
         </div>
-        <div className="input-group shadow-sm rounded-3 overflow-hidden" style={{ maxWidth: '280px' }}>
+        <div
+          className="flex-shrink-0 w-100 w-md-auto px-1"
+          style={{ maxWidth: '36rem' }}
+        >
+        <div className="d-flex flex-wrap justify-content-center justify-content-md-end align-items-center gap-2 gap-sm-3 w-100 mb-2">
+          <div className="d-flex align-items-center gap-1 flex-shrink-0">
+            <label htmlFor="student-events-date-from" className="small text-secondary mb-0 text-nowrap">
+              {t('studentEvents.dateFrom')}
+            </label>
+            <input
+              id="student-events-date-from"
+              type="date"
+              className="form-control form-control-sm shadow-sm rounded-3"
+              style={{ width: '9.5rem' }}
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              max={dateTo || undefined}
+            />
+          </div>
+          <div className="d-flex align-items-center gap-1 flex-shrink-0">
+            <label htmlFor="student-events-date-to" className="small text-secondary mb-0 text-nowrap">
+              {t('studentEvents.dateTo')}
+            </label>
+            <input
+              id="student-events-date-to"
+              type="date"
+              className="form-control form-control-sm shadow-sm rounded-3"
+              style={{ width: '9.5rem' }}
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              min={dateFrom || undefined}
+            />
+          </div>
+          <div
+            className="d-flex align-items-center flex-shrink-0"
+            style={{ width: '8.75rem', minHeight: '31px' }}
+          >
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary rounded-pill w-100 text-truncate"
+              style={{ visibility: dateFrom || dateTo ? 'visible' : 'hidden' }}
+              tabIndex={dateFrom || dateTo ? 0 : -1}
+              aria-hidden={!(dateFrom || dateTo)}
+              onClick={() => { setDateFrom(''); setDateTo('') }}
+            >
+              {t('studentEvents.clearDates')}
+            </button>
+          </div>
+        </div>
+        <div className="input-group shadow-sm rounded-3 overflow-hidden w-100">
           <span className="input-group-text bg-white border-end-0 border-0">
             <i className="bi bi-search text-secondary"></i>
           </span>
@@ -85,6 +153,7 @@ function StudentEvents() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+        </div>
         </div>
       </div>
 
@@ -152,7 +221,7 @@ function StudentEvents() {
             </div>
             <h6 className="fw-bold mb-1">{t('studentEvents.noEvents')}</h6>
             <p className="text-secondary small mb-0">
-              {search || activeCategory ? t('studentEvents.noEventsMsg') : t('studentEvents.noEventsMsg')}
+              {hasActiveFilters ? t('studentEvents.noEventsFiltered') : t('studentEvents.noEventsMsg')}
             </p>
           </div>
         </div>

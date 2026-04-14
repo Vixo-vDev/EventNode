@@ -468,6 +468,7 @@
     "upcomingEvents": "Próximos Eventos",
     "noEvents": "No se encontraron eventos",
     "tryOtherSearch": "Intenta con otro término de búsqueda.",
+    "filteredEmpty": "Prueba otro rango de fechas o un término de búsqueda distinto. En Explorar eventos verás el listado completo.",
     "noUpcoming": "No hay eventos próximos",
     "upcomingSoon": "Cuando se publiquen nuevos eventos, aparecerán aquí.",
     "diplomas": "Diplomas",
@@ -478,11 +479,15 @@
     "title": "Explorar Eventos",
     "subtitle": "Descubre y únete a los próximos eventos académicos y talleres.",
     "searchPlaceholder": "Buscar por nombre...",
+    "dateFrom": "Desde",
+    "dateTo": "Hasta",
+    "clearDates": "Quitar fechas",
     "exploreTab": "Explorar los Eventos",
     "myEventsTab": "Mis Eventos",
     "allCategories": "Todas",
     "noEvents": "No se encontraron eventos",
-    "noEventsMsg": "Aún no se han publicado eventos. Vuelve pronto para descubrir nuevas actividades."
+    "noEventsMsg": "Aún no se han publicado eventos. Vuelve pronto para descubrir nuevas actividades.",
+    "noEventsFiltered": "No hay eventos con estos criterios. Prueba otras fechas, categoría o búsqueda."
   },
   "studentMyEvents": {
     "title": "Mis Eventos",
