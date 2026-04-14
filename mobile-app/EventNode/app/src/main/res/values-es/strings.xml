@@ -6,4 +6,6 @@
     <string name="profile_logout_msg">¿Estás seguro de que deseas salir de tu cuenta en EventNode? Tendrás que volver a ingresar tus credenciales para acceder.</string>
     <string name="profile_logout_confirm">Sí, cerrar sesión</string>
     <string name="profile_keep_session">Mantener sesión</string>
+
+    <string name="agenda_live">ACTIVO</string>
 </resources>

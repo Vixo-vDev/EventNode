@@ -94,7 +94,7 @@
     <string name="agenda_past">Pasados</string>
     <string name="agenda_loading">Cargando tu agenda…</string>
     <string name="agenda_no_events">No estás inscrito a ningún evento aún.</string>
-    <string name="agenda_live">EN VIVO</string>
+    <string name="agenda_live">ACTIVO</string>
     <string name="agenda_view_qr">Ver QR de Acceso</string>
     <string name="agenda_today">Hoy,</string>
     <string name="agenda_tomorrow">Mañana,</string>

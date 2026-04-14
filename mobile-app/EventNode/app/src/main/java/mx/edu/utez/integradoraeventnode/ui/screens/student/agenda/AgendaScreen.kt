@@ -213,7 +213,7 @@ fun AgendaScreen(
                     else -> {
                         // ── Sección EN VIVO ──
                         if (enVivoEvents.isNotEmpty()) {
-                            SectionLabel(label = "EN VIVO", color = Color(0xFFE53935))
+                            SectionLabel(label = "ACTIVO", color = Color(0xFF2F6FED))
                             Spacer(modifier = Modifier.height(8.dp))
                             enVivoEvents.forEach { ev ->
                                 val evId = (ev["idEvento"] as? Double)?.toInt()
@@ -233,7 +233,7 @@ fun AgendaScreen(
 
                         // ── Sección PRÓXIMOS ──
                         if (proximosEvents.isNotEmpty()) {
-                            SectionLabel(label = "PRÓXIMOS", color = Color(0xFF2F6FED))
+                            SectionLabel(label = "PRÓXIMOS", color = Color(0xFF757575))
                             Spacer(modifier = Modifier.height(8.dp))
                             proximosEvents.forEach { ev ->
                                 AgendaCard(
@@ -352,18 +352,19 @@ private fun AgendaCard(
                         alpha = bannerImageAlpha
                     )
                 }
+                // Misma lógica visual que Inicio (EventCard): ACTIVO azul, PRÓXIMO gris — texto en blanco
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(8.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(if (isLive) Color(0xFFFFEBEE) else Color(0xFFE6F0FF))
+                        .background(if (isLive) Color(0xFF2F6FED) else Color(0xFF757575))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = if (isLive) "EN VIVO" else "PRÓXIMO",
+                        text = if (isLive) "ACTIVO" else "PRÓXIMO",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isLive) Color(0xFFE53935) else Color(0xFF2F6FED),
+                        color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
                 }
