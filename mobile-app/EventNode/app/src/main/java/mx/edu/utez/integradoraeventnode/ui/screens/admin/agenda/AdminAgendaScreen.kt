@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
@@ -158,9 +159,21 @@ fun AdminAgendaScreen(
 
 private fun parseDateTime(str: String?): LocalDateTime? {
     if (str.isNullOrEmpty()) return null
+    val trimmed = str.trim()
     return try {
-        LocalDateTime.parse(str.take(19), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
-    } catch (e: Exception) { null }
+        OffsetDateTime.parse(trimmed).toLocalDateTime()
+    } catch (_: Exception) {
+        try {
+            LocalDateTime.parse(trimmed.take(19), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
+        } catch (_: Exception) {
+            try {
+                val withT = trimmed.replace(' ', 'T').take(19)
+                LocalDateTime.parse(withT, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
 }
 
 @Composable

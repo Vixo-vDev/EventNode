@@ -62,10 +62,12 @@ fun AdminHomeScreen(
                 val bearerToken = "Bearer $token"
 
                 if (token.isNotEmpty()) {
-                    // Fetch active events
-                    val eventsResponse = ApiClient.apiService.getEventosFiltrados(bearerToken, estado = "ACTIVO")
+                    // Todos los eventos visibles (como alumno); "Eventos Próximos" incluye PRÓXIMO y ACTIVO publicados
+                    val eventsResponse = ApiClient.apiService.getEventosFiltrados(bearerToken)
                     if (eventsResponse.isSuccessful) {
-                        activeEvents = eventsResponse.body() ?: emptyList()
+                        activeEvents = (eventsResponse.body() ?: emptyList())
+                            .filter { it.estado != "CANCELADO" && it.estado != "FINALIZADO" }
+                            .sortedBy { it.fechaInicio }
                     }
 
                     // Fetch diplomas
