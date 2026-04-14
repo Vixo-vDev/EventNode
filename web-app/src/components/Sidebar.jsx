@@ -1,5 +1,5 @@
 import { NavLink, Link, useLocation } from 'react-router-dom'
-import { useTranslation } from '../../i18n/I18nContext'
+import { useTranslation } from '../i18n/I18nContext'
 
 function Sidebar({ menuItems, user }) {
   const { t } = useTranslation()
