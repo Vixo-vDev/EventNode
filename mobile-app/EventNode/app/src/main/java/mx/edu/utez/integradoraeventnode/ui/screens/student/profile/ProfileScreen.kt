@@ -54,7 +54,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -63,6 +66,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import mx.edu.utez.integradoraeventnode.R
@@ -575,7 +579,8 @@ private fun BottomNavItem(label: String, icon: String, selected: Boolean, onClic
 private fun ChangePasswordDialog(correo: String, onDismiss: () -> Unit) {
     // Steps: "sendCode" -> "code" -> "newPassword" -> "success"
     var step by remember { mutableStateOf("sendCode") }
-    var code by remember { mutableStateOf(List(6) { "" }) }
+    var otpValue by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
+    val otpFocus = remember { FocusRequester() }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var newPassword by remember { mutableStateOf("") }
@@ -583,6 +588,14 @@ private fun ChangePasswordDialog(correo: String, onDismiss: () -> Unit) {
     var showNewPwd by remember { mutableStateOf(false) }
     var showConfirmPwd by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(step) {
+        if (step == "code") {
+            otpValue = TextFieldValue("", TextRange(0))
+            delay(120)
+            otpFocus.requestFocus()
+        }
+    }
 
     Dialog(onDismissRequest = { if (!loading) onDismiss() }) {
         Card(
@@ -654,53 +667,113 @@ private fun ChangePasswordDialog(correo: String, onDismiss: () -> Unit) {
                         Text(error!!, color = Color(0xFFEF5350), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 12.dp))
                     }
 
-                    val focusRequesters = remember { List(6) { FocusRequester() } }
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        for (i in 0..5) {
-                            BasicTextField(
-                                value = code[i],
-                                onValueChange = { v ->
-                                    val filtered = v.filter { it.isDigit() }.take(1)
-                                    if (filtered != code[i]) {
-                                        code = code.toMutableList().also { it[i] = filtered }
-                                        error = null
-                                        if (filtered.isNotEmpty() && i < 5) {
-                                            focusRequesters[i + 1].requestFocus()
+                    BasicTextField(
+                        value = otpValue,
+                        onValueChange = { tfv ->
+                            if (loading) return@BasicTextField
+                            val digits = tfv.text.filter { it.isDigit() }.take(6)
+                            val sel = tfv.selection
+                            val newCursor = if (!sel.collapsed) {
+                                digits.length
+                            } else {
+                                minOf(sel.start, digits.length).coerceIn(0, digits.length)
+                            }
+                            otpValue = TextFieldValue(digits, TextRange(newCursor))
+                            error = null
+                            if (digits.length == 6) {
+                                scope.launch {
+                                    loading = true
+                                    error = null
+                                    try {
+                                        val resp = ApiClient.apiService.verificarCodigo(
+                                            mapOf("correo" to correo, "codigo" to digits)
+                                        )
+                                        if (resp.isSuccessful) {
+                                            step = "newPassword"
+                                        } else {
+                                            val err = resp.errorBody()?.string()
+                                            error = try {
+                                                JSONObject(err ?: "").optString("mensaje", "Código incorrecto")
+                                            } catch (_: Exception) {
+                                                "Código incorrecto"
+                                            }
+                                            otpValue = TextFieldValue("", TextRange(0))
                                         }
-                                    }
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(52.dp)
-                                    .focusRequester(focusRequesters[i])
-                                    .border(1.dp, if (code[i].isNotEmpty()) Color(0xFF2F6FED) else Color(0xFFE1E2EC), RoundedCornerShape(10.dp))
-                                    .background(if (code[i].isNotEmpty()) Color(0xFFF0F7FF) else Color(0xFFF8F9FB), RoundedCornerShape(10.dp)),
-                                textStyle = androidx.compose.ui.text.TextStyle(
-                                    textAlign = TextAlign.Center,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 22.sp,
-                                    color = Color.Black
-                                ),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true,
-                                decorationBox = { innerTextField ->
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier.fillMaxSize()
-                                    ) {
-                                        innerTextField()
+                                    } catch (_: Exception) {
+                                        error = "Error de conexión"
+                                    } finally {
+                                        loading = false
                                     }
                                 }
-                            )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(otpFocus),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 22.sp,
+                            color = Color.Black
+                        ),
+                        decorationBox = { inner ->
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    for (i in 0..5) {
+                                        val ch = otpValue.text.getOrNull(i)
+                                        val filled = ch != null
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(52.dp)
+                                                .clickable {
+                                                    otpFocus.requestFocus()
+                                                    val t = otpValue.text.take(i)
+                                                    otpValue = TextFieldValue(t, TextRange(t.length))
+                                                }
+                                                .border(
+                                                    1.dp,
+                                                    if (filled) Color(0xFF2F6FED) else Color(0xFFE1E2EC),
+                                                    RoundedCornerShape(10.dp)
+                                                )
+                                                .background(
+                                                    if (filled) Color(0xFFF0F7FF) else Color(0xFFF8F9FB),
+                                                    RoundedCornerShape(10.dp)
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = ch?.toString() ?: "",
+                                                style = TextStyle(
+                                                    textAlign = TextAlign.Center,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 22.sp,
+                                                    color = Color.Black
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                                Box(Modifier.size(0.dp)) { inner() }
+                            }
                         }
-                    }
+                    )
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
                         onClick = {
-                            val codeStr = code.joinToString("")
-                            if (codeStr.length != 6) { error = "Ingresa el código completo"; return@Button }
-                            loading = true; error = null
+                            val codeStr = otpValue.text
+                            if (codeStr.length != 6) {
+                                error = "Ingresa el código completo"
+                                return@Button
+                            }
+                            loading = true
+                            error = null
                             scope.launch {
                                 try {
                                     val resp = ApiClient.apiService.verificarCodigo(mapOf("correo" to correo, "codigo" to codeStr))
@@ -708,10 +781,18 @@ private fun ChangePasswordDialog(correo: String, onDismiss: () -> Unit) {
                                         step = "newPassword"
                                     } else {
                                         val err = resp.errorBody()?.string()
-                                        error = try { JSONObject(err ?: "").optString("mensaje", "Código incorrecto") } catch (_: Exception) { "Código incorrecto" }
+                                        error = try {
+                                            JSONObject(err ?: "").optString("mensaje", "Código incorrecto")
+                                        } catch (_: Exception) {
+                                            "Código incorrecto"
+                                        }
+                                        otpValue = TextFieldValue("", TextRange(0))
                                     }
-                                } catch (_: Exception) { error = "Error de conexión" }
-                                finally { loading = false }
+                                } catch (_: Exception) {
+                                    error = "Error de conexión"
+                                } finally {
+                                    loading = false
+                                }
                             }
                         },
                         enabled = !loading,
@@ -730,7 +811,7 @@ private fun ChangePasswordDialog(correo: String, onDismiss: () -> Unit) {
                                 scope.launch {
                                     try {
                                         ApiClient.apiService.enviarCodigoRecuperacion(mapOf("correo" to correo))
-                                        code = List(6) { "" }
+                                        otpValue = TextFieldValue("", TextRange(0))
                                     } catch (_: Exception) { error = "Error al reenviar" }
                                     finally { loading = false }
                                 }
@@ -813,7 +894,7 @@ private fun ChangePasswordDialog(correo: String, onDismiss: () -> Unit) {
                                 try {
                                     val resp = ApiClient.apiService.restablecerPassword(mapOf(
                                         "correo" to correo,
-                                        "codigo" to code.joinToString(""),
+                                        "codigo" to otpValue.text,
                                         "nuevaPassword" to newPassword
                                     ))
                                     if (resp.isSuccessful) {

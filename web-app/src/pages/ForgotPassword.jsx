@@ -10,7 +10,8 @@ function ForgotPassword() {
   // Flow steps: 'email' -> 'code' -> 'newPassword' -> 'success'
   const [step, setStep] = useState('email')
   const [correo, setCorreo] = useState('')
-  const [codigo, setCodigo] = useState(['', '', '', '', '', ''])
+  /** Código de 6 dígitos (un solo string; la UI son casillas de solo lectura) */
+  const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
 
   // New password state
@@ -19,7 +20,8 @@ function ForgotPassword() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
-  const codeInputRefs = useRef([])
+  const otpInputRef = useRef(null)
+  const verifyingOtpRef = useRef(false)
 
   // Password validations
   const hasMinLength = newPassword.length >= 8
@@ -50,43 +52,10 @@ function ForgotPassword() {
     }
   }
 
-  // --- Step 2: Verify code ---
-  const handleCodeChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return
-    const newCode = [...codigo]
-    newCode[index] = value.slice(-1)
-    setCodigo(newCode)
-    if (value && index < 5) {
-      codeInputRefs.current[index + 1]?.focus()
-    }
-  }
-
-  const handleCodeKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !codigo[index] && index > 0) {
-      codeInputRefs.current[index - 1]?.focus()
-    }
-  }
-
-  const handleCodePaste = (e) => {
-    e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
-    if (pasted.length > 0) {
-      const newCode = [...codigo]
-      for (let i = 0; i < 6; i++) {
-        newCode[i] = pasted[i] || ''
-      }
-      setCodigo(newCode)
-      const focusIndex = Math.min(pasted.length, 5)
-      codeInputRefs.current[focusIndex]?.focus()
-    }
-  }
-
-  const handleVerifyCode = async () => {
-    const codigoStr = codigo.join('')
-    if (codigoStr.length !== 6) {
-      toast.error('Ingresa el código completo de 6 dígitos')
-      return
-    }
+  // --- Step 2: Verify code (un solo campo; casillas solo muestran y permiten tocar para corregir) ---
+  const verifyOtpString = async (codigoStr) => {
+    if (codigoStr.length !== 6 || loading || verifyingOtpRef.current) return
+    verifyingOtpRef.current = true
     setLoading(true)
     try {
       await authService.verificarCodigo(correo.trim(), codigoStr)
@@ -94,9 +63,38 @@ function ForgotPassword() {
       setStep('newPassword')
     } catch (err) {
       toast.error(err.message)
+      setOtp('')
+      requestAnimationFrame(() => otpInputRef.current?.focus())
     } finally {
       setLoading(false)
+      verifyingOtpRef.current = false
     }
+  }
+
+  const handleOtpChange = (e) => {
+    const d = e.target.value.replace(/\D/g, '').slice(0, 6)
+    setOtp(d)
+    if (d.length === 6) {
+      verifyOtpString(d)
+    }
+  }
+
+  const handleOtpBoxClick = (index) => {
+    setOtp((prev) => prev.slice(0, index))
+    otpInputRef.current?.focus()
+    requestAnimationFrame(() => {
+      const el = otpInputRef.current
+      if (el) el.setSelectionRange(index, index)
+    })
+  }
+
+  const handleVerifyCode = async () => {
+    const codigoStr = otp
+    if (codigoStr.length !== 6) {
+      toast.error('Ingresa el código completo de 6 dígitos')
+      return
+    }
+    await verifyOtpString(codigoStr)
   }
 
   const handleResendCode = async () => {
@@ -104,7 +102,7 @@ function ForgotPassword() {
     try {
       await authService.enviarCodigoRecuperacion(correo.trim())
       toast.success('Código reenviado a tu correo')
-      setCodigo(['', '', '', '', '', ''])
+      setOtp('')
     } catch (err) {
       toast.error(err.message)
     } finally {
@@ -124,7 +122,7 @@ function ForgotPassword() {
     }
     setLoading(true)
     try {
-      await authService.restablecerPassword(correo.trim(), codigo.join(''), newPassword)
+      await authService.restablecerPassword(correo.trim(), otp, newPassword)
       toast.success('Contraseña restablecida exitosamente')
       setStep('success')
     } catch (err) {
@@ -134,10 +132,10 @@ function ForgotPassword() {
     }
   }
 
-  // Focus first code input when entering code step
   useEffect(() => {
     if (step === 'code') {
-      setTimeout(() => codeInputRefs.current[0]?.focus(), 100)
+      setOtp('')
+      setTimeout(() => otpInputRef.current?.focus(), 100)
     }
   }, [step])
 
@@ -206,21 +204,44 @@ function ForgotPassword() {
                   Ingresa el código de 6 dígitos que enviamos a <strong>{correo}</strong>
                 </p>
 
-                <div className="d-flex justify-content-center gap-2 mb-4" onPaste={handleCodePaste}>
-                  {codigo.map((digit, i) => (
-                    <input
-                      key={i}
-                      ref={(el) => (codeInputRefs.current[i] = el)}
-                      type="text"
-                      inputMode="numeric"
-                      className="form-control text-center fw-bold"
-                      maxLength="1"
-                      style={{ width: '44px', height: '48px' }}
-                      value={digit}
-                      onChange={(e) => handleCodeChange(i, e.target.value)}
-                      onKeyDown={(e) => handleCodeKeyDown(i, e)}
-                    />
-                  ))}
+                <div className="position-relative mb-4" style={{ minHeight: '48px' }}>
+                  <input
+                    ref={otpInputRef}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={otp}
+                    onChange={handleOtpChange}
+                    className="position-absolute border-0 p-0"
+                    style={{
+                      opacity: 0,
+                      caretColor: 'transparent',
+                      left: 0,
+                      top: 0,
+                      width: '100%',
+                      height: '100%',
+                      zIndex: 1,
+                      cursor: 'text',
+                    }}
+                    aria-label="Código de verificación de 6 dígitos"
+                  />
+                  <div
+                    className="d-flex justify-content-center gap-2 position-relative"
+                    style={{ zIndex: 2 }}
+                  >
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div
+                        key={i}
+                        role="presentation"
+                        className="form-control text-center fw-bold d-flex align-items-center justify-content-center user-select-none"
+                        style={{ width: '44px', height: '48px', minWidth: '44px' }}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleOtpBoxClick(i)}
+                      >
+                        {otp[i] ?? ''}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <button

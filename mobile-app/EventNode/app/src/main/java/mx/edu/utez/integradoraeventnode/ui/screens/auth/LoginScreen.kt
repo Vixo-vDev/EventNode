@@ -2,6 +2,7 @@ package mx.edu.utez.integradoraeventnode.ui.screens.auth
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,12 +31,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.data.network.models.LoginRequest
@@ -50,12 +55,18 @@ import org.json.JSONObject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -75,7 +86,8 @@ fun LoginScreen(
     // Recovery flow: "none" -> "email" -> "code" -> "newPassword" -> "success"
     var recoveryStep by remember { mutableStateOf("none") }
     var recoverEmail by remember { mutableStateOf("") }
-    var recoverCode by remember { mutableStateOf(List(6) { "" }) }
+    var recoverOtpValue by remember { mutableStateOf(TextFieldValue("", TextRange(0))) }
+    val recoverOtpFocus = remember { FocusRequester() }
     var recoverLoading by remember { mutableStateOf(false) }
     var recoverError by remember { mutableStateOf<String?>(null) }
     var newPassword by remember { mutableStateOf("") }
@@ -91,6 +103,14 @@ fun LoginScreen(
     var lockoutUntil by remember { mutableLongStateOf(prefs.getLong("lockoutUntil", 0L)) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(recoveryStep) {
+        if (recoveryStep == "code") {
+            recoverOtpValue = TextFieldValue("", TextRange(0))
+            delay(120)
+            recoverOtpFocus.requestFocus()
+        }
+    }
 
     Surface(modifier = modifier.fillMaxSize(), color = Color(0xFFF5F6FA)) {
         Box(
@@ -212,7 +232,7 @@ fun LoginScreen(
                                 modifier = Modifier.clickable {
                                     recoveryStep = "email"
                                     recoverEmail = ""
-                                    recoverCode = List(6) { "" }
+                                    recoverOtpValue = TextFieldValue("", TextRange(0))
                                     recoverError = null
                                     newPassword = ""
                                     confirmPassword = ""
@@ -491,47 +511,132 @@ fun LoginScreen(
                                     Text(recoverError!!, color = Color(0xFFEF5350), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 12.dp))
                                 }
 
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
-                                    for (i in 0..5) {
-                                        OutlinedTextField(
-                                            value = recoverCode[i],
-                                            onValueChange = { v ->
-                                                if (v.length <= 1 && v.all { it.isDigit() }) {
-                                                    recoverCode = recoverCode.toMutableList().also { it[i] = v }
-                                                    recoverError = null
+                                BasicTextField(
+                                    value = recoverOtpValue,
+                                    onValueChange = { tfv ->
+                                        if (recoverLoading) return@BasicTextField
+                                        val digits = tfv.text.filter { it.isDigit() }.take(6)
+                                        val sel = tfv.selection
+                                        val newCursor = if (!sel.collapsed) {
+                                            digits.length
+                                        } else {
+                                            minOf(sel.start, digits.length).coerceIn(0, digits.length)
+                                        }
+                                        recoverOtpValue = TextFieldValue(digits, TextRange(newCursor))
+                                        recoverError = null
+                                        if (digits.length == 6) {
+                                            scope.launch {
+                                                recoverLoading = true
+                                                recoverError = null
+                                                try {
+                                                    val resp = ApiClient.apiService.verificarCodigo(
+                                                        mapOf("correo" to recoverEmail.trim(), "codigo" to digits)
+                                                    )
+                                                    if (resp.isSuccessful) {
+                                                        recoveryStep = "newPassword"
+                                                    } else {
+                                                        val err = resp.errorBody()?.string()
+                                                        recoverError = try {
+                                                            JSONObject(err ?: "").optString("mensaje", "Código incorrecto")
+                                                        } catch (_: Exception) {
+                                                            "Código incorrecto"
+                                                        }
+                                                        recoverOtpValue = TextFieldValue("", TextRange(0))
+                                                    }
+                                                } catch (_: Exception) {
+                                                    recoverError = "Error de conexión"
+                                                } finally {
+                                                    recoverLoading = false
                                                 }
-                                            },
-                                            modifier = Modifier.width(44.dp).height(52.dp),
-                                            textStyle = androidx.compose.ui.text.TextStyle(textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, fontSize = 20.sp),
-                                            shape = RoundedCornerShape(10.dp),
-                                            singleLine = true,
-                                            colors = TextFieldDefaults.colors(
-                                                focusedContainerColor = Color(0xFFF0F7FF),
-                                                unfocusedContainerColor = Color(0xFFF8F9FB),
-                                                focusedIndicatorColor = Color(0xFF2F6FED),
-                                                unfocusedIndicatorColor = Color(0xFFE1E2EC)
-                                            )
-                                        )
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .focusRequester(recoverOtpFocus),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    singleLine = true,
+                                    textStyle = TextStyle(
+                                        textAlign = TextAlign.Center,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp
+                                    ),
+                                    decorationBox = { inner ->
+                                        Column {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+                                            ) {
+                                                for (i in 0..5) {
+                                                    val ch = recoverOtpValue.text.getOrNull(i)
+                                                    val filled = ch != null
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .width(44.dp)
+                                                            .height(52.dp)
+                                                            .clickable {
+                                                                recoverOtpFocus.requestFocus()
+                                                                val t = recoverOtpValue.text.take(i)
+                                                                recoverOtpValue = TextFieldValue(t, TextRange(t.length))
+                                                            }
+                                                            .border(
+                                                                1.dp,
+                                                                if (filled) Color(0xFF2F6FED) else Color(0xFFE1E2EC),
+                                                                RoundedCornerShape(10.dp)
+                                                            )
+                                                            .background(
+                                                                if (filled) Color(0xFFF0F7FF) else Color(0xFFF8F9FB),
+                                                                RoundedCornerShape(10.dp)
+                                                            ),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Text(
+                                                            text = ch?.toString() ?: "",
+                                                            style = TextStyle(
+                                                                textAlign = TextAlign.Center,
+                                                                fontWeight = FontWeight.Bold,
+                                                                fontSize = 20.sp
+                                                            )
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Box(Modifier.size(0.dp)) { inner() }
+                                        }
                                     }
-                                }
+                                )
                                 Spacer(modifier = Modifier.height(24.dp))
 
                                 Button(
                                     onClick = {
-                                        val codeStr = recoverCode.joinToString("")
-                                        if (codeStr.length != 6) { recoverError = "Ingresa el código completo"; return@Button }
-                                        recoverLoading = true; recoverError = null
+                                        val codeStr = recoverOtpValue.text
+                                        if (codeStr.length != 6) {
+                                            recoverError = "Ingresa el código completo"
+                                            return@Button
+                                        }
+                                        recoverLoading = true
+                                        recoverError = null
                                         scope.launch {
                                             try {
-                                                val resp = ApiClient.apiService.verificarCodigo(mapOf("correo" to recoverEmail.trim(), "codigo" to codeStr))
+                                                val resp = ApiClient.apiService.verificarCodigo(
+                                                    mapOf("correo" to recoverEmail.trim(), "codigo" to codeStr)
+                                                )
                                                 if (resp.isSuccessful) {
                                                     recoveryStep = "newPassword"
                                                 } else {
                                                     val err = resp.errorBody()?.string()
-                                                    recoverError = try { JSONObject(err ?: "").optString("mensaje", "Código incorrecto") } catch (_: Exception) { "Código incorrecto" }
+                                                    recoverError = try {
+                                                        JSONObject(err ?: "").optString("mensaje", "Código incorrecto")
+                                                    } catch (_: Exception) {
+                                                        "Código incorrecto"
+                                                    }
+                                                    recoverOtpValue = TextFieldValue("", TextRange(0))
                                                 }
-                                            } catch (_: Exception) { recoverError = "Error de conexión" }
-                                            finally { recoverLoading = false }
+                                            } catch (_: Exception) {
+                                                recoverError = "Error de conexión"
+                                            } finally {
+                                                recoverLoading = false
+                                            }
                                         }
                                     },
                                     enabled = !recoverLoading,
@@ -550,7 +655,7 @@ fun LoginScreen(
                                             scope.launch {
                                                 try {
                                                     ApiClient.apiService.enviarCodigoRecuperacion(mapOf("correo" to recoverEmail.trim()))
-                                                    recoverCode = List(6) { "" }
+                                                    recoverOtpValue = TextFieldValue("", TextRange(0))
                                                 } catch (_: Exception) { recoverError = "Error al reenviar" }
                                                 finally { recoverLoading = false }
                                             }
@@ -634,7 +739,7 @@ fun LoginScreen(
                                             try {
                                                 val resp = ApiClient.apiService.restablecerPassword(mapOf(
                                                     "correo" to recoverEmail.trim(),
-                                                    "codigo" to recoverCode.joinToString(""),
+                                                    "codigo" to recoverOtpValue.text,
                                                     "nuevaPassword" to newPassword
                                                 ))
                                                 if (resp.isSuccessful) {
