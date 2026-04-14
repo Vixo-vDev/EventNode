@@ -5,7 +5,6 @@ import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -30,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
@@ -169,17 +167,8 @@ fun AdminHomeScreen(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 filteredEvents.take(3).forEach { event ->
-                                    val (day, month) = extractDateParts(event.fechaInicio)
-                                    val statusColor = getStatusColor(event.estado)
                                     AdminEventCard(
-                                        day = day,
-                                        month = month,
-                                        title = event.nombre,
-                                        location = event.ubicacion,
-                                        status = event.estado,
-                                        statusColor = statusColor,
-                                        bannerBase64 = event.banner,
-                                        eventId = event.idEvento,
+                                        event = event,
                                         onClick = onViewEventDetail
                                     )
                                 }
@@ -241,26 +230,11 @@ fun AdminHomeScreen(
     }
 }
 
-private fun extractDateParts(isoDateTime: String): Pair<String, String> {
+private fun parseAdminEventDateTime(str: String?): LocalDateTime? {
+    if (str.isNullOrEmpty()) return null
     return try {
-        val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-        val dateTime = LocalDateTime.parse(isoDateTime, formatter)
-        val day = dateTime.dayOfMonth.toString().padStart(2, '0')
-        val monthFormatter = DateTimeFormatter.ofPattern("MMM", Locale("es", "ES"))
-        val month = dateTime.format(monthFormatter).uppercase()
-        Pair(day, month)
-    } catch (e: Exception) {
-        Pair("--", "---")
-    }
-}
-
-private fun getStatusColor(estado: String): Color {
-    return when (estado.uppercase()) {
-        "ACTIVO" -> Color(0xFF4CAF50)
-        "PENDIENTE" -> Color(0xFFFFB300)
-        "CANCELADO" -> Color(0xFFE53935)
-        else -> Color(0xFF999999)
-    }
+        LocalDateTime.parse(str.take(19), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
+    } catch (e: Exception) { null }
 }
 
 @Composable
@@ -295,39 +269,53 @@ private fun AdminStatCard(title: String, count: String, icon: String, modifier: 
 
 @Composable
 private fun AdminEventCard(
-    day: String,
-    month: String,
-    title: String,
-    location: String,
-    status: String,
-    statusColor: Color,
-    bannerBase64: String? = null,
-    eventId: Int = 0,
-    onClick: (Int) -> Unit = {}
+    event: EventoResponse,
+    onClick: (Int) -> Unit
 ) {
-    val decodedBanner: ImageBitmap? = remember(bannerBase64) {
-        if (bannerBase64.isNullOrEmpty()) return@remember null
+    val now = LocalDateTime.now()
+    val inicio = parseAdminEventDateTime(event.fechaInicio)
+    val fin = parseAdminEventDateTime(event.fechaFin)
+    val isLive = inicio != null && fin != null && !inicio.isAfter(now) && !fin.isBefore(now)
+
+    val fechaInicio = event.fechaInicio
+    val dateStr = if (fechaInicio.length >= 16) {
+        fechaInicio.substring(0, 10).replace("-", "/") + " • " + fechaInicio.substring(11, 16)
+    } else fechaInicio
+
+    val badgeText = when {
+        isLive -> "ACTIVO"
+        event.estado.uppercase() == "PRÓXIMO" -> "PRÓXIMO"
+        else -> event.estado.uppercase()
+    }
+    val badgeBg = if (isLive) Color(0xFF2F6FED) else Color(0xFF757575)
+
+    val decodedBanner: ImageBitmap? = remember(event.banner) {
+        if (event.banner.isNullOrEmpty()) return@remember null
         try {
-            val clean = if (bannerBase64.contains(",")) bannerBase64.substringAfter(",") else bannerBase64
+            val raw = event.banner ?: return@remember null
+            val clean = if (raw.contains(",")) raw.substringAfter(",") else raw
             val bytes = Base64.decode(clean, Base64.DEFAULT)
             BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
         } catch (e: Exception) { null }
     }
 
+    val bannerAccent = Color(0xFF6F9EA6)
+    val bannerImageAlpha = 0.6f
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick(eventId) },
+            .widthIn(max = 420.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column {
-            // Banner
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
-                    .background(Color(0xFF6F9EA6))
+                    .height(120.dp)
+                    .background(bannerAccent)
             ) {
                 if (decodedBanner != null) {
                     Image(
@@ -335,51 +323,55 @@ private fun AdminEventCard(
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
-                        alpha = 0.85f
+                        alpha = bannerImageAlpha
+                    )
+                } else {
+                    Image(
+                        bitmap = assetImageBitmap("Gemini_Generated_Image_j7p5usj7p5usj7p5.png"),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        alpha = bannerImageAlpha
                     )
                 }
-                // Status badge over banner
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
+                        .align(Alignment.BottomEnd)
                         .padding(8.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(statusColor.copy(alpha = 0.9f))
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(badgeBg)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = status,
+                        text = badgeText,
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 9.sp
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
 
-            // Info row below banner
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = event.nombre,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1A1C1E)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = dateStr, style = MaterialTheme.typography.bodySmall, color = Color(0xFF74777F))
+                Text(text = event.ubicacion, style = MaterialTheme.typography.bodySmall, color = Color(0xFF74777F))
+                Spacer(modifier = Modifier.height(10.dp))
+                Button(
+                    onClick = { onClick(event.idEvento) },
                     modifier = Modifier
-                        .width(45.dp)
-                        .padding(vertical = 4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
                 ) {
-                    Text(text = month, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                    Text(text = day, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Ver detalles", fontWeight = FontWeight.Bold)
                 }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                    Text(text = location, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                }
-
-                Text(">", color = Color.LightGray, modifier = Modifier.padding(horizontal = 8.dp))
             }
         }
     }

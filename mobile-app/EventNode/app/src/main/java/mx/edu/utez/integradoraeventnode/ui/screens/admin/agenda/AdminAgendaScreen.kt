@@ -32,6 +32,7 @@ import mx.edu.utez.integradoraeventnode.data.network.ApiClient
 import mx.edu.utez.integradoraeventnode.data.network.models.EventoResponse
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.screens.admin.common.AdminBottomNav
+import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 
 @Composable
 fun AdminAgendaScreen(
@@ -111,9 +112,9 @@ fun AdminAgendaScreen(
                             Text("No hay eventos activos ni próximos.", color = Color.Gray, textAlign = TextAlign.Center)
                         }
                     } else {
-                        // ── EN VIVO ──
+                        // ── ACTIVO (horario en curso) ──
                         if (enVivoEvents.isNotEmpty()) {
-                            SectionLabel(label = "EN VIVO", color = Color(0xFFE53935))
+                            SectionLabel(label = "ACTIVO", color = Color(0xFF2F6FED))
                             Spacer(modifier = Modifier.height(12.dp))
                             enVivoEvents.forEach { event ->
                                 AdminAgendaCard(event = event, isLive = true, onDetail = { onViewDetail(event.idEvento) })
@@ -124,7 +125,7 @@ fun AdminAgendaScreen(
 
                         // ── PRÓXIMOS ──
                         if (proximosEvents.isNotEmpty()) {
-                            SectionLabel(label = "PRÓXIMOS", color = Color(0xFF2F6FED))
+                            SectionLabel(label = "PRÓXIMOS", color = Color(0xFF757575))
                             Spacer(modifier = Modifier.height(12.dp))
                             proximosEvents.forEach { event ->
                                 AdminAgendaCard(event = event, isLive = false, onDetail = { onViewDetail(event.idEvento) })
@@ -187,12 +188,10 @@ private fun AdminAgendaCard(
     isLive: Boolean,
     onDetail: () -> Unit
 ) {
-    val timeRange = try {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
-        val start = LocalDateTime.parse(event.fechaInicio.take(19), formatter)
-        val end = LocalDateTime.parse(event.fechaFin.take(19), formatter)
-        "${start.format(DateTimeFormatter.ofPattern("HH:mm"))} - ${end.format(DateTimeFormatter.ofPattern("HH:mm"))}"
-    } catch (e: Exception) { "Hora no disponible" }
+    val fechaInicio = event.fechaInicio
+    val dateStr = if (fechaInicio.length >= 16) {
+        fechaInicio.substring(0, 10).replace("-", "/") + " • " + fechaInicio.substring(11, 16)
+    } else fechaInicio
 
     val bannerBitmap: ImageBitmap? = remember(event.banner) {
         if (event.banner.isNullOrEmpty()) return@remember null
@@ -203,10 +202,13 @@ private fun AdminAgendaCard(
         } catch (e: Exception) { null }
     }
 
-    val accentColor = if (isLive) Color(0xFFB71C1C) else Color(0xFF2F6FED)
+    val bannerAccent = Color(0xFF6F9EA6)
+    val bannerImageAlpha = 0.6f
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = 420.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -215,8 +217,8 @@ private fun AdminAgendaCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp)
-                    .background(accentColor.copy(alpha = 0.8f))
+                    .height(120.dp)
+                    .background(bannerAccent)
             ) {
                 if (bannerBitmap != null) {
                     Image(
@@ -224,43 +226,52 @@ private fun AdminAgendaCard(
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
-                        alpha = if (isLive) 0.5f else 0.7f
+                        alpha = bannerImageAlpha
+                    )
+                } else {
+                    Image(
+                        bitmap = assetImageBitmap("Gemini_Generated_Image_j7p5usj7p5usj7p5.png"),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        alpha = bannerImageAlpha
                     )
                 }
-                // Badge
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(10.dp)
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(if (isLive) Color(0xFFFFEBEE) else Color(0xFFE6F0FF))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .background(if (isLive) Color(0xFF2F6FED) else Color(0xFF757575))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = if (isLive) "EN VIVO" else "PRÓXIMO",
+                        text = if (isLive) "ACTIVO" else "PRÓXIMO",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isLive) Color(0xFFE53935) else Color(0xFF2F6FED),
+                        color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = event.nombre, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = timeRange, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                }
-                Spacer(modifier = Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = event.ubicacion, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                }
-                Spacer(modifier = Modifier.height(14.dp))
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = event.nombre,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1A1C1E)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = dateStr, style = MaterialTheme.typography.bodySmall, color = Color(0xFF74777F))
+                Text(text = event.ubicacion, style = MaterialTheme.typography.bodySmall, color = Color(0xFF74777F))
+                Spacer(modifier = Modifier.height(10.dp))
                 Button(
                     onClick = onDetail,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = accentColor)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FED))
                 ) {
                     Text("Ver detalles", fontWeight = FontWeight.Bold)
                 }
