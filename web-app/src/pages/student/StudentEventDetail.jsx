@@ -98,7 +98,10 @@ function StudentEventDetail({ user }) {
   const cutoff = new Date(fechaInicio.getTime() - (evento.tiempoCancelacionHoras || 0) * 60 * 60 * 1000)
   const dentroDelPlazo = ahora < cutoff
 
-  const puedeInscribirse = (evento.estado === 'ACTIVO' || evento.estado === 'PRÓXIMO') && capacityPercent < 100
+  // Alineado con PreCheckinService: no inscripción si la hora de inicio ya pasó (isAfter en backend)
+  const eventoYaInicio = ahora.getTime() > fechaInicio.getTime()
+  const abiertoEstado = evento.estado === 'ACTIVO' || evento.estado === 'PRÓXIMO'
+  const puedeInscribirse = abiertoEstado && capacityPercent < 100 && !eventoYaInicio
   const puedeCancelar = enrolled && dentroDelPlazo
 
   return (
@@ -227,8 +230,16 @@ function StudentEventDetail({ user }) {
                 <button className="btn btn-primary w-100 rounded-pill fw-semibold" onClick={handleInscribirse} disabled={enrolling}>
                   {enrolling ? 'Inscribiendo...' : t('eventDetail.enroll')}
                 </button>
+              ) : abiertoEstado && eventoYaInicio ? (
+                <button type="button" className="btn btn-secondary w-100 rounded-pill fw-semibold" disabled>
+                  {t('eventDetail.enrollmentClosedStarted')}
+                </button>
+              ) : abiertoEstado && capacityPercent >= 100 ? (
+                <button type="button" className="btn btn-secondary w-100 rounded-pill fw-semibold" disabled>
+                  {t('eventDetail.eventFull')}
+                </button>
               ) : (
-                <button className="btn btn-secondary w-100 rounded-pill fw-semibold" disabled>
+                <button type="button" className="btn btn-secondary w-100 rounded-pill fw-semibold" disabled>
                   {evento.estado.charAt(0).toUpperCase() + evento.estado.slice(1).toLowerCase()}
                 </button>
               )}

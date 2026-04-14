@@ -197,7 +197,8 @@
     "loading": "Loading...",
     "back": "Back",
     "alreadyEnrolled": "ALREADY ENROLLED",
-    "capacity": "Capacity"
+    "capacity": "Capacity",
+    "enrollmentClosedStarted": "Enrollment closed (the event has already started)"
   },
   "checkin": {
     "title": "Attendance List (Check-in)",

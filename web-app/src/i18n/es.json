@@ -199,7 +199,8 @@
     "loading": "Cargando...",
     "back": "Regresar",
     "alreadyEnrolled": "YA ESTÁS INSCRITO",
-    "capacity": "Capacidad"
+    "capacity": "Capacidad",
+    "enrollmentClosedStarted": "Inscripciones cerradas (el evento ya comenzó)"
   },
   "checkin": {
     "title": "Lista de Asistencia (Check-in)",

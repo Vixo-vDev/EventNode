@@ -56,6 +56,8 @@ import kotlinx.coroutines.launch
 import android.util.Base64
 import org.json.JSONObject
 import androidx.compose.ui.window.Dialog
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun StudentEventDetailScreen(
@@ -336,6 +338,13 @@ fun StudentEventDetailScreen(
 
                         Spacer(modifier = Modifier.height(32.dp))
 
+                        val inscritos = inscritosCount ?: 0
+                        val isFull = ev.capacidadMaxima > 0 && inscritos >= ev.capacidadMaxima
+                        val abiertoInscripcion = ev.estado == "ACTIVO" || ev.estado == "PRÓXIMO"
+                        val yaComenzo = eventoYaInicio(ev.fechaInicio)
+                        val puedeInscribir =
+                            !isEnrolled && abiertoInscripcion && !yaComenzo && !isFull
+
                         if (isEnrolled) {
                             Button(
                                 onClick = { cancelErrorMsg = null; showCancelDialog = true },
@@ -352,7 +361,7 @@ fun StudentEventDetailScreen(
                                     color = Color.White
                                 )
                             }
-                        } else if (ev.estado == "ACTIVO" || ev.estado == "PRÓXIMO") {
+                        } else if (puedeInscribir) {
                             Button(
                                 onClick = { errorMessage = null; showInscribirseDialog = true },
                                 modifier = Modifier
@@ -364,6 +373,38 @@ fun StudentEventDetailScreen(
                             ) {
                                 Text(
                                     if (isCheckingIn) "Inscribiendo..." else "Inscribirme",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.White
+                                )
+                            }
+                        } else if (abiertoInscripcion && yaComenzo) {
+                            Button(
+                                onClick = { },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                                enabled = false
+                            ) {
+                                Text(
+                                    "Inscripciones cerradas (el evento ya comenzó)",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.White
+                                )
+                            }
+                        } else if (abiertoInscripcion && isFull) {
+                            Button(
+                                onClick = { },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                                enabled = false
+                            ) {
+                                Text(
+                                    "Evento lleno",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = Color.White
                                 )
@@ -877,6 +918,19 @@ private fun StudentBottomNav(selected: String, onHome: () -> Unit, onAgenda: () 
                 onClick = onProfile
             )
         }
+    }
+}
+
+/** Alineado con PreCheckinService: inscripción no permitida si now isAfter(fechaInicio). */
+private fun eventoYaInicio(fechaInicio: String): Boolean {
+    if (fechaInicio.isBlank()) return false
+    return try {
+        val normalized = fechaInicio.trim()
+        val toParse = if (normalized.length >= 19) normalized.substring(0, 19) else normalized
+        val start = LocalDateTime.parse(toParse, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        LocalDateTime.now().isAfter(start)
+    } catch (_: Exception) {
+        false
     }
 }
 

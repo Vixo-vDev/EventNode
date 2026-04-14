@@ -273,35 +273,82 @@ fun EventDetailScreen(
 
                         Spacer(modifier = Modifier.height(40.dp))
 
-                        Button(
-                            onClick = {
-                                isRegistering = true
-                                scope.launch {
-                                    try {
-                                        if (userId != -1 && bearerToken.isNotEmpty()) {
-                                            val response = ApiClient.apiService.inscribirse(
-                                                bearerToken,
-                                                mapOf("idUsuario" to userId, "idEvento" to eventId)
-                                            )
-                                            if (response.isSuccessful) {
-                                                showRegisterModal = true
+                        val evReg = evento
+                        if (evReg != null) {
+                            val yaComenzoReg = isEventStartTimePassed(evReg.fechaInicio)
+                            val abiertoReg = evReg.estado == "ACTIVO" || evReg.estado == "PRÓXIMO"
+                            val puedeRegistrarse = abiertoReg && !yaComenzoReg
+
+                            if (puedeRegistrarse) {
+                                Button(
+                                    onClick = {
+                                        isRegistering = true
+                                        scope.launch {
+                                            try {
+                                                if (userId != -1 && bearerToken.isNotEmpty()) {
+                                                    val response = ApiClient.apiService.inscribirse(
+                                                        bearerToken,
+                                                        mapOf("idUsuario" to userId, "idEvento" to eventId)
+                                                    )
+                                                    if (response.isSuccessful) {
+                                                        showRegisterModal = true
+                                                    }
+                                                }
+                                            } catch (e: Exception) {
+                                                errorMessage = "Error al registrarse: ${e.message}"
+                                            } finally {
+                                                isRegistering = false
                                             }
                                         }
-                                    } catch (e: Exception) {
-                                        errorMessage = "Error al registrarse: ${e.message}"
-                                    } finally {
-                                        isRegistering = false
-                                    }
+                                    },
+                                    enabled = !isRegistering,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
+                                ) {
+                                    Text("Registrarse al Evento", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                                 }
-                            },
-                            enabled = !isRegistering,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = AppColors.Primary)
-                        ) {
-                            Text("Registrarse al Evento", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            } else if (abiertoReg && yaComenzoReg) {
+                                Button(
+                                    onClick = { },
+                                    enabled = false,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        disabledContainerColor = Color(0xFFB0B0B0),
+                                        disabledContentColor = Color.White
+                                    )
+                                ) {
+                                    Text(
+                                        "Inscripciones cerradas (el evento ya comenzó)",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
+                                }
+                            } else {
+                                Button(
+                                    onClick = { },
+                                    enabled = false,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        disabledContainerColor = Color(0xFFB0B0B0),
+                                        disabledContentColor = Color.White
+                                    )
+                                ) {
+                                    Text(
+                                        "Evento ${evReg.estado}",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -418,6 +465,17 @@ private fun formatDateTime(dateTimeString: String): String {
         dateTime.format(outputFormatter)
     } catch (e: Exception) {
         dateTimeString
+    }
+}
+
+/** Igual que PreCheckinService: no inscripción si now isAfter(fechaInicio). */
+private fun isEventStartTimePassed(fechaInicio: String): Boolean {
+    if (fechaInicio.isBlank()) return false
+    return try {
+        val dateTime = LocalDateTime.parse(fechaInicio.trim(), DateTimeFormatter.ISO_DATE_TIME)
+        LocalDateTime.now().isAfter(dateTime)
+    } catch (_: Exception) {
+        false
     }
 }
 
