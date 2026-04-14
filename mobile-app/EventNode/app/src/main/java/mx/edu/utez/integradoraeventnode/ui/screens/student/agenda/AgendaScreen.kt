@@ -314,7 +314,9 @@ private fun AgendaCard(
     // QR habilitado si el evento está EN VIVO y no hay asistencia aún
     val qrEnabled = isLive && !hasAttendance
 
-    val bannerColor = if (isLive) Color(0xFFB71C1C) else Color(0xFF9B7A4A)
+    // Mismo tratamiento que Inicio (EventCard): acento neutro, sin capa roja sobre el banner
+    val bannerAccent = Color(0xFF6F9EA6)
+    val bannerImageAlpha = 0.6f
 
     Card(
         modifier = Modifier
@@ -330,7 +332,7 @@ private fun AgendaCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)
-                    .background(bannerColor)
+                    .background(bannerAccent)
             ) {
                 val decoded = bannerDecoder(bannerBase64)
                 if (decoded != null) {
@@ -339,7 +341,15 @@ private fun AgendaCard(
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
-                        alpha = if (isLive) 0.5f else 0.6f
+                        alpha = bannerImageAlpha
+                    )
+                } else {
+                    Image(
+                        bitmap = assetImageBitmap("Gemini_Generated_Image_j7p5usj7p5usj7p5.png"),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        alpha = bannerImageAlpha
                     )
                 }
                 Box(
@@ -360,10 +370,15 @@ private fun AgendaCard(
             }
 
             Column(modifier = Modifier.padding(12.dp)) {
-                Text(text = nombre, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = nombre,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1A1C1E)
+                )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = dateStr, style = MaterialTheme.typography.bodySmall, color = Color(0xFF6C6C6C))
-                Text(text = ubicacion, style = MaterialTheme.typography.bodySmall, color = Color(0xFF6C6C6C))
+                Text(text = dateStr, style = MaterialTheme.typography.bodySmall, color = Color(0xFF74777F))
+                Text(text = ubicacion, style = MaterialTheme.typography.bodySmall, color = Color(0xFF74777F))
                 Spacer(modifier = Modifier.height(10.dp))
 
                 when {
