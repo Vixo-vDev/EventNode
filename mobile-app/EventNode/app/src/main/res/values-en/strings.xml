@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EventNode</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_agenda">Agenda</string>
+    <string name="nav_scan">Scan</string>
+    <string name="nav_diplomas">Diplomas</string>
+    <string name="nav_analytics">Analytics</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Auth - Login -->
+    <string name="auth_login">Sign In</string>
+    <string name="auth_login_subtitle">Enjoy the events we have prepared for you</string>
+    <string name="auth_email">Institutional Email</string>
+    <string name="auth_email_placeholder">studentid@utez.edu.mx</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_forgot_password">Forgot your password?</string>
+    <string name="auth_keep_session">Keep me signed in</string>
+    <string name="auth_logging_in">Signing In…</string>
+    <string name="auth_no_account">Don\'t have an account?</string>
+    <string name="auth_create_account">Create an account</string>
+    <string name="auth_sign_in">Sign in</string>
+    <string name="auth_has_account">Already have an account?</string>
+
+    <!-- Auth - Register -->
+    <string name="register_title">Create Account</string>
+    <string name="register_subtitle">Register to start using EventNode.</string>
+    <string name="register_first_name">First Name(s)*</string>
+    <string name="register_first_name_hint">Enter your name</string>
+    <string name="register_last_name_p">Last Name*</string>
+    <string name="register_last_name_p_hint">Enter last name</string>
+    <string name="register_last_name_m">Second Last Name*</string>
+    <string name="register_last_name_m_hint">Enter second last name</string>
+    <string name="register_matricula">Student ID*</string>
+    <string name="register_matricula_hint">E.g.: 20243ds01</string>
+    <string name="register_email">Institutional email*</string>
+    <string name="register_password">Password*</string>
+    <string name="register_password_hint">Minimum 8 characters, uppercase, lowercase, numbers, and symbols.</string>
+    <string name="register_confirm_password">Confirm password*</string>
+    <string name="register_birth_date">Date of birth*</string>
+    <string name="register_select_date">Select date</string>
+    <string name="register_calculated_age">Calculated age:</string>
+    <string name="register_years">years</string>
+    <string name="register_gender">Gender*</string>
+    <string name="register_male">Male</string>
+    <string name="register_female">Female</string>
+    <string name="register_quarter">Quarter*</string>
+    <string name="register_select">Select</string>
+    <string name="register_all_required">All fields are required</string>
+    <string name="register_password_mismatch">Passwords do not match</string>
+    <string name="register_email_invalid">Email must end with @utez.edu.mx</string>
+    <string name="register_password_invalid">Invalid password.\nMust have 8+ characters, uppercase, lowercase, numbers, and a symbol.</string>
+    <string name="register_age_invalid">The age entered is not valid for academic registration</string>
+    <string name="register_quarter_invalid">Quarter out of range</string>
+    <string name="register_success_title">Account Created Successfully!</string>
+    <string name="register_success_msg">Your account has been registered successfully. You can now sign in.</string>
+    <string name="register_back_to_home">Back to Home</string>
+    <string name="register_creating">Sending…</string>
+    <string name="register_notice">Notice</string>
+    <string name="register_duplicate">Student ID or email already registered</string>
+    <string name="register_error">Registration error</string>
+    <string name="register_connection_error">Connection error:</string>
+
+    <!-- Password Recovery -->
+    <string name="recovery_title">Recover Password</string>
+    <string name="recovery_instructions">Enter your institutional email and we\'ll send you recovery instructions.</string>
+    <string name="recovery_send_code">Send Code</string>
+    <string name="recovery_sending">Sending…</string>
+    <string name="recovery_verify_title">Verify Code</string>
+    <string name="recovery_code_instructions">Enter the 6-digit code we sent to your email</string>
+    <string name="recovery_verify">Verify</string>
+    <string name="recovery_verifying">Verifying…</string>
+    <string name="recovery_no_code">Didn\'t receive the code?</string>
+    <string name="recovery_resend">Resend code</string>
+    <string name="recovery_new_password">New password</string>
+    <string name="recovery_confirm_password">Confirm new password</string>
+    <string name="recovery_reset">Reset Password</string>
+    <string name="recovery_resetting">Resetting…</string>
+    <string name="recovery_success">Password Updated!</string>
+    <string name="recovery_success_msg">Your password has been changed successfully. You can now sign in.</string>
+    <string name="recovery_back_to_login">Back to sign in</string>
+
+    <!-- Student Home -->
+    <string name="home_search">Search events by name…</string>
+    <string name="home_loading">Loading events…</string>
+    <string name="home_upcoming">Upcoming Events</string>
+    <string name="home_see_more">See more events</string>
+
+    <!-- Student Agenda -->
+    <string name="agenda_title">My Events</string>
+    <string name="agenda_upcoming">Upcoming</string>
+    <string name="agenda_past">Past</string>
+    <string name="agenda_loading">Loading your agenda…</string>
+    <string name="agenda_no_events">You are not enrolled in any events yet.</string>
+    <string name="agenda_live">ACTIVE</string>
+    <string name="agenda_view_qr">View Access QR</string>
+    <string name="agenda_today">Today,</string>
+    <string name="agenda_tomorrow">Tomorrow,</string>
+    <string name="agenda_view_details">View details</string>
+    <string name="agenda_time_unavailable">Time unavailable</string>
+
+    <!-- Event Detail -->
+    <string name="event_date_time">DATE &amp; TIME</string>
+    <string name="event_location">LOCATION</string>
+    <string name="event_capacity">CAPACITY</string>
+    <string name="event_people">People</string>
+    <string name="event_info">Event Information</string>
+    <string name="event_status">Status:</string>
+    <string name="event_no_description">No description</string>
+    <string name="event_enroll">Enroll</string>
+    <string name="event_enrolling">Enrolling…</string>
+    <string name="event_cancel_enrollment">Cancel enrollment</string>
+    <string name="event_cancelling">Cancelling…</string>
+    <string name="event_cancel_event">Cancel Event</string>
+    <string name="event_back">Back</string>
+    <string name="event_edit">Edit</string>
+    <string name="event_loading">Loading details…</string>
+    <string name="event_loading_simple">Loading event…</string>
+    <string name="event_invalid_id">Invalid event ID</string>
+    <string name="event_connection_error">Connection error</string>
+    <string name="event_image">Event image</string>
+    <string name="event_register_to">Register for Event</string>
+    <string name="event_register_success">Registration successful!</string>
+    <string name="event_register_success_msg">All set to attend \'%1$s\'. Get ready for an inspiring experience.</string>
+    <string name="event_view_agenda">View in agenda</string>
+    <string name="event_discover_more">Discover more</string>
+
+    <!-- Event Cancellation Dialog -->
+    <string name="cancel_confirm_title">Are you sure you want to cancel your registration?</string>
+    <string name="cancel_confirm_msg">This action will logically remove your registration. Note that you can cancel within 30 minutes of registering.</string>
+    <string name="cancel_confirm_btn">Confirm cancellation</string>
+    <string name="cancel_processing">Processing…</string>
+    <string name="cancel_keep">Keep registration</string>
+    <string name="cancel_success_title">Cancellation successful!</string>
+    <string name="cancel_success_msg">Your event registration has been successfully removed from our database. We\'re sorry you can\'t attend.</string>
+    <string name="cancel_back_home">Back to Home</string>
+    <string name="cancel_see_events">See other events</string>
+
+    <!-- Checkin QR -->
+    <string name="checkin_title">Check-in</string>
+    <string name="checkin_student_label">STUDENT</string>
+    <string name="checkin_qr_label">Event check-in code</string>
+    <string name="checkin_valid_time">VALID FOR 15 MINUTES</string>
+    <string name="checkin_show_code">Show this code to attendants to register your arrival</string>
+
+    <!-- Admin Home -->
+    <string name="admin_search">Search events or users</string>
+    <string name="admin_certifications_issued">Certifications\nIssued</string>
+    <string name="admin_registered_users">Registered Users</string>
+    <string name="admin_upcoming_events">Upcoming Events</string>
+    <string name="admin_see_all">See all</string>
+    <string name="admin_recent_certs">Recent Certifications</string>
+    <string name="admin_manage">Manage</string>
+    <string name="admin_completed">COMPLETED</string>
+    <string name="admin_pending">PENDING</string>
+    <string name="admin_diploma_id">DIPLOMA ID:</string>
+
+    <!-- Admin Agenda -->
+    <string name="admin_agenda_title">Agenda</string>
+    <string name="admin_agenda_upcoming">Upcoming</string>
+    <string name="admin_agenda_past">Past</string>
+    <string name="admin_no_upcoming">No upcoming events</string>
+    <string name="admin_no_past">No past events</string>
+
+    <!-- Admin Edit Event -->
+    <string name="edit_event_loading">Loading event…</string>
+    <string name="edit_event_error">Error</string>
+    <string name="edit_event_back">Back</string>
+    <string name="edit_event_title">EVENT TITLE</string>
+    <string name="edit_event_start_date">START DATE</string>
+    <string name="edit_event_date_format">YYYY-MM-DD</string>
+    <string name="edit_event_time_format">HH:mm</string>
+    <string name="edit_event_end_date">END DATE</string>
+    <string name="edit_event_location">LOCATION</string>
+    <string name="edit_event_capacity">MAX CAPACITY</string>
+    <string name="edit_event_description">DESCRIPTION</string>
+    <string name="edit_event_load_error">Error loading event</string>
+    <string name="edit_event_save_error">Error saving changes</string>
+    <string name="edit_event_save">Save Changes</string>
+
+    <!-- Admin Event Detail -->
+    <string name="admin_event_attendance_metrics">ATTENDANCE METRICS</string>
+    <string name="admin_event_registered">REGISTERED</string>
+    <string name="admin_event_live">live</string>
+    <string name="admin_event_attended">ATTENDED</string>
+    <string name="admin_event_quick_actions">QUICK ACTIONS</string>
+    <string name="admin_event_view_attendance">View Attendance List</string>
+    <string name="admin_event_manage_participants">Manage participants and records</string>
+    <string name="admin_event_attendance_list">Attendance List</string>
+    <string name="admin_event_no_attendance">No attendance records</string>
+    <string name="admin_event_student">Student</string>
+    <string name="admin_event_synced">Synced</string>
+
+    <!-- Admin Analytics -->
+    <string name="analytics_title">Analytics</string>
+    <string name="analytics_summary">Event Summary</string>
+    <string name="analytics_total_events">Total Events</string>
+    <string name="analytics_active_events">Active Events</string>
+    <string name="analytics_live">LIVE</string>
+    <string name="analytics_diplomas">Diplomas</string>
+    <string name="analytics_performance">Event Performance</string>
+    <string name="analytics_avg_attendance">Average attendance rate</string>
+    <string name="analytics_live_data">Live data</string>
+    <string name="analytics_popular_categories">Popular Event Categories</string>
+    <string name="analytics_no_categories">No categories available</string>
+    <string name="analytics_demographics">Demographics Breakdown</string>
+    <string name="analytics_gender">Users by Gender</string>
+    <string name="analytics_male">MALE</string>
+    <string name="analytics_female">FEMALE</string>
+    <string name="analytics_no_token">Token unavailable</string>
+    <string name="analytics_error">Error</string>
+    <string name="analytics_unknown_error">Unknown error</string>
+
+    <!-- Admin Diplomas -->
+    <string name="diplomas_title">Diploma Management</string>
+    <string name="diplomas_no_diplomas">No Diplomas</string>
+    <string name="diplomas_no_diplomas_msg">No diplomas configured. Create one on the web to get started.</string>
+    <string name="diplomas_template_yes">✓ Template</string>
+    <string name="diplomas_template_no">No template</string>
+    <string name="diplomas_signature_yes">✓ Signature</string>
+    <string name="diplomas_signature_no">No signature</string>
+    <string name="diplomas_issued">Issued</string>
+    <string name="diplomas_pending">Pending</string>
+    <string name="diplomas_emit">Issue Diplomas</string>
+    <string name="diplomas_emitted_title">Diplomas Issued!</string>
+    <string name="diplomas_emitted_msg">Successfully issued %1$d diploma(s).</string>
+    <string name="diplomas_accept">Accept</string>
+
+    <!-- Admin Scanner -->
+    <string name="scanner_select_event">Select Event</string>
+    <string name="scanner_loading_events">Loading active events…</string>
+    <string name="scanner_no_events">No active events available</string>
+    <string name="scanner_starts">Starts:</string>
+    <string name="scanner_qr_title">QR Scanner for\nAdministrator</string>
+    <string name="scanner_qr_subtitle">Scan the student\'s QR code to register their attendance.</string>
+    <string name="scanner_manual_entry">Manual entry</string>
+    <string name="scanner_simulate">Simulate Scan</string>
+    <string name="scanner_change_event">Change event</string>
+    <string name="scanner_scan_qr">Scan the QR code</string>
+    <string name="scanner_scan_instruction">Place the code within the frame to register attendance</string>
+    <string name="scanner_matricula_simulate">Student ID (simulate QR)</string>
+    <string name="scanner_register_attendance">Register Attendance</string>
+    <string name="scanner_processing">Processing…</string>
+    <string name="scanner_back">Back</string>
+    <string name="scanner_success_title">Attendance Registered!</string>
+    <string name="scanner_success_msg">Attendance registered</string>
+    <string name="scanner_continue">Continue</string>
+    <string name="scanner_failed_title">Registration failed</string>
+    <string name="scanner_failed_msg">The QR code is invalid or has expired. Please try again or search manually.</string>
+    <string name="scanner_retry">Try again</string>
+    <string name="scanner_search_manual">Search manually</string>
+    <string name="scanner_manual_title">Manual Registration</string>
+    <string name="scanner_matricula_label">Student ID</string>
+    <string name="scanner_matricula_hint">Enter student ID</string>
+    <string name="scanner_search_student">Search Student</string>
+    <string name="scanner_search_results">SEARCH RESULTS</string>
+    <string name="scanner_student_label">Student</string>
+    <string name="scanner_event_label">EVENT</string>
+    <string name="scanner_confirm_register">Confirm Registration</string>
+    <string name="scanner_back_to_scanner">Back to scanner</string>
+
+    <!-- Admin Profile -->
+    <string name="profile_admin_data">Administrator Data</string>
+    <string name="profile_full_name">Full name:</string>
+    <string name="profile_email">Email:</string>
+    <string name="profile_matricula">Student ID:</string>
+    <string name="profile_gender">Gender:</string>
+    <string name="profile_quarter">Quarter:</string>
+    <string name="profile_role">Role:</string>
+    <string name="profile_certs_issued">Issued certificates</string>
+    <string name="profile_no_certs">No certificates issued</string>
+    <string name="profile_logout">Log Out</string>
+    <string name="profile_logout_title">Log out?</string>
+    <string name="profile_logout_msg">Are you sure you want to sign out of your EventNode account? You\'ll need to re-enter your credentials to access it again.</string>
+    <string name="profile_logout_confirm">Yes, log out</string>
+    <string name="profile_keep_session">Keep session</string>
+    <string name="profile_male">Male</string>
+    <string name="profile_female">Female</string>
+    <string name="profile_edit">Edit Profile</string>
+    <string name="profile_admin_role">ADMINISTRATOR</string>
+    <string name="profile_superadmin_role">SUPERADMIN</string>
+    <string name="profile_student_role">STUDENT</string>
+
+    <!-- Admin Edit Profile -->
+    <string name="edit_profile_name">NAME</string>
+    <string name="edit_profile_last_name_p">LAST NAME</string>
+    <string name="edit_profile_last_name_m">SECOND LAST NAME</string>
+    <string name="edit_profile_email">EMAIL</string>
+    <string name="edit_profile_photo">Profile photo</string>
+    <string name="edit_profile_edit_photo">Edit photo</string>
+    <string name="edit_profile_save">Save data</string>
+    <string name="edit_profile_success">Data updated!</string>
+    <string name="edit_profile_success_msg">Your information has been saved successfully.</string>
+    <string name="edit_profile_back">Back to Profile</string>
+    <string name="edit_profile_go_home">Go to Home</string>
+    <string name="edit_profile_error">Error updating profile</string>
+    <string name="edit_profile_required">Name and last name are required</string>
+
+    <!-- Student Profile -->
+    <string name="student_profile_edit">Edit Profile</string>
+    <string name="student_profile_back">Back</string>
+
+    <!-- Student Diplomas -->
+    <string name="student_diplomas_title">Your earned diplomas</string>
+    <string name="student_diplomas_count">You\'ve completed %1$d course(s)</string>
+    <string name="student_diplomas_empty">No diplomas\nyet</string>
+    <string name="student_diplomas_empty_msg">You haven\'t completed any events yet. Explore events to start earning certificates.</string>
+    <string name="student_diplomas_explore">Explore events</string>
+    <string name="student_diplomas_error">Error loading diplomas</string>
+    <string name="student_diplomas_delivered">Delivered</string>
+    <string name="student_diplomas_error_status">Error</string>
+    <string name="student_diplomas_pending">Pending</string>
+    <string name="student_diplomas_issued">Issued:</string>
+    <string name="student_diplomas_download">Download PDF</string>
+    <string name="student_diplomas_downloading">Downloading…</string>
+    <string name="student_diplomas_downloaded">Diploma downloaded to Downloads</string>
+    <string name="student_diplomas_download_error">Error downloading diploma</string>
+
+    <!-- Common -->
+    <string name="common_close">Close</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_accept">Accept</string>
+    <string name="common_error">Error</string>
+    <string name="common_loading">Loading…</string>
+    <string name="common_unknown">Unknown</string>
+    <string name="common_of">of</string>
+
+    <!-- Language -->
+    <string name="language_title">Language</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_english">English</string>
+</resources>

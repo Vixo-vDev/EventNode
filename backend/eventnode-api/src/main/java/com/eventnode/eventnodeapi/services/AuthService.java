@@ -1,0 +1,125 @@
+package com.eventnode.eventnodeapi.services;
+
+import com.eventnode.eventnodeapi.dtos.LoginRequest;
+import com.eventnode.eventnodeapi.dtos.LoginResponse;
+import com.eventnode.eventnodeapi.models.Usuario;
+import com.eventnode.eventnodeapi.models.Alumno;
+import com.eventnode.eventnodeapi.repositories.UsuarioRepository;
+import com.eventnode.eventnodeapi.repositories.AlumnoRepository;
+import com.eventnode.eventnodeapi.security.JwtTokenProvider;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Service
+public class AuthService {
+
+    private final UsuarioRepository usuarioRepository;
+    private final AlumnoRepository alumnoRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    public AuthService(UsuarioRepository usuarioRepository, 
+                       AlumnoRepository alumnoRepository, 
+                       PasswordEncoder passwordEncoder, 
+                       JwtTokenProvider jwtTokenProvider) {    
+        this.usuarioRepository = usuarioRepository;
+        this.alumnoRepository = alumnoRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
+
+    public LoginResponse login(LoginRequest request) {
+        Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo())
+                .orElseThrow(() -> new BadCredentialsException("Credenciales incorrectas"));
+
+        LocalDateTime ahora = LocalDateTime.now();
+
+        if (usuario.getBloqueadoHasta() != null && usuario.getBloqueadoHasta().isAfter(ahora)) {
+            throw new LockedException("Cuenta bloqueada, intente más tarde");
+        }
+
+        if (!"ACTIVO".equalsIgnoreCase(usuario.getEstado())) {
+            throw new DisabledException("Cuenta inactiva, contacte al administrador");
+        }
+
+        boolean passwordValid = false;
+        boolean needsRehash = false;
+
+        // Check if stored password is a BCrypt hash (starts with $2)
+        if (usuario.getPassword() != null && usuario.getPassword().startsWith("$2")) {
+            passwordValid = passwordEncoder.matches(request.getPassword(), usuario.getPassword());
+        } else {
+            // Legacy: plain text password comparison (from seed data)
+            passwordValid = request.getPassword().equals(usuario.getPassword());
+            if (passwordValid) {
+                needsRehash = true;
+            }
+        }
+
+        if (!passwordValid) {
+            int intentos = usuario.getIntentosFallidos() == null ? 0 : usuario.getIntentosFallidos();
+            intentos++;
+            usuario.setIntentosFallidos(intentos);
+
+            if (intentos >= 3) {
+                usuario.setBloqueadoHasta(ahora.plusMinutes(15));
+            }
+
+            usuarioRepository.save(usuario);
+            throw new BadCredentialsException("Credenciales incorrectas");
+        }
+
+        // Migrate plain text password to BCrypt hash
+        if (needsRehash) {
+            usuario.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        // Generar token JWT
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                usuario.getCorreo(), null, null // Authorities will be loaded in the filter
+        );
+        String token = jwtTokenProvider.generateToken(authentication);
+
+        usuario.setIntentosFallidos(0);
+        usuario.setBloqueadoHasta(null);
+        usuarioRepository.save(usuario);
+
+        String rolNombre = usuario.getRol() != null ? usuario.getRol().getNombre() : null;
+
+        String matricula = null;
+        String sexo = null;
+        Integer cuatrimestre = null;
+
+        if ("ALUMNO".equalsIgnoreCase(rolNombre)) {
+            Optional<Alumno> alumnoOpt = alumnoRepository.findById(usuario.getIdUsuario());
+            if (alumnoOpt.isPresent()) {
+                Alumno alumno = alumnoOpt.get();
+                matricula = alumno.getMatricula();
+                sexo = alumno.getSexo();
+                cuatrimestre = alumno.getCuatrimestre();
+            }
+        }
+
+        return new LoginResponse(
+                "Inicio de sesión exitoso",
+                rolNombre,
+                usuario.getIdUsuario(),
+                usuario.getNombre(),
+                usuario.getApellidoPaterno(),
+                usuario.getApellidoMaterno(),
+                usuario.getCorreo(),
+                matricula,
+                sexo,
+                cuatrimestre,
+                token
+        );
+    }
+}
