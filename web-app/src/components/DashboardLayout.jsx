@@ -1,6 +1,5 @@
 import Header from './Header'
 import Footer from './Footer'
-import CerrarSesionModal from './modals/CerrarSesionModal'
 
 function DashboardLayout({ sidebar, user, children }) {
   return (
@@ -40,7 +39,6 @@ function DashboardLayout({ sidebar, user, children }) {
           <Footer />
         </main>
       </div>
-      <CerrarSesionModal />
     </div>
   )
 }

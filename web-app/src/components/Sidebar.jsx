@@ -1,6 +1,8 @@
 import { NavLink, Link, useLocation } from 'react-router-dom'
+import { useTranslation } from '../../i18n/I18nContext'
 
 function Sidebar({ menuItems, user }) {
+  const { t } = useTranslation()
   const location = useLocation()
 
   const userName = user?.name || 'Usuario'
@@ -55,7 +57,7 @@ function Sidebar({ menuItems, user }) {
           style={{ fontSize: '13px' }}
         >
           <i className="bi bi-box-arrow-left"></i>
-          Cerrar sesion
+          {t('nav.logout')}
         </button>
       </div>
     </nav>
