@@ -34,11 +34,6 @@ import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: formulario de alta de alumnos desde la app movil.
- * Por que existe: valida datos de registro y envia el contrato esperado por /api/alumnos/registro.
- */
 @Composable
 fun RegisterScreen(
     modifier: Modifier = Modifier,

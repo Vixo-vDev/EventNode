@@ -22,11 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: expone endpoints HTTP para consulta y administracion de eventos.
- * Por que existe: traduce requests de Web/Mobile a operaciones de negocio del EventoService.
- */
 @RestController
 @RequestMapping("/api/eventos")
 public class EventoController {

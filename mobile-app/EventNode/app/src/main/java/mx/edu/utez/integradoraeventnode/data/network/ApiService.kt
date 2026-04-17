@@ -8,11 +8,6 @@ import retrofit2.Response
 import retrofit2.http.*
 import retrofit2.http.Streaming
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: contrato Retrofit de endpoints que consume la app movil.
- * Por que existe: centraliza rutas y payloads para mantener sincronizado Mobile <-> Backend.
- */
 interface ApiService {
     // ── Auth ──
     @POST("/api/auth/login")

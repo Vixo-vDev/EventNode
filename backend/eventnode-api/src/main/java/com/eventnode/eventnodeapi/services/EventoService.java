@@ -18,11 +18,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: concentra validaciones de negocio para crear, actualizar y cancelar eventos.
- * Por que existe: evita depender de validaciones del cliente y protege consistencia antes de persistir.
- */
 @Service
 public class EventoService {
 
@@ -47,10 +42,7 @@ public class EventoService {
     @Transactional
     public void crearEvento(EventoCreateRequest request) {
 
-        // LÓGICA DE NEGOCIO: ¿Por qué validados al usuario aquí?
-        // En una app robusta, NUNCA confías en lo que dice el cliente (React/Android).
-        // Aunque la web bloquee el botón "Crear Evento", alguien con Postman podría
-        // mandar un POST saltándose el frontend. Por eso validamos el ROL directamente en la BD.
+        // Validar que el creador existe y es admin
         Usuario creador = usuarioRepository.findById(request.getIdCreador())
                 .orElseThrow(() -> new IllegalArgumentException("Usuario creador no encontrado"));
 
@@ -59,8 +51,6 @@ public class EventoService {
             throw new SecurityException("Solo los administradores pueden crear eventos");
         }
 
-        // Esta validacion conserva unicidad por nombre+fecha para evitar colisiones operativas.
-        // Se aplica en backend para que no pueda saltarse desde clientes externos o Postman.
         if (eventoRepository.findByNombreAndFechaInicio(request.getNombre(), request.getFechaInicio()).isPresent()) {
             throw new IllegalStateException("Ya existe un evento con ese nombre en ese horario");
         }
@@ -89,8 +79,7 @@ public class EventoService {
             throw new IllegalArgumentException("El tiempo de tolerancia debe ser un número mayor o igual a cero");
         }
 
-        // MAPEO DE DEPENDENCIAS: El campo "request.getBanner()" viene del frontend en formato "Base64".
-        // Ocupa mucho string, por eso en application.properties subimos el multipart.max-file-size a 20MB.
+        // Banner es opcional - si se proporciona, validar que sea Base64 de imagen
         String banner = request.getBanner();
         if (banner != null && !banner.isBlank()) {
             if (!banner.startsWith("data:image/")) {
@@ -118,10 +107,7 @@ public class EventoService {
 
         Evento saved = eventoRepository.save(evento);
 
-        // LÓGICA DE NEGOCIO (Junction/Pivot Tabla M:M):
-        // ¿Por qué uso EntityManager .createNativeQuery en lugar del ORM clásico de Hibernate?
-        // Porque en asociaciones Many-to-Many puede volverse lento y complejo. Inyectarlo por
-        // Query puro aquí me garantiza persistencia inmediata sin lidiar con los estados "Detached" del ORM.
+        // Insertar asociaciones evento-organizador en la tabla junction
         List<Integer> organizadorIds = request.getOrganizadores();
         if (organizadorIds != null && !organizadorIds.isEmpty()) {
             for (Integer idOrg : organizadorIds) {

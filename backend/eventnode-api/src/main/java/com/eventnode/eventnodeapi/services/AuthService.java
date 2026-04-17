@@ -18,11 +18,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: autentica credenciales y construye respuesta de login con JWT.
- * Por que existe: centraliza seguridad de acceso y normaliza datos de sesion para clientes.
- */
 @Service
 public class AuthService {
 

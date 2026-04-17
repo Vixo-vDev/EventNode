@@ -73,11 +73,6 @@ import androidx.compose.ui.unit.dp
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: pantalla de autenticacion con login y recuperacion de contrasena.
- * Por que existe: conecta credenciales del usuario con endpoints de auth y persiste sesion local.
- */
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,

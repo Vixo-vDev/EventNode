@@ -18,11 +18,6 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: gestiona inscripciones previas de alumnos a eventos.
- * Por que existe: protege capacidad, tiempos de cancelacion y estado de inscripcion en backend.
- */
 @Service
 public class PreCheckinService {
 

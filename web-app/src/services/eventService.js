@@ -1,10 +1,5 @@
 import { apiGet, apiPost, apiPut, apiDelete, apiFetch } from './apiHelper'
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: capa de operaciones de eventos usada por pantallas administrativas y publicas.
- * Por que existe: encapsula endpoints para que la UI no dependa de detalles HTTP ni rutas directas.
- */
 export const eventService = {
   getEventos: async (nombre, mes, categoriaId, estado) => {
     const params = new URLSearchParams()

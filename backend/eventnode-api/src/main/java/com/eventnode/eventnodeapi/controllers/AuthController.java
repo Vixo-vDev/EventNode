@@ -18,11 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: expone endpoints de autenticacion y recuperacion de contrasena.
- * Por que existe: centraliza el contrato HTTP usado por Web/Mobile para obtener sesion JWT.
- */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -101,7 +96,6 @@ public class AuthController {
     }
 
     private ResponseEntity<Map<String, String>> buildError(HttpStatus status, String mensaje) {
-        // El campo "mensaje" es el contrato de error consumido por apiHelper.js y authService.js.
         Map<String, String> body = new HashMap<>();
         body.put("mensaje", mensaje);
         return ResponseEntity.status(status).body(body);

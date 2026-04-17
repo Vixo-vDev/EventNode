@@ -1,10 +1,5 @@
 import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from './apiHelper'
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: encapsula operaciones web de gestion de usuarios y perfiles.
- * Por que existe: mantiene desacoplada la UI de detalles HTTP y rutas del backend.
- */
 export const userService = {
   getPerfil: (idUsuario) =>
     apiGet(`/usuarios/${idUsuario}/perfil`),

@@ -53,11 +53,6 @@ import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: agenda del alumno con eventos activos/proximos y acceso a QR.
- * Por que existe: sincroniza precheckin y asistencia del backend con estado visual de la app.
- */
 @Composable
 fun AgendaScreen(
     modifier: Modifier = Modifier,

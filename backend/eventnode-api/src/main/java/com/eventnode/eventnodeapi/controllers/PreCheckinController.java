@@ -9,11 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: API REST para precheckin (inscribir, cancelar y listar inscripciones).
- * Por que existe: transforma solicitudes de cliente en operaciones consistentes del PreCheckinService.
- */
 @RestController
 @RequestMapping("/api/precheckin")
 public class PreCheckinController {

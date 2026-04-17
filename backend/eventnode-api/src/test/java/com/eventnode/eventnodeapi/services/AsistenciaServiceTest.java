@@ -25,11 +25,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: valida reglas de asistencia del servicio antes de persistir cambios.
- * Por que existe: protege escenarios limite del flujo PreCheckin -> Asistencia -> Reportes.
- */
 @SpringBootTest
 class AsistenciaServiceTest {
 

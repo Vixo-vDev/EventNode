@@ -6,11 +6,6 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: prueba comportamiento basico del modelo Alumno usado en backend.
- * Por que existe: previene regresiones en entidad que alimenta contratos de perfil y asistencia.
- */
 class AlumnoTest {
 
     @Test

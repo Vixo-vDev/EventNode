@@ -28,11 +28,6 @@ import mx.edu.utez.integradoraeventnode.ui.screens.student.diplomas.*
 import mx.edu.utez.integradoraeventnode.ui.screens.student.agenda.*
 import mx.edu.utez.integradoraeventnode.ui.theme.IntegradoraEventNodeTheme
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: punto de entrada de navegacion y estado global de sesion en Android.
- * Por que existe: decide la ruta inicial segun token/rol y conecta pantallas con servicios de datos.
- */
 class MainActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.onAttach(newBase))

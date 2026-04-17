@@ -9,11 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: endpoints para registrar y consultar asistencias por evento.
- * Por que existe: encapsula el contrato HTTP consumido por web/movil para control de asistencia.
- */
 @RestController
 @RequestMapping("/api/asistencias")
 public class AsistenciaController {

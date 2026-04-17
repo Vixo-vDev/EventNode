@@ -4,11 +4,6 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: entidad JPA que representa el estado persistente de un evento.
- * Por que existe: define el contrato de columnas que alimenta respuestas consumidas por Web y Mobile.
- */
 @Entity
 @Table(name = "eventos")
 public class Evento {

@@ -20,11 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: concentra gestion de usuarios y perfiles para operaciones administrativas.
- * Por que existe: aplica reglas de rol/estado y transforma entidades en respuestas para clientes.
- */
 @Service
 public class UsuarioService {
 

@@ -8,11 +8,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * FLUJO DE DATOS (EventNode)
- * Rol del archivo: prueba de validaciones del DTO usado para alta de administradores.
- * Por que existe: evita romper reglas de entrada que llegan desde interfaces Web/Mobile.
- */
 class AdminRegistroRequestTest {
 
     @Test
