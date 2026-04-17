@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * FLUJO DE DATOS (EventNode)
+ * Rol del archivo: endpoint de registro y actualizacion de alumnos en backend.
+ * Por que existe: valida entrada HTTP y delega reglas de negocio al servicio de alumnos.
+ */
 @RestController
 @RequestMapping("/api/alumnos")
 public class AlumnoController {

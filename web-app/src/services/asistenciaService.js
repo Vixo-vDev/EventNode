@@ -1,5 +1,10 @@
 import { apiGet, apiPost, apiPatch } from './apiHelper'
 
+/**
+ * FLUJO DE DATOS (EventNode)
+ * Rol del archivo: servicio web para registro y control de asistencias.
+ * Por que existe: evita duplicar endpoints y estandariza consumo de respuestas del backend.
+ */
 export const asistenciaService = {
   registrarAsistencia: (idUsuario, idEvento, metodo = 'QR') =>
     apiPost('/asistencias/registrar', { idUsuario, idEvento, metodo }),

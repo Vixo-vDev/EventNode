@@ -1,4 +1,14 @@
+# FLUJO DE DATOS (EventNode)
+# Rol del archivo: orquesta la comunicacion Web <-> Backend <-> MySQL en contenedores.
+# Por que existe: asegura que servicios, puertos y variables de entorno mantengan el mismo contrato.
+#
+# Inicio: docker compose up -d (desde /docker)
+# Logs:   docker compose logs -f backend
+# Parar:  docker compose down
+
 services:
+
+  # ── 1. Base de datos ──────────────────────────────────────
   mysql:
     image: mysql:8.0
     container_name: event_node_mysql
@@ -10,7 +20,7 @@ services:
       MYSQL_USER: vixo_dev
       MYSQL_PASSWORD: eventnode01
     ports:
-      - "3307:3306"
+      - "3307:3306"        # puerto local:contenedor
     volumes:
       - mysql_data:/var/lib/mysql
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/01-schema.sql
@@ -18,27 +28,55 @@ services:
     networks:
       - eventos_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "vixo_dev", "-peventnode01"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s    # espera extra al primer arranque
 
+  # ── 2. API Spring Boot ───────────────────────────────────
   backend:
     build:
-      context: ../backend/eventnode-api
+      context: ../backend/eventnode-api   # Dockerfile en esta carpeta
       dockerfile: Dockerfile
     container_name: event_node_backend
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/event_node?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&useUnicode=true
-      SPRING_DATASOURCE_USERNAME: vixo_dev
-      SPRING_DATASOURCE_PASSWORD: eventnode01
+    restart: unless-stopped
     depends_on:
       mysql:
-        condition: service_healthy
+        condition: service_healthy        # espera que MySQL responda antes de iniciar
+    environment:
+      # Conexión a la BD — mismos valores que MySQL arriba
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/event_node?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: vixo_dev
+      SPRING_DATASOURCE_PASSWORD: eventnode01
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
     networks:
       - eventos_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s    # Spring tarda en arrancar
+
+  # ── 3. Web App React (Nginx) ─────────────────────────────
+  web:
+    build:
+      context: ../web-app                 # Dockerfile en esta carpeta
+      dockerfile: Dockerfile
+    container_name: event_node_web
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy        # espera que el backend responda
+    ports:
+      - "80:80"
+    networks:
+      - eventos_network
+    # nginx.conf ya redirige /api → http://backend:8080
 
 volumes:
   mysql_data:

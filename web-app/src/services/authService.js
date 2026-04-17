@@ -1,3 +1,8 @@
+/**
+ * FLUJO DE DATOS (EventNode)
+ * Rol del archivo: gestiona autenticacion web y persistencia local/session del usuario.
+ * Por que existe: conecta formulario de login con backend y propaga JWT al resto de servicios.
+ */
 const API_URL = '/api';
 
 const rolMap = {

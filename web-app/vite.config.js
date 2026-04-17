@@ -1,7 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
+/**
+ * FLUJO DE DATOS (EventNode)
+ * Rol del archivo: configuracion de build/dev server para la app web.
+ * Por que existe: define proxy /api para enrutar peticiones al backend durante desarrollo.
+ */
 export default defineConfig({
   plugins: [react()],
   server: {

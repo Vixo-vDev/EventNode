@@ -9,9 +9,9 @@ import org.junit.runner.RunWith
 import org.junit.Assert.*
 
 /**
- * Instrumented test, which will execute on an Android device.
- *
- * See [testing documentation](http://d.android.com/tools/testing).
+ * FLUJO DE DATOS (EventNode)
+ * Rol del archivo: prueba instrumentada base para validar contexto real de la app.
+ * Por que existe: confirma que el modulo Android puede ejecutarse con infraestructura de test.
  */
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {

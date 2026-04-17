@@ -5,9 +5,9 @@ import org.junit.Test
 import org.junit.Assert.*
 
 /**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
+ * FLUJO DE DATOS (EventNode)
+ * Rol del archivo: base de pruebas unitarias locales del modulo Android.
+ * Por que existe: garantiza que pipeline de test local se mantenga operativo.
  */
 class ExampleUnitTest {
     @Test

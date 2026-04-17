@@ -1,5 +1,10 @@
 import { apiGet, apiPost, apiPut, apiDelete, apiFetch } from './apiHelper'
 
+/**
+ * FLUJO DE DATOS (EventNode)
+ * Rol del archivo: concentra operaciones de diplomas para panel web.
+ * Por que existe: unifica llamadas para emision, descarga y consulta sin repetir logica HTTP.
+ */
 export const diplomaService = {
   crearDiploma: (datos) =>
     apiPost('/diplomas/crear', datos),

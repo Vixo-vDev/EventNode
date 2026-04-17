@@ -1,5 +1,10 @@
 import { apiGet, apiPost } from './apiHelper'
 
+/**
+ * FLUJO DE DATOS (EventNode)
+ * Rol del archivo: maneja inscripciones precheckin de usuario a eventos.
+ * Por que existe: concentra el contrato de preinscripcion entre UI web y backend.
+ */
 export const precheckinService = {
   inscribirse: (idUsuario, idEvento) =>
     apiPost('/precheckin/inscribirse', { idUsuario, idEvento }),

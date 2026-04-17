@@ -12,6 +12,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * FLUJO DE DATOS (EventNode)
+ * Rol del archivo: expone operaciones administrativas de usuarios y perfiles.
+ * Por que existe: conecta paneles Web/Mobile con reglas de usuario gestionadas en UsuarioService.
+ */
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {

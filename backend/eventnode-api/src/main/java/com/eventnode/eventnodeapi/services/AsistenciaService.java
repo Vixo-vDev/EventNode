@@ -20,6 +20,11 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
+/**
+ * FLUJO DE DATOS (EventNode)
+ * Rol del archivo: aplica reglas para registro y estado de asistencias.
+ * Por que existe: asegura que check-in respete preinscripcion, estado de evento y ventana de tolerancia.
+ */
 @Service
 public class AsistenciaService {
 

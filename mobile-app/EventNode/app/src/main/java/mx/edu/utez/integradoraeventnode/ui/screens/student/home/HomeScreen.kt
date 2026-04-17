@@ -64,6 +64,11 @@ import mx.edu.utez.integradoraeventnode.ui.utils.assetImageBitmap
 import mx.edu.utez.integradoraeventnode.ui.screens.student.profile.ProfileBottomNav
 import androidx.compose.ui.graphics.asImageBitmap
 
+/**
+ * FLUJO DE DATOS (EventNode)
+ * Rol del archivo: pantalla principal del alumno con consulta y filtrado de eventos/diplomas.
+ * Por que existe: conecta estado de UI con endpoints del backend para mostrar oferta activa.
+ */
 
 
 
