@@ -18,6 +18,8 @@ function AdminEventCard({ id, image, title, location, date, status, capacityCurr
   const isProximo = status === 'PRÓXIMO'
   const percent = capacityMax > 0 ? Math.round((capacityCurrent / capacityMax) * 100) : 0
 
+
+
   return (
     <Link
       to={`/admin/evento/${id}`}
@@ -198,9 +200,24 @@ function GestionEventos({ user }) {
     return () => clearTimeout(timer)
   }, [searchTerm])
 
+  //Correo
+  const correoValido = (correo) => {
+    if(!correo) return true
+    return correo.includes("@") && correo.includes(".")
+  }
+
   const handleEventSubmit = async (formData) => {
     setEventLoading(true)
     try {
+      // Validar
+      if(formData.organizadores && formData.organizadores.length > 0){
+        const invalido = formData.organizadores.some((organizador) => !correoValido(organizador.correo))
+        if (invalido){
+          toast.error("El correo de este organizador no tiene un formato correcto") 
+          setEventLoading(false)
+          return
+        }
+      }
       // Convertir banner File a Base64 si existe
       let bannerBase64 = null
       if (formData.banner && formData.banner instanceof File) {

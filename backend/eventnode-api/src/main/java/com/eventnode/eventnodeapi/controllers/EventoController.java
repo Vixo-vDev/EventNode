@@ -44,6 +44,13 @@ public class EventoController {
         this.asistenciaRepository = asistenciaRepository;
     }
 
+    //Revisar
+    private boolean correoValido(String correo){
+        if(correo == null || correo.isBlank())
+            return true;
+        return correo.contains("@") && correo.contains(".");
+    }
+
     @PostMapping("/crear")
     public ResponseEntity<?> crearEvento(@Valid @RequestBody EventoCreateRequest request) {
         try {
@@ -135,6 +142,14 @@ public class EventoController {
             error.put("mensaje", "El nombre del organizador es obligatorio");
             return ResponseEntity.badRequest().body(error);
         }
+
+        //Correo
+        if(body.containsKey("correo") && correoValido.(bodyget("correo"))){
+            Map<String, Object> error = new HashMap<>();
+            error.put("mensaje", "El correo de este organizador no tiene un formato correcto");
+            return ResponseEntity.badRequest().body(error);
+        }
+
         Organizador org = new Organizador();
         org.setNombre(nombreOrg.trim());
         org.setCorreo(body.get("correo"));
@@ -155,9 +170,15 @@ public class EventoController {
         if (body.containsKey("nombre") && body.get("nombre") != null && !body.get("nombre").isBlank()) {
             org.setNombre(body.get("nombre").trim());
         }
-        if (body.containsKey("correo")) {
+
+        //Correo
+        if (body.containsKey("correo") && correoValido(bodyget.("correo"))) {
+            throw new IllegalArgumentException("El correo de este organizador no tiene un formato correcto")
+        } 
+        else if (body.containsKey("correo")) { 
             org.setCorreo(body.get("correo"));
         }
+
         if (body.containsKey("descripcion")) {
             org.setDescripcion(body.get("descripcion"));
         }
