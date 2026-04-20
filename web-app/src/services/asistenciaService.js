@@ -7,8 +7,12 @@ export const asistenciaService = {
   registrarManual: (matricula, idEvento) =>
     apiPost('/asistencias/manual', { matricula, idEvento }),
 
-  listarAsistencias: (idEvento) =>
-    apiGet(`/asistencias/evento/${idEvento}`),
+  listarAsistencias: (idEvento,estado = null) => {
+    const url = estado
+    ? `/asistencias/evento/${idEvento}?estado=${estado}`
+    : `/asistencias/evento/${idEvento}`
+    return apiGet(url)
+  },
 
   actualizarEstado: (idAsistencia, estado) =>
     apiPatch(`/asistencias/${idAsistencia}/estado`, { estado }),

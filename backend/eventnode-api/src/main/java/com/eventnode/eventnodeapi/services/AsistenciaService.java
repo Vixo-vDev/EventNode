@@ -92,8 +92,17 @@ public class AsistenciaService {
         registrarAsistencia(alumno.getIdUsuario(), idEvento, metodo);
     }
 
-    public List<Map<String, Object>> listarAsistencias(Integer idEvento) {
+    public List<Map<String, Object>> listarAsistencias(Integer idEvento, String estado ) {
         List<Asistencia> asistencias = asistenciaRepository.findByIdEvento(idEvento);
+
+        if (estado != null && !estado.isBlank()) {
+            if (!estado.equals("PENDIENTE") && !estado.equals("ASISTIDO")) {
+                throw new IllegalArgumentException("Estado inválido. Use PENDIENTE o ASISTIDO");
+            }
+            asistencias = asistenciaRepository.findByIdEventoAndEstado(idEvento, estado);
+        } else {
+            asistencias = asistenciaRepository.findByIdEvento(idEvento);
+        }
 
         return asistencias.stream().map(a -> {
             Map<String, Object> map = new HashMap<>();

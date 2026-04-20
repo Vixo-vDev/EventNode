@@ -88,10 +88,15 @@ public class AsistenciaController {
     }
 
     @GetMapping("/evento/{idEvento}")
-    public ResponseEntity<?> listarAsistencias(@PathVariable Integer idEvento) {
+    public ResponseEntity<?> listarAsistencias(@PathVariable Integer idEvento,
+                                               @RequestParam(required = false) String estado) {
         try {
-            List<Map<String, Object>> asistencias = asistenciaService.listarAsistencias(idEvento);
+            List<Map<String, Object>> asistencias = asistenciaService.listarAsistencias(idEvento, estado);
             return ResponseEntity.ok(asistencias);
+        } catch (IllegalArgumentException ex){
+            Map<String,String> error = new HashMap<>();
+            error.put("mensaje", ex.getMessage());
+            return ResponseEntity.badRequest().body(error);
         } catch (Exception ex) {
             Map<String, String> error = new HashMap<>();
             error.put("mensaje", "Error interno");

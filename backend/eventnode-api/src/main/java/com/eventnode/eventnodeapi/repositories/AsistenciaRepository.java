@@ -9,6 +9,7 @@ import java.util.Optional;
 public interface AsistenciaRepository extends JpaRepository<Asistencia, Integer> {
 
     List<Asistencia> findByIdEvento(Integer idEvento);
+    List<Asistencia> findByIdEventoAndEstado(Integer idEvento, String estado);
 
     Optional<Asistencia> findByIdUsuarioAndIdEvento(Integer idUsuario, Integer idEvento);
 

@@ -14,12 +14,13 @@ function AdminCheckIn() {
   const [search, setSearch] = useState('')
   const [matricula, setMatricula] = useState('')
   const [manualLoading, setManualLoading] = useState(false)
+  const [filtroEstado, setFiltroEstado] = useState(null)
 
   const fetchData = async () => {
     try {
       const [eventoData, asistenciasData] = await Promise.all([
         eventService.getEvento(id),
-        asistenciaService.listarAsistencias(id),
+        asistenciaService.listarAsistencias(id,filtroEstado),
       ])
       setEvento(eventoData)
       setStudents(asistenciasData)
@@ -30,7 +31,7 @@ function AdminCheckIn() {
     }
   }
 
-  useEffect(() => { fetchData() }, [id])
+  useEffect(() => { fetchData() }, [id,filtroEstado])
 
   const handleManualCheckin = async () => {
     if (!matricula.trim()) return toast.error(t('checkin.studentId'))
@@ -58,6 +59,7 @@ function AdminCheckIn() {
   const manualCount = students.filter(s => s.metodo === 'MANUAL').length
 
   return (
+    
     <div>
       <div className="d-flex align-items-center gap-3 mb-4">
         <Link to={`/admin/evento/${id}`} className="btn btn-light rounded-circle shadow-sm d-flex align-items-center justify-content-center p-0" style={{ width: '40px', height: '40px' }}>
@@ -100,6 +102,25 @@ function AdminCheckIn() {
           </div>
         </div>
       </div>
+      <div className="d-flex gap-2 mb-3">
+    {[
+        { label: 'Todos', value: null },
+        { label: 'Pendiente', value: 'PENDIENTE' },
+        { label: 'Asistido', value: 'ASISTIDO' },
+    ].map(({ label, value }) => (
+        <button
+            key={label}
+            className={`btn btn-sm rounded-pill px-3 ${
+                filtroEstado === value
+                    ? 'btn-primary'
+                    : 'btn-outline-secondary'
+            }`}
+            onClick={() => setFiltroEstado(value)}
+        >
+            {label}
+        </button>
+    ))}
+</div>
 
       {/* Manual check-in */}
       <div className="card border-0 shadow-sm rounded-4 mb-4">
