@@ -216,6 +216,7 @@ public class EventoController {
             map.put("idOrganizador", o.getIdOrganizador());
             map.put("nombre", o.getNombre());
             map.put("correo", o.getCorreo());
+            map.put("descripcion", o.getDescripcion());
             return map;
         }).collect(Collectors.toList());
         response.put("organizadores", orgsList);

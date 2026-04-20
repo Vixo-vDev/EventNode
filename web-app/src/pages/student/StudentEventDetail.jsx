@@ -146,6 +146,7 @@ function StudentEventDetail({ user }) {
                         <div>
                           <div className="fw-semibold text-dark">{org.nombre}</div>
                           {org.correo && <div className="text-muted" style={{fontSize: '0.8rem'}}>{org.correo}</div>}
+                          {org.descripcion && <div className="text-muted" style={{fontSize: '0.8rem'}}>{org.descripcion}</div>}
                         </div>
                       </li>
                     ))}
