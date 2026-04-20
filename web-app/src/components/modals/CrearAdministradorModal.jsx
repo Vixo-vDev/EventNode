@@ -28,7 +28,7 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
   const displayError = localError || error
 
   return (
-    <div className="modal fade" id="crearAdminModal" tabIndex="-1" aria-labelledby="crearAdminModalLabel" aria-hidden="true">
+    <div className="modal" id="crearAdminModal" tabIndex="-1" aria-labelledby="crearAdminModalLabel" aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content border-0 rounded-4 shadow bg-white">
           <div className="modal-header border-0 px-4 pt-4 pb-0">
@@ -178,14 +178,7 @@ function CrearAdministradorModal({ formData, error, isLoading, onChange, onSubmi
                 disabled={isLoading}
                 style={{ fontSize: '13px' }}
               >
-                {isLoading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    {t('createAdmin.creating')}
-                  </>
-                ) : (
-                  t('createAdmin.create')
-                )}
+                {isLoading ? t('createAdmin.creating') : t('createAdmin.create')}
               </button>
             </div>
           </form>

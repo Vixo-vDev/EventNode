@@ -72,9 +72,10 @@ public class UsuarioController {
     @PatchMapping("/{id}/estado")
     public ResponseEntity<?> cambiarEstado(@PathVariable("id") Integer id) {
         try {
-            usuarioService.cambiarEstado(id);
+            String estado = usuarioService.cambiarEstado(id);
             Map<String, String> body = new HashMap<>();
-            body.put("mensaje", "Estado actualizado con éxito");
+            body.put("mensaje", "Estado actualizado con exito");
+            body.put("estado", estado);
             return ResponseEntity.ok(body);
         } catch (IllegalArgumentException ex) {
             Map<String, String> body = new HashMap<>();
@@ -88,7 +89,7 @@ public class UsuarioController {
         String mensaje = ex.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(fe -> fe.getDefaultMessage())
-                .orElse("Error de validación");
+                .orElse("Error de validacion");
         Map<String, String> body = new HashMap<>();
         body.put("mensaje", mensaje);
         return ResponseEntity.badRequest().body(body);

@@ -119,10 +119,10 @@ class UsuarioServiceTest {
         when(usuarioRepository.findById(idUsuario)).thenReturn(Optional.of(usuarioEntrada));
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioEntrada);
 
-        // Invocar método
-        instancia.cambiarEstado(idUsuario);
+        String estado = instancia.cambiarEstado(idUsuario);
 
         // Validar resultado
+        assertEquals("INACTIVO", estado);
         assertEquals("INACTIVO", usuarioEntrada.getEstado());
     }
 }

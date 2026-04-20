@@ -65,7 +65,7 @@ function CrearEstudianteModal({ onStudentCreated }) {
   }
 
   return (
-    <div className="modal fade" id="crearEstudianteModal" tabIndex="-1" aria-labelledby="crearEstudianteModalLabel" aria-hidden="true">
+    <div className="modal" id="crearEstudianteModal" tabIndex="-1" aria-labelledby="crearEstudianteModalLabel" aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered modal-lg">
         <div className="modal-content border-0 rounded-4 shadow bg-white">
           <div className="modal-header border-0 px-4 pt-4 pb-0">
@@ -262,12 +262,7 @@ function CrearEstudianteModal({ onStudentCreated }) {
                 disabled={loading}
                 style={{ fontSize: '13px' }}
               >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Creando...
-                  </>
-                ) : 'Crear estudiante'}
+                {loading ? 'Creando...' : 'Crear estudiante'}
               </button>
             </div>
           </form>

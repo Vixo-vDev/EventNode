@@ -68,7 +68,7 @@ function EditarAdministradorModal({ admin, onAdminUpdated }) {
   }
 
   return (
-    <div className="modal fade" id="editarAdminModal" tabIndex="-1" aria-labelledby="editarAdminModalLabel" aria-hidden="true">
+    <div className="modal" id="editarAdminModal" tabIndex="-1" aria-labelledby="editarAdminModalLabel" aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content border-0 rounded-4 shadow bg-white">
           <div className="modal-header border-0 px-4 pt-4 pb-0">
@@ -149,11 +149,7 @@ function EditarAdministradorModal({ admin, onAdminUpdated }) {
                   onClick={handleToggleState}
                   disabled={disableLoading || loading}
                 >
-                  {disableLoading ? (
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  ) : (
-                    <i className={`bi ${admin.active ? 'bi-person-dash' : 'bi-person-check'} me-2`}></i>
-                  )}
+                  <i className={`bi ${admin.active ? 'bi-person-dash' : 'bi-person-check'} me-2`}></i>
                   {admin.active ? 'Deshabilitar' : 'Habilitar'}
                 </button>
               )}
@@ -175,9 +171,7 @@ function EditarAdministradorModal({ admin, onAdminUpdated }) {
                 style={{ fontSize: '13px' }}
                 disabled={loading || disableLoading}
               >
-                {loading ? (
-                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                ) : 'Guardar cambios'}
+                {loading ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </div>
           </div>

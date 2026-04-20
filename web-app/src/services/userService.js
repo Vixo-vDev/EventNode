@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from './apiHelper'
+import { apiGet, apiPost, apiPut, apiPatch } from './apiHelper'
 
 export const userService = {
   getPerfil: (idUsuario) =>
@@ -20,9 +20,6 @@ export const userService = {
     const res = await apiPatch(`/usuarios/${idUsuario}/estado`, {})
     return res
   },
-
-  eliminarUsuario: (idUsuario) =>
-    apiDelete(`/usuarios/${idUsuario}`),
 
   crearAlumno: (datos) =>
     apiPost('/alumnos/registro', datos),

@@ -23,8 +23,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -172,18 +170,17 @@ class UsuarioControllerTest {
 
     @Test
     void cambiarEstadoUsuarioExistenteRetornaOkTest() throws Exception {
-        doNothing().when(usuarioService).cambiarEstado(1);
+        when(usuarioService.cambiarEstado(1)).thenReturn("INACTIVO");
 
         resultadoMvc = mockMvc.perform(patch("/api/usuarios/1/estado")).andReturn();
 
         assertEquals(200, resultadoMvc.getResponse().getStatus());
-        assertTrue(JsonPath.read(resultadoMvc.getResponse().getContentAsString(), "$.mensaje")
-                .toString().contains("Estado"));
+        assertEquals("INACTIVO", JsonPath.read(resultadoMvc.getResponse().getContentAsString(), "$.estado"));
     }
 
     @Test
     void cambiarEstadoUsuarioInexistenteRetornaBadRequestTest() throws Exception {
-        doThrow(new IllegalArgumentException("No existe")).when(usuarioService).cambiarEstado(2);
+        when(usuarioService.cambiarEstado(2)).thenThrow(new IllegalArgumentException("No existe"));
 
         resultadoMvc = mockMvc.perform(patch("/api/usuarios/2/estado")).andReturn();
 

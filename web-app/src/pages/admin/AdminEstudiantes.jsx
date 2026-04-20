@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 import { useTranslation } from '../../i18n/I18nContext'
 import { userService } from '../../services/userService'
-import { closeModal } from '../../services/apiHelper'
 import EditarEstudianteModal from '../../components/modals/EditarEstudianteModal'
 import CrearAdministradorModal from '../../components/modals/CrearAdministradorModal'
 import CrearEstudianteModal from '../../components/modals/CrearEstudianteModal'
@@ -23,32 +22,22 @@ function AdminEstudiantes({ user }) {
   const [admins, setAdmins] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-
-  // Estado para crear administrador
   const [adminForm, setAdminForm] = useState(INITIAL_ADMIN_FORM)
   const [adminError, setAdminError] = useState('')
   const [adminLoading, setAdminLoading] = useState(false)
-
-  // Estado para editar / ver / eliminar estudiante
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [viewStudent, setViewStudent] = useState(null)
-  const [deleteStudentTarget, setDeleteStudentTarget] = useState(null)
-  const [deleteStudentLoading, setDeleteStudentLoading] = useState(false)
-  const deleteStudentCloseBtnRef = useRef(null)
-
-  // Estado para ver / eliminar administrador
   const [selectedAdmin, setSelectedAdmin] = useState(null)
-  const [deleteAdminTarget, setDeleteAdminTarget] = useState(null)
-  const [deleteAdminLoading, setDeleteAdminLoading] = useState(false)
-  const deleteAdminCloseBtnRef = useRef(null)
-  const crearAdminCloseBtnRef = useRef(null)
+  const [toggleTarget, setToggleTarget] = useState(null)
+  const [toggleLoading, setToggleLoading] = useState(false)
+  const toggleCloseBtnRef = useRef(null)
 
   const isSuperAdmin = user?.originalRole === 'SUPERADMIN'
 
   const fetchUsers = async () => {
     try {
       const data = await userService.getUsuarios()
-      const alumnos = data
+      const studentList = data
         .filter(u => u.rol === 'ALUMNO')
         .map(u => ({
           id: u.idUsuario,
@@ -57,14 +46,14 @@ function AdminEstudiantes({ user }) {
           nombre: u.nombre,
           apellidoPaterno: u.apellidoPaterno,
           apellidoMaterno: u.apellidoMaterno,
-          matricula: u.matricula || '—',
+          matricula: u.matricula || '-',
           email: u.correo,
           edad: u.edad,
           sexo: u.sexo,
           cuatrimestre: u.cuatrimestre,
-          role: 'STUDENT',
           active: u.estado === 'ACTIVO',
         }))
+
       const adminList = data
         .filter(u => (u.rol === 'ADMINISTRADOR' || u.rol === 'SUPERADMIN') && u.idUsuario !== user?.id)
         .map(u => ({
@@ -77,9 +66,10 @@ function AdminEstudiantes({ user }) {
           active: u.estado === 'ACTIVO',
           esPrincipal: u.esPrincipal === true,
           role: u.rol === 'SUPERADMIN' ? 'Super Admin' : 'Administrador',
-          bg: u.rol === 'SUPERADMIN' ? 'bg-warning bg-opacity-25 text-warning' : 'bg-primary bg-opacity-10 text-primary',
+          bg: u.rol === 'SUPERADMIN' ? 'bg-info bg-opacity-25 text-danger' : 'bg-warning bg-opacity-10 text-dark',
         }))
-      setStudents(alumnos)
+
+      setStudents(studentList)
       setAdmins(adminList)
     } catch {
       setStudents([])
@@ -103,9 +93,8 @@ function AdminEstudiantes({ user }) {
     e.preventDefault()
     setAdminError('')
     setAdminLoading(true)
-    const payload = { ...adminForm, idSolicitante: user?.id }
     try {
-      await userService.crearAdmin(payload)
+      await userService.crearAdmin({ ...adminForm, idSolicitante: user?.id })
       toast.success(t('students.adminCreatedSuccess'))
       setAdminForm(INITIAL_ADMIN_FORM)
       setLoading(true)
@@ -113,58 +102,55 @@ function AdminEstudiantes({ user }) {
     } catch (err) {
       setAdminError(err.message)
       toast.error(err.message)
-      throw err
     } finally {
       setAdminLoading(false)
     }
   }
 
-  const handleDeleteStudent = async () => {
-    if (!deleteStudentTarget) return
-    setDeleteStudentLoading(true)
+  const handleToggleState = async () => {
+    if (!toggleTarget) return
+    setToggleLoading(true)
     try {
-      await userService.eliminarUsuario(deleteStudentTarget.id)
-      toast.success('Estudiante eliminado correctamente')
-      setDeleteStudentTarget(null)
-      deleteStudentCloseBtnRef.current?.click()
-      setLoading(true)
-      fetchUsers()
+      const res = await userService.cambiarEstado(toggleTarget.id)
+      const nuevoEstado = res?.estado === 'ACTIVO'
+
+      if (toggleTarget.type === 'student') {
+        setStudents(prev => prev.map(item => item.id === toggleTarget.id ? { ...item, active: nuevoEstado } : item))
+      } else {
+        setAdmins(prev => prev.map(item => item.id === toggleTarget.id ? { ...item, active: nuevoEstado } : item))
+      }
+
+      toast.success(res?.mensaje || 'Estado actualizado')
+      setToggleTarget(null)
+      toggleCloseBtnRef.current?.click()
     } catch (err) {
-      toast.error(err.message)
+      toast.error(err.message || 'Error al cambiar estado')
     } finally {
-      setDeleteStudentLoading(false)
+      setToggleLoading(false)
     }
   }
 
-  const handleDeleteAdmin = async () => {
-    if (!deleteAdminTarget) return
-    setDeleteAdminLoading(true)
-    try {
-      await userService.eliminarUsuario(deleteAdminTarget.id)
-      toast.success('Administrador eliminado correctamente')
-      setDeleteAdminTarget(null)
-      deleteAdminCloseBtnRef.current?.click()
-      setLoading(true)
-      fetchUsers()
-    } catch (err) {
-      toast.error(err.message)
-    } finally {
-      setDeleteAdminLoading(false)
-    }
-  }
+  const estudiantesFiltrados = students.filter(student =>
+    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.matricula.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.email.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const adminsFiltrados = admins.filter(admin =>
+    admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    admin.role.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
     <div>
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
           <h2 className="fw-bold mb-1">Usuarios</h2>
-          <p className="text-secondary small mb-0">
-            Gestiona los usuarios del sistema
-          </p>
+          <p className="text-secondary small mb-0">Gestiona los usuarios del sistema</p>
         </div>
         {activeTab === 'estudiantes' && (
           <button
-            className="btn btn-primary rounded-pill d-flex align-items-center gap-2 flex-shrink-0"
+            className="btn btn-dark rounded-pill d-flex align-items-center gap-2 flex-shrink-0"
             data-bs-toggle="modal"
             data-bs-target="#crearEstudianteModal"
           >
@@ -174,7 +160,7 @@ function AdminEstudiantes({ user }) {
         )}
         {isSuperAdmin && activeTab === 'administradores' && (
           <button
-            className="btn btn-primary rounded-pill d-flex align-items-center gap-2 flex-shrink-0"
+            className="btn btn-dark rounded-pill d-flex align-items-center gap-2 flex-shrink-0"
             data-bs-toggle="modal"
             data-bs-target="#crearAdminModal"
           >
@@ -184,10 +170,9 @@ function AdminEstudiantes({ user }) {
         )}
       </div>
 
-      {/* Tabs */}
       <div className="d-flex gap-2 mb-4">
         <button
-          className={`btn rounded-pill px-4 py-2 fw-semibold ${activeTab === 'estudiantes' ? 'btn-primary' : 'btn-outline-secondary'}`}
+            className={`btn rounded-pill px-4 py-2 fw-semibold ${activeTab === 'estudiantes' ? 'btn-dark' : 'btn-outline-secondary'}`}
           style={{ fontSize: '13px' }}
           onClick={() => { setActiveTab('estudiantes'); setSearchTerm('') }}
         >
@@ -196,7 +181,7 @@ function AdminEstudiantes({ user }) {
         </button>
         {isSuperAdmin && (
           <button
-            className={`btn rounded-pill px-4 py-2 fw-semibold ${activeTab === 'administradores' ? 'btn-primary' : 'btn-outline-secondary'}`}
+            className={`btn rounded-pill px-4 py-2 fw-semibold ${activeTab === 'administradores' ? 'btn-dark' : 'btn-outline-secondary'}`}
             style={{ fontSize: '13px' }}
             onClick={() => { setActiveTab('administradores'); setSearchTerm('') }}
           >
@@ -206,35 +191,29 @@ function AdminEstudiantes({ user }) {
         )}
       </div>
 
-      {/* Tab: Estudiantes */}
       {activeTab === 'estudiantes' && (
         <div className="card border-0 shadow-sm rounded-4 mb-4">
           <div className="card-header bg-white border-bottom-0 p-4">
-            <div className="d-flex flex-column flex-md-row gap-3">
-              <div className="input-group bg-light rounded-3 overflow-hidden flex-grow-1" style={{ border: 'none' }}>
-                <span className="input-group-text bg-transparent border-0 pe-1">
-                  <i className="bi bi-search text-secondary"></i>
-                </span>
-                <input
-                  type="text"
-                  className="form-control bg-transparent border-0 shadow-none small"
-                  placeholder={t('students.searchPlaceholder')}
-                  style={{ fontSize: '13px' }}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+            <div className="input-group bg-light rounded-3 overflow-hidden" style={{ border: 'none' }}>
+              <span className="input-group-text bg-transparent border-0 pe-1">
+                <i className="bi bi-search text-secondary"></i>
+              </span>
+              <input
+                type="text"
+                className="form-control bg-transparent border-0 shadow-none small"
+                placeholder={t('students.searchPlaceholder')}
+                style={{ fontSize: '13px' }}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
-
           <div className="card-body p-0">
             {loading ? (
               <div className="text-center py-5">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">{t('common.loading')}</span>
-                </div>
+                <div className="text-dark small">cargando...</div>
               </div>
-            ) : students.length > 0 ? (
+            ) : estudiantesFiltrados.length > 0 ? (
               <div className="table-responsive">
                 <table className="table align-middle mb-0">
                   <thead>
@@ -246,18 +225,12 @@ function AdminEstudiantes({ user }) {
                       <th className="text-uppercase text-secondary small fw-bold pb-3 border-0 border-bottom text-end pe-4" style={{ fontSize: '10px', letterSpacing: '1px' }}>{t('students.actions')}</th>
                     </tr>
                   </thead>
-                  <tbody className="border-top-0">
-                    {students
-                      .filter(student =>
-                        student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        student.matricula.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        student.email.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map(student => (
+                  <tbody>
+                    {estudiantesFiltrados.map(student => (
                       <tr key={student.id}>
                         <td className="py-3 border-light ps-4">
                           <div className="d-flex align-items-center gap-3">
-                            <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '32px', height: '32px', fontSize: '12px' }}>
+                            <div className="bg-warning bg-opacity-25 text-danger rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '32px', height: '32px', fontSize: '12px' }}>
                               {student.initials}
                             </div>
                             <span className="fw-bold text-dark small">{student.name}</span>
@@ -266,10 +239,9 @@ function AdminEstudiantes({ user }) {
                         <td className="small py-3 border-light text-secondary">{student.matricula}</td>
                         <td className="small py-3 border-light text-secondary">{student.email}</td>
                         <td className="py-3 border-light">
-                          <div className={`d-flex align-items-center gap-1 fw-bold ${student.active ? 'text-success' : 'text-secondary'}`} style={{ fontSize: '11px' }}>
-                            <span style={{ fontSize: '14px', lineHeight: '1' }}>{student.active ? '•' : '○'}</span>
-                            {student.active ? t('students.active') : t('students.inactive')}
-                          </div>
+                          <span className={`badge rounded-pill ${student.active ? 'bg-success text-white' : 'bg-danger text-white'}`}>
+                            {student.active ? 'ACTIVO' : 'INACTIVO'}
+                          </span>
                         </td>
                         <td className="py-3 border-light text-end pe-4">
                           <div className="d-flex justify-content-end gap-2">
@@ -292,13 +264,13 @@ function AdminEstudiantes({ user }) {
                               <i className="bi bi-pencil" style={{ fontSize: '13px' }}></i>
                             </button>
                             <button
-                              className="btn btn-link text-danger p-0 m-0"
-                              title="Eliminar"
+                              className={`btn btn-link p-0 m-0 ${student.active ? 'text-danger' : 'text-warning'}`}
+                              title={student.active ? 'Desactivar' : 'Activar'}
                               data-bs-toggle="modal"
-                              data-bs-target="#deleteStudentModal"
-                              onClick={() => setDeleteStudentTarget(student)}
+                              data-bs-target="#toggleUserModal"
+                              onClick={() => setToggleTarget({ id: student.id, type: 'student', name: student.name, active: student.active })}
                             >
-                              <i className="bi bi-trash" style={{ fontSize: '13px' }}></i>
+                              <i className={`bi ${student.active ? 'bi-person-dash' : 'bi-person-check'}`} style={{ fontSize: '13px' }}></i>
                             </button>
                           </div>
                         </td>
@@ -309,20 +281,17 @@ function AdminEstudiantes({ user }) {
               </div>
             ) : (
               <div className="text-center py-5">
-                <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
-                  <i className="bi bi-people text-primary fs-4"></i>
+                <div className="rounded-circle bg-danger bg-opacity-25 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
+                  <i className="bi bi-people text-warning fs-4"></i>
                 </div>
                 <h6 className="fw-bold mb-1">{t('students.noStudents')}</h6>
-                <p className="text-secondary small mb-0">
-                  {t('students.studentsComingSoon')}
-                </p>
+                <p className="text-secondary small mb-0">{t('students.studentsComingSoon')}</p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Tab: Administradores */}
       {isSuperAdmin && activeTab === 'administradores' && (
         <div className="card border-0 shadow-sm rounded-4 mb-4">
           <div className="card-header bg-white border-bottom-0 p-4">
@@ -343,20 +312,13 @@ function AdminEstudiantes({ user }) {
           <div className="card-body px-4 pb-4 pt-0">
             {loading ? (
               <div className="text-center py-5">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">{t('common.loading')}</span>
-                </div>
+                <div className="text-dark small">cargando...</div>
               </div>
-            ) : admins.length > 0 ? (
+            ) : adminsFiltrados.length > 0 ? (
               <div className="row g-3">
-                {admins
-                  .filter(admin =>
-                    admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    admin.role.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                  .map((admin, index) => (
-                  <div key={index} className="col-12 col-md-4">
-                    <div className="border border-light-subtle rounded-4 p-3 d-flex align-items-center justify-content-between card-hover" style={{ transition: 'all 0.2s ease' }}>
+                {adminsFiltrados.map(admin => (
+                  <div key={admin.id} className="col-12 col-md-4">
+                    <div className="border border-dark rounded-4 p-3 d-flex align-items-center justify-content-between">
                       <div className="d-flex align-items-center gap-3">
                         <div className={`rounded-circle d-flex align-items-center justify-content-center fw-bold ${admin.bg}`} style={{ width: '40px', height: '40px' }}>
                           <i className="bi bi-person-fill"></i>
@@ -389,13 +351,13 @@ function AdminEstudiantes({ user }) {
                         )}
                         {isSuperAdmin && !admin.esPrincipal && (
                           <button
-                            className="btn btn-link text-danger p-0"
-                            title="Eliminar"
+                            className={`btn btn-link p-0 ${admin.active ? 'text-warning' : 'text-success'}`}
+                            title={admin.active ? 'Desactivar' : 'Activar'}
                             data-bs-toggle="modal"
-                            data-bs-target="#deleteAdminModal"
-                            onClick={() => setDeleteAdminTarget(admin)}
+                            data-bs-target="#toggleUserModal"
+                            onClick={() => setToggleTarget({ id: admin.id, type: 'admin', name: admin.name, active: admin.active })}
                           >
-                            <i className="bi bi-trash" style={{ fontSize: '14px' }}></i>
+                            <i className={`bi ${admin.active ? 'bi-person-dash' : 'bi-person-check'}`} style={{ fontSize: '14px' }}></i>
                           </button>
                         )}
                       </div>
@@ -405,8 +367,8 @@ function AdminEstudiantes({ user }) {
               </div>
             ) : (
               <div className="text-center py-5">
-                <div className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
-                  <i className="bi bi-shield-person text-primary fs-4"></i>
+                <div className="rounded-circle bg-warning bg-opacity-25 d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '56px', height: '56px' }}>
+                  <i className="bi bi-shield-person text-danger fs-4"></i>
                 </div>
                 <h6 className="fw-bold mb-1">{t('students.noAdmins')}</h6>
               </div>
@@ -435,8 +397,7 @@ function AdminEstudiantes({ user }) {
         onSubmit={handleAdminSubmit}
       />
 
-      {/* Modal: Ver detalle estudiante */}
-      <div className="modal fade" id="verEstudianteModal" tabIndex="-1" aria-hidden="true">
+      <div className="modal" id="verEstudianteModal" tabIndex="-1" aria-hidden="true">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content border-0 rounded-4 shadow">
             <div className="modal-header border-0 px-4 pt-4 pb-0">
@@ -447,46 +408,45 @@ function AdminEstudiantes({ user }) {
               {viewStudent && (
                 <div className="d-flex flex-column gap-3">
                   <div className="d-flex align-items-center gap-3 mb-2">
-                    <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '52px', height: '52px', fontSize: '18px' }}>
+                    <div className="bg-warning bg-opacity-25 text-danger rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '52px', height: '52px', fontSize: '18px' }}>
                       {viewStudent.initials}
                     </div>
                     <div>
                       <div className="fw-bold text-dark">{viewStudent.name}</div>
-                      <div className={`d-flex align-items-center gap-1 fw-bold small ${viewStudent.active ? 'text-success' : 'text-secondary'}`}>
-                        <span style={{ fontSize: '14px', lineHeight: '1' }}>{viewStudent.active ? '•' : '○'}</span>
-                        {viewStudent.active ? 'Activo' : 'Inactivo'}
-                      </div>
+                      <span className={`badge rounded-pill ${viewStudent.active ? 'bg-success text-white' : 'bg-danger text-white'}`}>
+                        {viewStudent.active ? 'ACTIVO' : 'INACTIVO'}
+                      </span>
                     </div>
                   </div>
                   <div className="border-top pt-3 d-flex flex-column gap-2">
                     <div>
                       <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Apellido Paterno</div>
-                      <div className="fw-semibold small">{viewStudent.apellidoPaterno || '—'}</div>
+                      <div className="fw-semibold small">{viewStudent.apellidoPaterno || '-'}</div>
                     </div>
                     <div>
                       <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Apellido Materno</div>
-                      <div className="fw-semibold small">{viewStudent.apellidoMaterno || '—'}</div>
+                      <div className="fw-semibold small">{viewStudent.apellidoMaterno || '-'}</div>
                     </div>
                     <div>
-                      <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Matrícula</div>
+                      <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Matriula</div>
                       <div className="fw-semibold small">{viewStudent.matricula}</div>
                     </div>
                     <div>
-                      <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Correo electrónico</div>
-                      <div className="fw-semibold small">{viewStudent.email || '—'}</div>
+                      <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Correo electroncio</div>
+                      <div className="fw-semibold small">{viewStudent.email || '-'}</div>
                     </div>
                     <div className="d-flex gap-4">
                       <div>
                         <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Edad</div>
-                        <div className="fw-semibold small">{viewStudent.edad || '—'}</div>
+                        <div className="fw-semibold small">{viewStudent.edad || '-'}</div>
                       </div>
                       <div>
                         <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Sexo</div>
-                        <div className="fw-semibold small">{viewStudent.sexo || '—'}</div>
+                        <div className="fw-semibold small">{viewStudent.sexo || '-'}</div>
                       </div>
                       <div>
                         <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Cuatrimestre</div>
-                        <div className="fw-semibold small">{viewStudent.cuatrimestre || '—'}</div>
+                        <div className="fw-semibold small">{viewStudent.cuatrimestre || '-'}</div>
                       </div>
                     </div>
                   </div>
@@ -494,35 +454,13 @@ function AdminEstudiantes({ user }) {
               )}
             </div>
             <div className="modal-footer border-top px-4 py-3">
-              <button type="button" className="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+              <button type="button" className="btn btn-dark rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal: Confirmar eliminar estudiante */}
-      <div className="modal fade" id="deleteStudentModal" tabIndex="-1" aria-hidden="true">
-        <div className="modal-dialog modal-dialog-centered modal-sm">
-          <div className="modal-content border-0 rounded-4 shadow text-center p-4">
-            <div className="mb-3">
-              <i className="bi bi-exclamation-triangle-fill text-danger" style={{ fontSize: '3rem' }}></i>
-            </div>
-            <h6 className="fw-bold mb-2">Eliminar estudiante</h6>
-            <p className="text-secondary small mb-3">
-              ¿Estás seguro de eliminar a <strong>{deleteStudentTarget?.name}</strong>? Esta acción no se puede deshacer.
-            </p>
-            <div className="d-flex justify-content-center gap-2">
-              <button className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal" ref={deleteStudentCloseBtnRef}>Cancelar</button>
-              <button className="btn btn-danger rounded-pill px-4" onClick={handleDeleteStudent} disabled={deleteStudentLoading}>
-                {deleteStudentLoading ? 'Eliminando...' : 'Eliminar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal: Ver detalle administrador */}
-      <div className="modal fade" id="verAdminModal" tabIndex="-1" aria-hidden="true">
+      <div className="modal" id="verAdminModal" tabIndex="-1" aria-hidden="true">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content border-0 rounded-4 shadow">
             <div className="modal-header border-0 px-4 pt-4 pb-0">
@@ -538,7 +476,7 @@ function AdminEstudiantes({ user }) {
                     </div>
                     <div>
                       <div className="fw-bold text-dark">{selectedAdmin.name}</div>
-                      <span className={`badge rounded-pill ${selectedAdmin.role === 'Super Admin' ? 'bg-warning bg-opacity-25 text-warning' : 'bg-primary bg-opacity-10 text-primary'}`} style={{ fontSize: '11px' }}>
+                      <span className={`badge rounded-pill ${selectedAdmin.role === 'Super Admin' ? 'bg-info bg-opacity-25 text-danger' : 'bg-warning bg-opacity-10 text-dark'}`} style={{ fontSize: '11px' }}>
                         {selectedAdmin.role}
                       </span>
                     </div>
@@ -546,49 +484,55 @@ function AdminEstudiantes({ user }) {
                   <div className="border-top pt-3 d-flex flex-column gap-2">
                     <div>
                       <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Apellido Paterno</div>
-                      <div className="fw-semibold small">{selectedAdmin.apellidoPaterno || '—'}</div>
+                      <div className="fw-semibold small">{selectedAdmin.apellidoPaterno || '-'}</div>
                     </div>
                     <div>
                       <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Apellido Materno</div>
-                      <div className="fw-semibold small">{selectedAdmin.apellidoMaterno || '—'}</div>
+                      <div className="fw-semibold small">{selectedAdmin.apellidoMaterno || '-'}</div>
                     </div>
                     <div>
-                      <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Correo electrónico</div>
-                      <div className="fw-semibold small">{selectedAdmin.email || '—'}</div>
+                      <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Correo electornico</div>
+                      <div className="fw-semibold small">{selectedAdmin.email || '-'}</div>
                     </div>
                     <div>
                       <div className="text-uppercase text-secondary fw-bold" style={{ fontSize: '10px', letterSpacing: '1px' }}>Estado</div>
-                      <div className={`d-flex align-items-center gap-1 fw-bold small ${selectedAdmin.active ? 'text-success' : 'text-secondary'}`}>
-                        <span style={{ fontSize: '14px', lineHeight: '1' }}>{selectedAdmin.active ? '•' : '○'}</span>
-                        {selectedAdmin.active ? 'Activo' : 'Inactivo'}
-                      </div>
+                      <span className={`badge rounded-pill ${selectedAdmin.active ? 'bg-success text-white' : 'bg-danger text-white'}`}>
+                        {selectedAdmin.active ? 'ACTIVO' : 'INACTIVO'}
+                      </span>
                     </div>
                   </div>
                 </div>
               )}
             </div>
             <div className="modal-footer border-top px-4 py-3">
-              <button type="button" className="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+              <button type="button" className="btn btn-dark rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal: Confirmar eliminar administrador */}
-      <div className="modal fade" id="deleteAdminModal" tabIndex="-1" aria-hidden="true">
+      <div className="modal" id="toggleUserModal" tabIndex="-1" aria-hidden="true">
         <div className="modal-dialog modal-dialog-centered modal-sm">
           <div className="modal-content border-0 rounded-4 shadow text-center p-4">
             <div className="mb-3">
-              <i className="bi bi-exclamation-triangle-fill text-danger" style={{ fontSize: '3rem' }}></i>
+              <i className={`bi ${toggleTarget?.active ? 'bi-person-dash-fill text-danger' : 'bi-person-check-fill text-warning'}`} style={{ fontSize: '3rem' }}></i>
             </div>
-            <h6 className="fw-bold mb-2">Eliminar administrador</h6>
+            <h6 className="fw-bold mb-2">
+              {toggleTarget?.active ? 'Desactivar usuario' : 'Activar usuario'}
+            </h6>
             <p className="text-secondary small mb-3">
-              ¿Estás seguro de eliminar a <strong>{deleteAdminTarget?.name}</strong>? Esta acción no se puede deshacer.
+              {toggleTarget?.active
+                ? `Seguro que quieres desactivar a ${toggleTarget?.name}`
+                : `Seguro que quieres activar a ${toggleTarget?.name}`}
             </p>
             <div className="d-flex justify-content-center gap-2">
-              <button className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal" ref={deleteAdminCloseBtnRef}>Cancelar</button>
-              <button className="btn btn-danger rounded-pill px-4" onClick={handleDeleteAdmin} disabled={deleteAdminLoading}>
-                {deleteAdminLoading ? 'Eliminando...' : 'Eliminar'}
+              <button className="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal" ref={toggleCloseBtnRef}>Cancelar</button>
+              <button
+                className={`btn rounded-pill px-4 ${toggleTarget?.active ? 'btn-danger' : 'btn-warning'}`}
+                onClick={handleToggleState}
+                disabled={toggleLoading}
+              >
+                {toggleLoading ? 'Guardando...' : toggleTarget?.active ? 'Desactivar' : 'Activar'}
               </button>
             </div>
           </div>

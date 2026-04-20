@@ -236,7 +236,7 @@ class AsistenciaServiceTest {
         });
 
         // Invocar método
-        instancia.registrarAsistenciaManual(matricula, idEvento);
+        instancia.registrarAsistenciaManual(matricula, idEvento, metodo);
 
         // Validar resultado
         assertTrue(guardado);

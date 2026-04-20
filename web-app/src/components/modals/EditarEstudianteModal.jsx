@@ -76,7 +76,7 @@ function EditarEstudianteModal({ student, onStudentUpdated }) {
   }
 
   return (
-    <div className="modal fade" id="editarEstudianteModal" tabIndex="-1" aria-labelledby="editarEstudianteModalLabel" aria-hidden="true">
+    <div className="modal" id="editarEstudianteModal" tabIndex="-1" aria-labelledby="editarEstudianteModalLabel" aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content border-0 rounded-4 shadow bg-white">
           <div className="modal-header border-0 px-4 pt-4 pb-0">
@@ -146,11 +146,7 @@ function EditarEstudianteModal({ student, onStudentUpdated }) {
                   onClick={handleToggleState}
                   disabled={disableLoading || loading}
                 >
-                  {disableLoading ? (
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  ) : (
-                    <i className={`bi ${student.active ? 'bi-person-dash' : 'bi-person-check'} me-2`}></i>
-                  )}
+                  <i className={`bi ${student.active ? 'bi-person-dash' : 'bi-person-check'} me-2`}></i>
                   {student.active ? t('students.disable') : t('students.enable')}
                 </button>
               )}
@@ -160,9 +156,7 @@ function EditarEstudianteModal({ student, onStudentUpdated }) {
                 {t('common.cancel')}
               </button>
               <button type="button" onClick={handleSubmit} className="btn btn-primary px-4 fw-semibold rounded-3" style={{ fontSize: '13px' }} disabled={loading || disableLoading}>
-                {loading ? (
-                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                ) : t('students.saveChanges')}
+                {loading ? 'Guardando...' : t('students.saveChanges')}
               </button>
             </div>
           </div>

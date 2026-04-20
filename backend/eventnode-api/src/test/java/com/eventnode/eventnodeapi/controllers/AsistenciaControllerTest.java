@@ -140,7 +140,8 @@ class AsistenciaControllerTest {
 
     @Test
     void registrarAsistenciaManualExitosoRetornaCreadoTest() throws Exception {
-        doNothing().when(asistenciaService).registrarAsistenciaManual(anyString(), anyInt());
+        cuerpoManual.put("metodo", "MANUAL");
+        doNothing().when(asistenciaService).registrarAsistenciaManual(anyString(), anyInt(), anyString());
         jsonSolicitud = objectMapper.writeValueAsString(cuerpoManual);
 
         resultadoMvc = mockMvc.perform(post("/api/asistencias/manual")

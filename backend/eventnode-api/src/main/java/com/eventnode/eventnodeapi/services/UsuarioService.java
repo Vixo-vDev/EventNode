@@ -136,7 +136,7 @@ public class UsuarioService {
     }
 
     @Transactional
-    public void cambiarEstado(Integer idUsuario) {
+    public String cambiarEstado(Integer idUsuario) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
@@ -147,6 +147,7 @@ public class UsuarioService {
         }
 
         usuarioRepository.save(usuario);
+        return usuario.getEstado();
     }
 
     @Transactional
