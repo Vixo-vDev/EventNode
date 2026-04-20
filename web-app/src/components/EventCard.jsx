@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n/I18nContext'
 
-function EventCard({ image, title, date, location, category, detailUrl, status, capacityCurrent, capacityMax }) {
+function EventCard({ image, title, date, location, category, detailUrl, status, capacityCurrent, capacityMax, cuposDisponibles }) {
   const { t } = useTranslation()
   const isActive = status === 'ACTIVO'
   const isCancelled = status === 'CANCELADO'
@@ -69,6 +69,12 @@ function EventCard({ image, title, date, location, category, detailUrl, status, 
                   style={{ width: `${percent}%` }}
                 ></div>
               </div>
+
+              {cuposDisponibles !== undefined && (
+                <div className="mt-2 small fw-semibold">
+                  Cupos disponibles: {cuposDisponibles}
+                </div>
+              )}
             </>
           )}
         </div>

@@ -17,6 +17,7 @@ public class EventoResponse {
     private Integer categoriaId;
     private String categoriaNombre;
     private Long inscritos;
+    private Integer cuposDisponibles;
 
     public EventoResponse() {
     }
@@ -26,7 +27,7 @@ public class EventoResponse {
                           LocalDateTime fechaInicio, LocalDateTime fechaFin,
                           Integer tiempoToleranciaMinutos, String descripcion,
                           String estado, Integer categoriaId, String categoriaNombre,
-                          Long inscritos) {
+                          Long inscritos, Integer cuposDisponibles) {
         this.idEvento = idEvento;
         this.banner = banner;
         this.nombre = nombre;
@@ -41,7 +42,8 @@ public class EventoResponse {
         this.categoriaId = categoriaId;
         this.categoriaNombre = categoriaNombre;
         this.inscritos = inscritos;
-    }
+        this.cuposDisponibles = cuposDisponibles;
+}
 
     // Getters and Setters
     public Integer getIdEvento() {
@@ -154,5 +156,13 @@ public class EventoResponse {
 
     public void setInscritos(Long inscritos) {
         this.inscritos = inscritos;
+    }
+
+    public Integer getCuposDisponibles() {
+        return cuposDisponibles;
+    }
+
+    public void setCuposDisponibles(Integer cuposDisponibles) {
+        this.cuposDisponibles = cuposDisponibles;
     }
 }

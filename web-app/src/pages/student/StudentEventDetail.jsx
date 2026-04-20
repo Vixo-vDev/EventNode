@@ -205,6 +205,12 @@ function StudentEventDetail({ user }) {
                   <div className="progress mt-1" style={{ height: '4px' }}>
                     <div className={`progress-bar ${capacityPercent >= 100 ? 'bg-danger' : 'bg-primary'}`} style={{ width: `${Math.min(capacityPercent, 100)}%` }}></div>
                   </div>
+x
+                  {evento.cuposDisponibles !== undefined && (
+                    <div className="mt-2 small fw-semibold">
+                      Cupos disponibles: {evento.cuposDisponibles}
+                    </div>
+                  )}
                 </div>
               </div>
 

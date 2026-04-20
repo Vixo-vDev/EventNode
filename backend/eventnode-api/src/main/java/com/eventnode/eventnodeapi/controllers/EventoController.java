@@ -1,26 +1,37 @@
 package com.eventnode.eventnodeapi.controllers;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.eventnode.eventnodeapi.dtos.EventoCreateRequest;
 import com.eventnode.eventnodeapi.dtos.EventoResponse;
 import com.eventnode.eventnodeapi.dtos.EventoUpdateRequest;
 import com.eventnode.eventnodeapi.models.Categoria;
 import com.eventnode.eventnodeapi.models.Evento;
 import com.eventnode.eventnodeapi.models.Organizador;
+import com.eventnode.eventnodeapi.repositories.AsistenciaRepository;
 import com.eventnode.eventnodeapi.repositories.CategoriaRepository;
 import com.eventnode.eventnodeapi.repositories.OrganizadorRepository;
 import com.eventnode.eventnodeapi.repositories.PreCheckinRepository;
-import com.eventnode.eventnodeapi.repositories.AsistenciaRepository;
 import com.eventnode.eventnodeapi.services.EventoService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/eventos")
@@ -74,22 +85,28 @@ public class EventoController {
             return ResponseEntity.ok(List.of());
         }
         List<EventoResponse> response = eventos.stream()
-                .map(e -> new EventoResponse(
-                        e.getIdEvento(),
-                        e.getBanner(),
-                        e.getNombre(),
-                        e.getUbicacion(),
-                        e.getCapacidadMaxima(),
-                        e.getTiempoCancelacionHoras(),
-                        e.getFechaInicio(),
-                        e.getFechaFin(),
-                        e.getTiempoToleranciaMinutos(),
-                        e.getDescripcion(),
-                        e.getEstado(),
-                        e.getCategoria() != null ? e.getCategoria().getIdCategoria() : null,
-                        e.getCategoria() != null ? e.getCategoria().getNombre() : null,
-                        preCheckinRepository.countByIdEventoAndEstado(e.getIdEvento(), "ACTIVO")
-                ))
+                .map(e -> {
+                    long inscritos = preCheckinRepository.countByIdEventoAndEstado(e.getIdEvento(), "ACTIVO");
+                    int cupos = Math.max(0, e.getCapacidadMaxima() - (int) inscritos);
+
+                    return new EventoResponse(
+                            e.getIdEvento(),
+                            e.getBanner(),
+                            e.getNombre(),
+                            e.getUbicacion(),
+                            e.getCapacidadMaxima(),
+                            e.getTiempoCancelacionHoras(),
+                            e.getFechaInicio(),
+                            e.getFechaFin(),
+                            e.getTiempoToleranciaMinutos(),
+                            e.getDescripcion(),
+                            e.getEstado(),
+                            e.getCategoria() != null ? e.getCategoria().getIdCategoria() : null,
+                            e.getCategoria() != null ? e.getCategoria().getNombre() : null,
+                            inscritos,
+                            cupos
+                    );
+                })
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
@@ -206,6 +223,9 @@ public class EventoController {
 
         long inscritos = preCheckinRepository.countByIdEventoAndEstado(idEvento, "ACTIVO");
         response.put("inscritos", inscritos);
+
+        int cuposDisponibles = Math.max(0, evento.getCapacidadMaxima() - (int) inscritos);
+        response.put("cuposDisponibles", cuposDisponibles);
 
         long asistencias = asistenciaRepository.countByIdEvento(idEvento);
         response.put("asistencias", asistencias);

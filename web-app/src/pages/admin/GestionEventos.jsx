@@ -11,7 +11,7 @@ import eventWorkshop from '../../assets/events/event_workshop.png'
 import CrearEventoModal from '../../components/modals/CrearEventoModal'
 import EditarEventoModal from '../../components/modals/EditarEventoModal'
 
-function AdminEventCard({ id, image, title, location, date, status, capacityCurrent, capacityMax, isFull, isFinished, onEdit, onDelete }) {
+function AdminEventCard({ id, image, title, location, date, status, capacityCurrent, capacityMax, isFull, isFinished, cuposDisponibles, onEdit, onDelete }) {
   const isActive = status === 'ACTIVO'
   const isCancelled = status === 'CANCELADO'
   const isTerminado = status === 'TERMINADO' || status === 'FINALIZADO'
@@ -73,6 +73,12 @@ function AdminEventCard({ id, image, title, location, date, status, capacityCurr
               style={{ width: `${percent}%` }}
             ></div>
           </div>
+
+          {cuposDisponibles !== undefined && (
+            <div className="mt-2 small fw-semibold">
+              Cupos disponibles: {cuposDisponibles}
+            </div>
+          )}
         </div>
         <div className="card-footer bg-white border-top d-flex justify-content-start gap-3 px-3 py-2">
           {(isActive || isProximo) && (
@@ -156,6 +162,7 @@ function GestionEventos({ user }) {
         capacityMax: e.capacidadMaxima,
         isFull: e.inscritos >= e.capacidadMaxima,
         isFinished: e.estado === 'FINALIZADO',
+        cuposDisponibles: e.cuposDisponibles,
         // Raw data for edit modal
         raw: e,
       }))
@@ -371,6 +378,7 @@ function GestionEventos({ user }) {
               capacityMax={evento.capacityMax}
               isFull={evento.isFull}
               isFinished={evento.isFinished}
+              cuposDisponibles={evento.cuposDisponibles}
               onEdit={() => handleEditOpen(evento)}
               onDelete={() => setDeleteTarget(evento)}
             />
