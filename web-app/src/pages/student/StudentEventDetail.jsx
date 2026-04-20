@@ -145,8 +145,9 @@ function StudentEventDetail({ user }) {
                         <i className="bi bi-person-circle fs-5"></i>
                         <div>
                           <div className="fw-semibold text-dark">{org.nombre}</div>
-                          {org.correo && <div className="text-muted" style={{fontSize: '0.8rem'}}>{org.correo}</div>}
                           {org.descripcion && <div className="text-muted" style={{fontSize: '0.8rem'}}>{org.descripcion}</div>}
+                          {org.correo && <div className="text-muted" style={{fontSize: '0.8rem'}}>{org.correo}</div>}
+                
                         </div>
                       </li>
                     ))}

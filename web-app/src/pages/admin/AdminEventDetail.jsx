@@ -230,6 +230,28 @@ function AdminEventDetail() {
         </div>
       </div>
 
+      {evento.organizadores && evento.organizadores.length > 0 && (
+                <div className="mt-4">
+                  <h6 className="fw-bold mb-3">
+                    <i className="bi bi-person-badge text-primary me-2"></i>
+                    {t('eventDetail.organizers')}
+                  </h6>
+                  <ul className="list-unstyled mb-0">
+                    {evento.organizadores.map(org => (
+                      <li key={org.idOrganizador} className="text-secondary small mb-2 d-flex align-items-start gap-2">
+                        <i className="bi bi-person-circle fs-5"></i>
+                        <div>
+                          <div className="fw-semibold text-dark">{org.nombre}</div>
+                          {org.descripcion && <div className="text-muted" style={{fontSize: '0.8rem'}}>{org.descripcion}</div>}
+                          {org.correo && <div className="text-muted" style={{fontSize: '0.8rem'}}>{org.correo}</div>}
+                
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
       <div className="row g-3">
         <div className="col-12 col-md-8">
           <div className="card border-0 rounded-3 h-100 text-white" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)' }}>
